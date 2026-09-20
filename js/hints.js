@@ -64,11 +64,13 @@ function applyHints(players, referenceDate) {
 }
 
 // Für jeden Positionscode: wie viele Spieler im Kader sind dort einsetzbar.
+// severity: 'missing' (0 Spieler), 'thin' (weniger als positionThinCount), 'ok'.
 function computePositionGaps(players, positionSlots) {
   return positionSlots.map(function (slot) {
     var count = players.filter(function (p) {
       return p.positionSlots.indexOf(slot) !== -1;
     }).length;
-    return { code: slot, count: count, thin: count < HINT_THRESHOLDS.positionThinCount };
+    var severity = count === 0 ? 'missing' : (count < HINT_THRESHOLDS.positionThinCount ? 'thin' : 'ok');
+    return { code: slot, count: count, severity: severity };
   });
 }

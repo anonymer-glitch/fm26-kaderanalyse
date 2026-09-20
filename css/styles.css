@@ -43,8 +43,93 @@ header p {
 }
 
 .position-gap-chip.thin {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.position-gap-chip.missing {
   background: #fee2e2;
   color: #991b1b;
+  font-weight: 600;
+}
+
+.view-nav {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.view-nav-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.view-nav-btn.active {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+
+#dashboard-view h3 {
+  margin-top: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.hints-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.hint-summary-box {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.6rem 0.9rem;
+  min-width: 180px;
+  font-size: 0.85rem;
+}
+
+.hint-summary-title {
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.hint-summary-box ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.quality-settings {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.5rem 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.quality-settings summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+#quality-settings-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+#quality-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
 }
 
 .warnings {

@@ -1,13 +1,21 @@
 document.addEventListener('DOMContentLoaded', function () {
   var fileInput = document.getElementById('csv-file');
   var statusEl = document.getElementById('import-status');
-  var dataSection = document.getElementById('data-section');
+  var referenceDateInput = document.getElementById('reference-date');
+
+  var navEl = document.getElementById('view-nav');
+  var dashboardViewEl = document.getElementById('dashboard-view');
+  var kaderViewEl = document.getElementById('kader-view');
+
+  var neededPositionsEl = document.getElementById('needed-positions');
+  var positionGapsEl = document.getElementById('position-gaps');
+  var hintsSummaryEl = document.getElementById('hints-summary');
+  var qualitySettingsBodyEl = document.getElementById('quality-settings-body');
+  var qualityTableWrapperEl = document.getElementById('quality-table-wrapper');
+
   var rowCountEl = document.getElementById('row-count');
   var filtersEl = document.getElementById('filters');
   var tableWrapper = document.getElementById('table-wrapper');
-  var positionGapsEl = document.getElementById('position-gaps');
-  var neededPositionsEl = document.getElementById('needed-positions');
-  var referenceDateInput = document.getElementById('reference-date');
 
   var COLUMNS = [
     { key: 'name', label: 'Spieler', get: function (p) { return p.name; } },
@@ -31,6 +39,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   ];
 
+  var HINT_CATEGORIES = [
+    { label: 'Vertrag prüfen', key: 'Vertrag prüfen' },
+    { label: 'Verkaufskandidaten', key: 'Verkaufskandidat' },
+    { label: 'Verleihkandidaten', key: 'Verleihkandidat' }
+  ];
+
   var defaultFilters = function () {
     return {
       positions: [], ageMin: null, ageMax: null, contractBefore: null,
@@ -45,10 +59,12 @@ document.addEventListener('DOMContentLoaded', function () {
     positionSlots: [],
     neededPositions: [],
     statusOptions: [],
+    qualityAttributes: {},
     referenceDate: null,
     filters: defaultFilters(),
     sortKey: 'name',
-    sortDir: 'asc'
+    sortDir: 'asc',
+    activeView: 'dashboard'
   };
 
   function openProfile(player) {
@@ -56,44 +72,36 @@ document.addEventListener('DOMContentLoaded', function () {
     window.open('profile.html#' + encodeURIComponent(payload), '_blank');
   }
 
+  function switchView(view) {
+    state.activeView = view;
+    dashboardViewEl.hidden = view !== 'dashboard';
+    kaderViewEl.hidden = view !== 'kader';
+    Array.from(navEl.querySelectorAll('.view-nav-btn')).forEach(function (btn) {
+      btn.classList.toggle('active', btn.dataset.view === view);
+    });
+  }
+
+  Array.from(navEl.querySelectorAll('.view-nav-btn')).forEach(function (btn) {
+    btn.addEventListener('click', function () { switchView(btn.dataset.view); });
+  });
+
   referenceDateInput.addEventListener('change', function () {
     state.referenceDate = parseGermanDate(referenceDateInput.value);
     if (state.players.length > 0) {
       applyHints(state.players, state.referenceDate);
+      renderHintsSummary();
       renderTable();
     }
   });
-
-  function renderNeededPositions() {
-    neededPositionsEl.innerHTML = '';
-    neededPositionsEl.appendChild(makeCheckboxGroupField(
-      'Benötigte Positionen (für Lücken-Analyse, z.B. bei 3er-Kette keine Außenverteidiger nötig)',
-      state.positionSlots,
-      state.neededPositions,
-      function (selected) {
-        state.neededPositions = selected;
-        renderPositionGaps();
-      }
-    ));
-  }
-
-  function renderPositionGaps() {
-    positionGapsEl.innerHTML = '';
-    var gaps = computePositionGaps(state.players, state.neededPositions);
-    gaps.forEach(function (gap) {
-      var chip = document.createElement('span');
-      chip.className = 'position-gap-chip' + (gap.thin ? ' thin' : '');
-      chip.textContent = gap.code + ': ' + gap.count;
-      positionGapsEl.appendChild(chip);
-    });
-  }
 
   fileInput.addEventListener('change', function (event) {
     var file = event.target.files[0];
     if (!file) return;
 
     statusEl.textContent = 'Lese Datei...';
-    dataSection.hidden = true;
+    navEl.hidden = true;
+    dashboardViewEl.hidden = true;
+    kaderViewEl.hidden = true;
 
     var reader = new FileReader();
     reader.onload = function (e) {
@@ -109,7 +117,6 @@ document.addEventListener('DOMContentLoaded', function () {
   function handleImport(result, fileName) {
     if (result.records.length === 0) {
       statusEl.textContent = 'Keine Datensätze in "' + fileName + '" gefunden.';
-      dataSection.hidden = true;
       return;
     }
 
@@ -153,13 +160,128 @@ document.addEventListener('DOMContentLoaded', function () {
     state.sortKey = 'name';
     state.sortDir = 'asc';
 
+    state.qualityAttributes = {};
+    collectRootPositionCodes(state.players).forEach(function (code) {
+      state.qualityAttributes[code] = defaultQualityAttributes(code, state.numericColumns);
+    });
+
     applyHints(state.players, state.referenceDate);
 
-    renderFilters();
     renderNeededPositions();
     renderPositionGaps();
+    renderHintsSummary();
+    renderQualitySettings();
+    renderQualityTable();
+    renderFilters();
     renderTable();
-    dataSection.hidden = false;
+
+    navEl.hidden = false;
+    switchView('dashboard');
+  }
+
+  function renderNeededPositions() {
+    neededPositionsEl.innerHTML = '';
+    neededPositionsEl.appendChild(makeCheckboxGroupField(
+      'Benötigte Positionen (für Lücken-Analyse, z.B. bei 3er-Kette keine Außenverteidiger nötig)',
+      state.positionSlots,
+      state.neededPositions,
+      function (selected) {
+        state.neededPositions = selected;
+        renderPositionGaps();
+      }
+    ));
+  }
+
+  function renderPositionGaps() {
+    positionGapsEl.innerHTML = '';
+    var gaps = computePositionGaps(state.players, state.neededPositions);
+    gaps.forEach(function (gap) {
+      var chip = document.createElement('span');
+      chip.className = 'position-gap-chip' + (gap.severity !== 'ok' ? ' ' + gap.severity : '');
+      chip.textContent = gap.code + ': ' + gap.count;
+      positionGapsEl.appendChild(chip);
+    });
+  }
+
+  function renderHintsSummary() {
+    hintsSummaryEl.innerHTML = '';
+    HINT_CATEGORIES.forEach(function (cat) {
+      var matches = state.players.filter(function (p) {
+        return p.hints && p.hints.indexOf(cat.key) !== -1;
+      });
+
+      var box = document.createElement('div');
+      box.className = 'hint-summary-box';
+
+      var title = document.createElement('div');
+      title.className = 'hint-summary-title';
+      title.textContent = cat.label + ' (' + matches.length + ')';
+      box.appendChild(title);
+
+      if (matches.length > 0) {
+        var list = document.createElement('ul');
+        matches.forEach(function (p) {
+          var li = document.createElement('li');
+          var link = document.createElement('a');
+          link.href = '#';
+          link.textContent = p.name;
+          link.addEventListener('click', function (event) {
+            event.preventDefault();
+            openProfile(p);
+          });
+          li.appendChild(link);
+          list.appendChild(li);
+        });
+        box.appendChild(list);
+      }
+
+      hintsSummaryEl.appendChild(box);
+    });
+  }
+
+  function renderQualitySettings() {
+    qualitySettingsBodyEl.innerHTML = '';
+    collectRootPositionCodes(state.players).forEach(function (code) {
+      qualitySettingsBodyEl.appendChild(makeCheckboxGroupField(
+        code,
+        state.numericColumns,
+        state.qualityAttributes[code] || [],
+        function (selected) {
+          state.qualityAttributes[code] = selected;
+          renderQualityTable();
+        }
+      ));
+    });
+  }
+
+  function renderQualityTable() {
+    qualityTableWrapperEl.innerHTML = '';
+    var results = computePositionQuality(state.players, state.qualityAttributes);
+
+    var table = document.createElement('table');
+    var thead = document.createElement('thead');
+    var headRow = document.createElement('tr');
+    ['Position', 'Spieler', 'Attribute', 'Ø Qualität'].forEach(function (h) {
+      var th = document.createElement('th');
+      th.textContent = h;
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    var tbody = document.createElement('tbody');
+    results.forEach(function (r) {
+      var tr = document.createElement('tr');
+      [r.code, r.playerCount, r.attributeCount, r.average != null ? r.average.toFixed(1) : '–'].forEach(function (val) {
+        var td = document.createElement('td');
+        td.textContent = val;
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+
+    qualityTableWrapperEl.appendChild(table);
   }
 
   function renderFilters() {
