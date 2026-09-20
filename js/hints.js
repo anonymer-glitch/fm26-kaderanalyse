@@ -27,6 +27,23 @@ function monthsBetween(from, to) {
   return (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth());
 }
 
+// FM-Verträge enden in diesen Daten immer am 30.6. - die "Saison" eines Datums
+// ist deshalb das Kalenderjahr des kommenden 30.6. (Juli-Dezember -> nächstes Jahr).
+function seasonEndYear(date) {
+  return date.getMonth() <= 5 ? date.getFullYear() : date.getFullYear() + 1;
+}
+
+// Alle Spieler, deren Vertrag in derselben Saison wie referenceDate endet.
+// Gibt null zurück, wenn kein Spieldatum gesetzt ist.
+function computeContractCluster(players, referenceDate) {
+  if (!referenceDate) return null;
+  var year = seasonEndYear(referenceDate);
+  var matches = players.filter(function (p) {
+    return p.contractEnd && p.contractEnd.getFullYear() === year;
+  });
+  return { seasonEndYear: year, players: matches };
+}
+
 function computeSalaryThreshold(players, percentile) {
   var salaries = players
     .map(function (p) { return p.salary; })

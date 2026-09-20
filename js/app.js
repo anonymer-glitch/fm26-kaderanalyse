@@ -252,6 +252,38 @@ document.addEventListener('DOMContentLoaded', function () {
       hintsSummaryEl.appendChild(box);
     });
 
+    var cluster = computeContractCluster(state.players, state.referenceDate);
+    var clusterBox = document.createElement('div');
+    clusterBox.className = 'hint-summary-box';
+
+    var clusterTitle = document.createElement('div');
+    clusterTitle.className = 'hint-summary-title';
+    if (cluster) {
+      clusterTitle.textContent = 'Vertragsballung Saison ' + (cluster.seasonEndYear - 1) + '/' + cluster.seasonEndYear +
+        ' (' + cluster.players.length + ')';
+    } else {
+      clusterTitle.textContent = 'Vertragsballung (kein Spieldatum gesetzt)';
+    }
+    clusterBox.appendChild(clusterTitle);
+
+    if (cluster && cluster.players.length > 0) {
+      var clusterList = document.createElement('ul');
+      cluster.players.forEach(function (p) {
+        var li = document.createElement('li');
+        var link = document.createElement('a');
+        link.href = '#';
+        link.textContent = p.name;
+        link.addEventListener('click', function (event) {
+          event.preventDefault();
+          openProfile(p);
+        });
+        li.appendChild(link);
+        clusterList.appendChild(li);
+      });
+      clusterBox.appendChild(clusterList);
+    }
+    hintsSummaryEl.appendChild(clusterBox);
+
     var gapResults = computePositionGaps(state.players, state.neededPositions);
     var qualityResults = computePositionQuality(state.players, state.qualityAttributes);
     var actionItems = computePositionActionItems(gapResults, qualityResults);
