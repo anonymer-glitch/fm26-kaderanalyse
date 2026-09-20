@@ -71,12 +71,14 @@ function applyHints(players, referenceDate) {
 
   players.forEach(function (p) {
     var hints = [];
+    var hintReasons = {};
 
     if (referenceDate && p.contractEnd) {
       var months = monthsBetween(referenceDate, p.contractEnd);
       if (months != null && months <= HINT_THRESHOLDS.contractWarningMonths &&
           CONTRACT_WARNING_EXCLUDED_STATUSES.indexOf(p.statusActual) === -1) {
         hints.push('Vertrag prüfen');
+        hintReasons['Vertrag prüfen'] = 'Vertrag endet ' + p.contractEndRaw + ' (' + months + ' Mon.), Status ' + p.statusActual;
       }
     }
 
@@ -88,14 +90,20 @@ function applyHints(players, referenceDate) {
 
     if (highSalary && (oldAndSidelined || underperforming)) {
       hints.push('Verkaufskandidat');
+      var sellReasons = ['Gehalt ' + p.salaryRaw + ' (oberstes Viertel im Kader)'];
+      if (oldAndSidelined) sellReasons.push('Alter ' + p.age + ' + Status ' + p.statusActual);
+      if (underperforming) sellReasons.push('Note ' + p.rating.toFixed(2) + ' unter Kader-Ø ' + ratingMean.toFixed(2));
+      hintReasons['Verkaufskandidat'] = sellReasons.join(' + ');
     }
 
     if (p.age != null && p.age <= HINT_THRESHOLDS.loanAgeMax &&
         statusRank(p.statusActual) >= HINT_THRESHOLDS.loanMinRank) {
       hints.push('Verleihkandidat');
+      hintReasons['Verleihkandidat'] = 'Alter ' + p.age + ' + Status ' + p.statusActual;
     }
 
     p.hints = hints;
+    p.hintReasons = hintReasons;
   });
 }
 

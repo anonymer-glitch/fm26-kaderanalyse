@@ -287,6 +287,10 @@ document.addEventListener('DOMContentLoaded', function () {
             openProfile(p);
           });
           li.appendChild(link);
+          var reason = p.hintReasons && p.hintReasons[cat.key];
+          if (reason) {
+            li.appendChild(document.createTextNode(' – ' + reason));
+          }
           list.appendChild(li);
         });
         box.appendChild(list);
