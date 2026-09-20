@@ -47,12 +47,14 @@ Drei getrennte Bereiche, damit spätere Erweiterungen bestehende Bereiche nicht 
   - Positionslücke (Position im Kader dünn besetzt/fehlend, nur für manuell als "benötigt" markierte Positionen)
 - Positionslücken-Übersicht (3-stufig: fehlt / dünn / ok)
 - Qualität je Position: Ø-Wert frei wählbarer Attribute je Position (Vorschlag aus FM-Community-Guides als editierbarer Startpunkt, keine feste Bewertungsformel)
-- Leistung je Position: wie Qualität je Position, aber auf Basis echter Saison-Leistungsdaten (Standard: Durchschnittsnote) statt Attributen/Potenzial, positionsübergreifend vergleichbar
+- Leistung je Position: Ø-Wert frei wählbarer Saison-Leistungsdaten je Position (Standard: Durchschnittsnote), eine Spalte pro Kennzahl statt einem Blend-Wert (unterschiedliche Skalen wie Note/Prozent/Pro-90-Rate lassen sich nicht sinnvoll mitteln). Absolute Zähler (z. B. Gewonnene Zweikämpfe) werden automatisch auf "pro 90 Minuten" umgerechnet, damit Vielspieler nicht automatisch besser dastehen
 - Standardsituationen & Führung: Top-5-Vorschläge für Eckbälle, Freistöße, Elfmeter und Führung (Kapitän/Stellvertreter), je Kategorie frei wählbare Attribute. Freistöße/Elfmeter/Führung nutzen mangels eigener FM-Attribute im Export eine Näherung aus ähnlichen Attributen (klar gekennzeichnet)
 
 ### Explizit nicht in V1
 
 Transfer-Scouting (Spieler außerhalb des eigenen Kaders), automatische Taktik-/Formationserkennung, Verlaufsspeicherung über mehrere Importe.
+
+Jeder Entscheidungs-Hinweis zeigt direkt in der Liste, welche Werte ihn ausgelöst haben (z. B. Gehalt + Note vs. Kader-Ø beim Verkaufskandidat), statt nur den Spielernamen.
 
 ## Erweiterungspunkte (für später, nicht in V1 umgesetzt)
 
