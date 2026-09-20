@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var filtersEl = document.getElementById('filters');
   var tableWrapper = document.getElementById('table-wrapper');
   var positionGapsEl = document.getElementById('position-gaps');
+  var neededPositionsEl = document.getElementById('needed-positions');
   var referenceDateInput = document.getElementById('reference-date');
 
   var COLUMNS = [
@@ -42,6 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
     headers: [],
     numericColumns: [],
     positionCodes: [],
+    neededPositions: [],
     statusOptions: [],
     referenceDate: null,
     filters: defaultFilters(),
@@ -62,9 +64,22 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
+  function renderNeededPositions() {
+    neededPositionsEl.innerHTML = '';
+    neededPositionsEl.appendChild(makeCheckboxGroupField(
+      'Benötigte Positionen (für Lücken-Analyse, z.B. bei 3er-Kette keine Außenverteidiger nötig)',
+      state.positionCodes,
+      state.neededPositions,
+      function (selected) {
+        state.neededPositions = selected;
+        renderPositionGaps();
+      }
+    ));
+  }
+
   function renderPositionGaps() {
     positionGapsEl.innerHTML = '';
-    var gaps = computePositionGaps(state.players, state.positionCodes);
+    var gaps = computePositionGaps(state.players, state.neededPositions);
     gaps.forEach(function (gap) {
       var chip = document.createElement('span');
       chip.className = 'position-gap-chip' + (gap.thin ? ' thin' : '');
@@ -132,6 +147,7 @@ document.addEventListener('DOMContentLoaded', function () {
     state.players = buildPlayers(result.records);
     state.numericColumns = detectNumericColumns(result.headers, result.records);
     state.positionCodes = sortByPositionOrder(collectPositionCodes(state.players));
+    state.neededPositions = state.positionCodes.slice();
     state.statusOptions = sortByPlayingTime(uniqueValues(result.records, 'Tatsächliche Einsatzzeiten'));
     state.filters = defaultFilters();
     state.sortKey = 'name';
@@ -140,6 +156,7 @@ document.addEventListener('DOMContentLoaded', function () {
     applyHints(state.players, state.referenceDate);
 
     renderFilters();
+    renderNeededPositions();
     renderPositionGaps();
     renderTable();
     dataSection.hidden = false;
