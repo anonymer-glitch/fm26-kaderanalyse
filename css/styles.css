@@ -64,8 +64,15 @@ header p {
 .checkbox-group {
   display: flex;
   flex-wrap: wrap;
+  align-content: flex-start;
   gap: 0.3rem;
-  max-width: 220px;
+  width: 260px;
+  max-height: 130px;
+  overflow-y: auto;
+  padding: 0.3rem;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  background: #fafafa;
 }
 
 .checkbox-chip {

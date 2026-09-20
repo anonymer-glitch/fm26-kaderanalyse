@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var defaultFilters = function () {
     return {
       positions: [], ageMin: null, ageMax: null, contractBefore: null,
-      status: '', attrColumn: '', attrMin: null
+      status: '', attrColumns: [], attrMin: null
     };
   };
 
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     state.players = buildPlayers(result.records);
     state.numericColumns = detectNumericColumns(result.headers, result.records);
-    state.positionCodes = collectPositionCodes(state.players);
+    state.positionCodes = sortByPositionOrder(collectPositionCodes(state.players));
     state.statusOptions = sortByPlayingTime(uniqueValues(result.records, 'Tatsächliche Einsatzzeiten'));
     state.filters = defaultFilters();
     state.sortKey = 'name';
@@ -136,12 +136,8 @@ document.addEventListener('DOMContentLoaded', function () {
       renderTable();
     }));
 
-    filtersEl.appendChild(makeSelectField('Attribut', ['– kein Filter –'].concat(state.numericColumns), function (v) {
-      state.filters.attrColumn = v === '– kein Filter –' ? '' : v;
-      if (!state.filters.attrColumn && state.sortKey === 'attr') {
-        state.sortKey = 'name';
-        state.sortDir = 'asc';
-      }
+    filtersEl.appendChild(makeCheckboxGroupField('Attribute', state.numericColumns, state.filters.attrColumns, function (selected) {
+      state.filters.attrColumns = selected;
       renderTable();
     }));
     filtersEl.appendChild(makeNumberField('Mindestwert', state.filters.attrMin, function (v) {
@@ -244,17 +240,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function renderTable() {
     var columns = COLUMNS.slice();
-    if (state.filters.attrColumn) {
-      var attrName = state.filters.attrColumn;
+    state.filters.attrColumns.forEach(function (attrName) {
       columns.push({
-        key: 'attr',
+        key: 'attr:' + attrName,
         label: attrName,
         get: function (p) {
           var val = parseInt(p.raw[attrName], 10);
           return isNaN(val) ? null : val;
         }
       });
-    }
+    });
 
     var filtered = filterPlayers(state.players, state.filters);
     var sorted = sortPlayers(filtered, state.sortKey, state.sortDir, columns);

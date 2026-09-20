@@ -61,7 +61,22 @@ function collectPositionCodes(players) {
       }
     });
   });
-  return result.sort();
+  return result;
+}
+
+// Annahme zur fußballerisch sinnvollen Reihenfolge der Positionscodes
+// (TW -> Abwehr -> Mittelfeld -> Sturm). Unbekannte Codes landen alphabetisch am Ende.
+var POSITION_ORDER = ['TW', 'V', 'FV', 'DM', 'M', 'OM', 'ST'];
+
+function sortByPositionOrder(codes) {
+  return codes.slice().sort(function (a, b) {
+    var ia = POSITION_ORDER.indexOf(a);
+    var ib = POSITION_ORDER.indexOf(b);
+    if (ia === -1 && ib === -1) return a.localeCompare(b);
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
 }
 
 // Annahme/Vermutung zur Reihenfolge der FM26-Einsatzstatus-Kategorien nach Einsatzzeit
@@ -149,9 +164,12 @@ function filterPlayers(players, filters) {
     if (filters.ageMax != null && (p.age == null || p.age > filters.ageMax)) return false;
     if (filters.contractBefore && (!p.contractEnd || p.contractEnd > filters.contractBefore)) return false;
     if (filters.status && p.statusActual !== filters.status) return false;
-    if (filters.attrColumn && filters.attrMin != null) {
-      var val = parseInt(p.raw[filters.attrColumn], 10);
-      if (isNaN(val) || val < filters.attrMin) return false;
+    if (filters.attrColumns && filters.attrColumns.length > 0 && filters.attrMin != null) {
+      var passesAll = filters.attrColumns.every(function (col) {
+        var val = parseInt(p.raw[col], 10);
+        return !isNaN(val) && val >= filters.attrMin;
+      });
+      if (!passesAll) return false;
     }
     return true;
   });
