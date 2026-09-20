@@ -4,7 +4,9 @@ Lokale Web-App zur Analyse des eigenen Football-Manager-26-Kaders auf Basis von 
 
 ## Status
 
-V1-Funktionsumfang umgesetzt: CSV-Import, Dashboard (Positionslücken, Entscheidungs-Hinweise, Qualität je Position, Standardsituationen & Führung), Kaderübersicht mit Filtern/Sortierung, Spielerprofil.
+V1-Funktionsumfang umgesetzt: CSV-Import, Dashboard (Positionslücken, Entscheidungs-Hinweise, Qualität je Position, Leistung je Position, Standardsituationen & Führung), Kaderübersicht mit Filtern/Sortierung/Marktwert, Spielerprofil.
+
+Der Export ist mittlerweile deutlich reichhaltiger als beim V1-Start (113 statt 46 Spalten): u. a. echte Saison-Leistungsdaten (`Durchschnittsnote – Verein`, xG, ...) und Marktwert (`Transferwert`) sind jetzt dabei. `Lsp Eins`/`Lsp Tore`/`U-Lsp`/`U-Tore` bleiben Länderspiele über die Gesamtkarriere (weiterhin ungeeignet für Saison-Leistung).
 
 ## Navigation
 
@@ -40,23 +42,22 @@ Drei getrennte Bereiche, damit spätere Erweiterungen bestehende Bereiche nicht 
 - Vergleichsansicht mehrerer Spieler
 - Entscheidungs-Hinweise (regelbasiert, transparent, Schwellenwerte später einstellbar):
   - Vertrag prüfen (Vertragsende bald + Spieler wichtig für die Mannschaft)
-  - Verkaufskandidat (hohes Alter + niedriger Einsatzstatus + hohes Gehalt)
+  - Verkaufskandidat (hohes Gehalt + [hohes Alter + niedriger Einsatzstatus ODER unterdurchschnittliche Leistungsnote])
   - Verleihkandidat (junger Spieler + niedriger Einsatzstatus)
   - Positionslücke (Position im Kader dünn besetzt/fehlend, nur für manuell als "benötigt" markierte Positionen)
 - Positionslücken-Übersicht (3-stufig: fehlt / dünn / ok)
 - Qualität je Position: Ø-Wert frei wählbarer Attribute je Position (Vorschlag aus FM-Community-Guides als editierbarer Startpunkt, keine feste Bewertungsformel)
+- Leistung je Position: wie Qualität je Position, aber auf Basis echter Saison-Leistungsdaten (Standard: Durchschnittsnote) statt Attributen/Potenzial, positionsübergreifend vergleichbar
 - Standardsituationen & Führung: Top-5-Vorschläge für Eckbälle, Freistöße, Elfmeter und Führung (Kapitän/Stellvertreter), je Kategorie frei wählbare Attribute. Freistöße/Elfmeter/Führung nutzen mangels eigener FM-Attribute im Export eine Näherung aus ähnlichen Attributen (klar gekennzeichnet)
 
 ### Explizit nicht in V1
 
-Transfer-Scouting (Spieler außerhalb des eigenen Kaders), automatische Taktik-/Formationserkennung, Verlaufsspeicherung über mehrere Importe, marktwertbasierte Bewertung (Marktwert fehlt aktuell im Export), echte Spielminuten-Statistiken.
+Transfer-Scouting (Spieler außerhalb des eigenen Kaders), automatische Taktik-/Formationserkennung, Verlaufsspeicherung über mehrere Importe.
 
 ## Erweiterungspunkte (für später, nicht in V1 umgesetzt)
 
 - Verlaufs-Import: mehrere Zeitpunkte pro Spieler speichern und vergleichen
-- Marktwert-Daten ergänzen, sobald im Export verfügbar
-- Echte Spielminuten/Statistiken statt nur Einsatzstatus-Kategorien (`Lsp Eins`/`Lsp Tore`/`U-Lsp`/`U-Tore` sind Länderspiele über die Gesamtkarriere, nicht Vereins-Saisonwerte - dafür ungeeignet)
-- Leistung je Position + Hinweis "hohes Gehalt, wenig Leistung" (unabhängig vom Alter) – wartet auf einen künftigen Export mit echten Club-Leistungsdaten (Saison-Einsätze, Tore, Bewertungsnote o. Ä.)
+- Gehalt-vs-Marktwert-Hinweis (Marktwert ist jetzt als Spalte da, aber noch kein automatischer Hinweis daraus - bewusst keine geratene Ratio-Schwelle ohne Rückmeldung)
 - Transfer-Scouting (Spieler außerhalb des eigenen Kaders)
 - Formations-Presets (z. B. "3er-Kette", "4-3-3"), die die benötigten Positionen automatisch vorauswählen, statt sie manuell anzuhaken
 - Einstellbare Schwellenwerte für Entscheidungs-Hinweise über die Oberfläche
