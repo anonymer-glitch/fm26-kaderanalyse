@@ -47,7 +47,7 @@ Drei getrennte Bereiche, damit spätere Erweiterungen bestehende Bereiche nicht 
   - Positionslücke (Position im Kader dünn besetzt/fehlend, nur für manuell als "benötigt" markierte Positionen)
 - Positionslücken-Übersicht (3-stufig: fehlt / dünn / ok)
 - Qualität je Position: Ø-Wert frei wählbarer Attribute je Position (Vorschlag aus FM-Community-Guides als editierbarer Startpunkt, keine feste Bewertungsformel)
-- Leistung je Position: Ø-Wert frei wählbarer Saison-Leistungsdaten je Position (Standard: Durchschnittsnote), eine Spalte pro Kennzahl statt einem Blend-Wert (unterschiedliche Skalen wie Note/Prozent/Pro-90-Rate lassen sich nicht sinnvoll mitteln). Absolute Zähler (z. B. Gewonnene Zweikämpfe) werden automatisch auf "pro 90 Minuten" umgerechnet, damit Vielspieler nicht automatisch besser dastehen
+- Leistung je Position: Durchschnittsnote fest je Position, plus je Position frei wählbare, standardmäßig unterschiedliche Leistungskennzahlen (z. B. Verteidiger: Zweikampfquote/Klärungen, Stürmer: Tore/Chancenverwertung) - eine Spalte pro Kennzahl statt einem Blend-Wert (unterschiedliche Skalen wie Note/Prozent/Pro-90-Rate lassen sich nicht sinnvoll mitteln). Absolute Zähler (z. B. Gewonnene Zweikämpfe) werden automatisch auf "pro 90 Minuten" umgerechnet, damit Vielspieler nicht automatisch besser dastehen
 - Standardsituationen & Führung: Top-5-Vorschläge für Eckbälle, Freistöße, Elfmeter und Führung (Kapitän/Stellvertreter), je Kategorie frei wählbare Attribute. Freistöße/Elfmeter/Führung nutzen mangels eigener FM-Attribute im Export eine Näherung aus ähnlichen Attributen (klar gekennzeichnet)
 
 ### Explizit nicht in V1
