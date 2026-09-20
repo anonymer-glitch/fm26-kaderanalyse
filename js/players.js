@@ -34,55 +34,15 @@ function isIntegerString(str) {
   return /^-?\d+$/.test((str || '').trim());
 }
 
-// Zerlegt FM26-Positionsangaben wie "DM, M/OM (Z)" oder "V/FV (R)" in einzelne
-// Positionscodes ("DM", "M", "OM", "V", "FV" ...) ohne Seitenangabe. Wird aus den
-// Daten abgeleitet statt einer festen Liste von FM-Positionscodes.
-function extractPositionCodes(positionStr) {
-  if (!positionStr) return [];
-  var codes = [];
-  positionStr.split(',').forEach(function (segment) {
-    var withoutSide = segment.replace(/\([^)]*\)/g, '');
-    withoutSide.split('/').forEach(function (code) {
-      var trimmed = code.trim();
-      if (trimmed) codes.push(trimmed);
-    });
-  });
-  return codes;
-}
-
-function collectPositionCodes(players) {
-  var seen = {};
-  var result = [];
-  players.forEach(function (p) {
-    p.positionCodes.forEach(function (code) {
-      if (!seen[code]) {
-        seen[code] = true;
-        result.push(code);
-      }
-    });
-  });
-  return result;
-}
-
 // Annahme zur fußballerisch sinnvollen Reihenfolge der Positionscodes
 // (TW -> Abwehr -> Mittelfeld -> Sturm). Unbekannte Codes landen alphabetisch am Ende.
 var POSITION_ORDER = ['TW', 'V', 'FV', 'DM', 'M', 'OM', 'ST'];
 
-function sortByPositionOrder(codes) {
-  return codes.slice().sort(function (a, b) {
-    var ia = POSITION_ORDER.indexOf(a);
-    var ib = POSITION_ORDER.indexOf(b);
-    if (ia === -1 && ib === -1) return a.localeCompare(b);
-    if (ia === -1) return 1;
-    if (ib === -1) return -1;
-    return ia - ib;
-  });
-}
-
-// Wie extractPositionCodes, behält aber die Seitenangabe pro Code als eigenen
-// "Slot" bei (z.B. "V/FV (R)" -> "V (R)", "FV (R)"; "DM, M/OM (Z)" -> "DM",
-// "M (Z)", "OM (Z)"). Für die benötigten Positionen bei der Lückenanalyse, wo
-// z.B. "V (Z)" und "V (L)" getrennt betrachtet werden sollen.
+// Zerlegt FM26-Positionsangaben wie "DM, M/OM (Z)" oder "V/FV (R)" in einzelne
+// Positions-"Slots" inkl. Seitenangabe (z.B. "V/FV (R)" -> "V (R)", "FV (R)";
+// "DM, M/OM (Z)" -> "DM", "M (Z)", "OM (Z)"). Wird aus den Daten abgeleitet statt
+// einer festen Liste von FM-Positionscodes - nur die Reihenfolge (POSITION_ORDER)
+// ist eine Annahme.
 function extractPositionSlots(positionStr) {
   if (!positionStr) return [];
   var slots = [];
@@ -196,7 +156,6 @@ function buildPlayers(records) {
       name: record['Spieler'] || '',
       position: record['Position'] || '',
       idealPosition: record['Idealpos'] || '',
-      positionCodes: extractPositionCodes(record['Position']),
       positionSlots: extractPositionSlots(record['Position']),
       age: isNaN(age) ? null : age,
       contractEnd: parseGermanDate(record['Endet']),
@@ -225,8 +184,8 @@ function uniqueValues(records, column) {
 function filterPlayers(players, filters) {
   return players.filter(function (p) {
     if (filters.positions && filters.positions.length > 0) {
-      var matches = p.positionCodes.some(function (code) {
-        return filters.positions.indexOf(code) !== -1;
+      var matches = p.positionSlots.some(function (slot) {
+        return filters.positions.indexOf(slot) !== -1;
       });
       if (!matches) return false;
     }

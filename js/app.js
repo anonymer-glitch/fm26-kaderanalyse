@@ -42,7 +42,6 @@ document.addEventListener('DOMContentLoaded', function () {
     players: [],
     headers: [],
     numericColumns: [],
-    positionCodes: [],
     positionSlots: [],
     neededPositions: [],
     statusOptions: [],
@@ -147,7 +146,6 @@ document.addEventListener('DOMContentLoaded', function () {
     state.headers = result.headers;
     state.players = buildPlayers(result.records);
     state.numericColumns = detectNumericColumns(result.headers, result.records);
-    state.positionCodes = sortByPositionOrder(collectPositionCodes(state.players));
     state.positionSlots = sortBySlotOrder(collectPositionSlots(state.players));
     state.neededPositions = state.positionSlots.slice();
     state.statusOptions = sortByPlayingTime(uniqueValues(result.records, 'Tatsächliche Einsatzzeiten'));
@@ -167,7 +165,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function renderFilters() {
     filtersEl.innerHTML = '';
 
-    filtersEl.appendChild(makeCheckboxGroupField('Position', state.positionCodes, state.filters.positions, function (selected) {
+    filtersEl.appendChild(makeCheckboxGroupField('Position', state.positionSlots, state.filters.positions, function (selected) {
       state.filters.positions = selected;
       renderTable();
     }));
