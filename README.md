@@ -54,7 +54,8 @@ Transfer-Scouting (Spieler außerhalb des eigenen Kaders), automatische Taktik-/
 
 - Verlaufs-Import: mehrere Zeitpunkte pro Spieler speichern und vergleichen
 - Marktwert-Daten ergänzen, sobald im Export verfügbar
-- Echte Spielminuten/Statistiken statt nur Einsatzstatus-Kategorien
+- Echte Spielminuten/Statistiken statt nur Einsatzstatus-Kategorien (`Lsp Eins`/`Lsp Tore`/`U-Lsp`/`U-Tore` sind Länderspiele über die Gesamtkarriere, nicht Vereins-Saisonwerte - dafür ungeeignet)
+- Leistung je Position + Hinweis "hohes Gehalt, wenig Leistung" (unabhängig vom Alter) – wartet auf einen künftigen Export mit echten Club-Leistungsdaten (Saison-Einsätze, Tore, Bewertungsnote o. Ä.)
 - Transfer-Scouting (Spieler außerhalb des eigenen Kaders)
 - Formations-Presets (z. B. "3er-Kette", "4-3-3"), die die benötigten Positionen automatisch vorauswählen, statt sie manuell anzuhaken
 - Einstellbare Schwellenwerte für Entscheidungs-Hinweise über die Oberfläche
