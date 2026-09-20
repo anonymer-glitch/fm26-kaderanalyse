@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', function () {
   var hintsSummaryEl = document.getElementById('hints-summary');
   var qualitySettingsBodyEl = document.getElementById('quality-settings-body');
   var qualityTableWrapperEl = document.getElementById('quality-table-wrapper');
+  var standardsSettingsBodyEl = document.getElementById('standards-settings-body');
+  var standardsResultsEl = document.getElementById('standards-results');
 
   var rowCountEl = document.getElementById('row-count');
   var filtersEl = document.getElementById('filters');
@@ -71,6 +73,7 @@ document.addEventListener('DOMContentLoaded', function () {
     neededPositions: [],
     statusOptions: [],
     qualityAttributes: {},
+    standardsAttributes: {},
     referenceDate: null,
     filters: defaultFilters(),
     sortKey: 'name',
@@ -178,6 +181,11 @@ document.addEventListener('DOMContentLoaded', function () {
       state.qualityAttributes[code] = defaultQualityAttributes(code, state.numericColumns);
     });
 
+    state.standardsAttributes = {};
+    STANDARDS_CATEGORIES.forEach(function (cat) {
+      state.standardsAttributes[cat.key] = defaultStandardsAttributes(cat.key, state.numericColumns);
+    });
+
     applyHints(state.players, state.referenceDate);
 
     renderNeededPositions();
@@ -185,6 +193,8 @@ document.addEventListener('DOMContentLoaded', function () {
     renderHintsSummary();
     renderQualitySettings();
     renderQualityTable();
+    renderStandardsSettings();
+    renderStandardsResults();
     renderFilters();
     renderTable();
 
@@ -405,6 +415,74 @@ document.addEventListener('DOMContentLoaded', function () {
       records: relevantPlayers.map(function (p) { return p.raw; })
     });
     window.open('position.html#' + encodeURIComponent(payload), '_blank');
+  }
+
+  function renderStandardsSettings() {
+    standardsSettingsBodyEl.innerHTML = '';
+    STANDARDS_CATEGORIES.forEach(function (cat) {
+      standardsSettingsBodyEl.appendChild(makeCheckboxGroupField(
+        cat.label,
+        state.numericColumns,
+        state.standardsAttributes[cat.key] || [],
+        function (selected) {
+          state.standardsAttributes[cat.key] = selected;
+          renderStandardsResults();
+        }
+      ));
+    });
+  }
+
+  function renderStandardsResults() {
+    standardsResultsEl.innerHTML = '';
+    STANDARDS_CATEGORIES.forEach(function (cat) {
+      var attrs = state.standardsAttributes[cat.key] || [];
+      var ranking = computeStandardsRanking(state.players, attrs, 5);
+
+      var box = document.createElement('div');
+      box.className = 'standards-category';
+
+      var title = document.createElement('h4');
+      title.textContent = cat.label;
+      box.appendChild(title);
+
+      if (attrs.length === 0) {
+        var note = document.createElement('p');
+        note.className = 'standards-role';
+        note.textContent = 'Keine Attribute ausgewählt.';
+        box.appendChild(note);
+      } else if (ranking.length === 0) {
+        var noData = document.createElement('p');
+        noData.className = 'standards-role';
+        noData.textContent = 'Keine Daten für diese Attribute.';
+        box.appendChild(noData);
+      } else {
+        var ol = document.createElement('ol');
+        ranking.forEach(function (entry, index) {
+          var li = document.createElement('li');
+          var link = document.createElement('a');
+          link.href = '#';
+          link.textContent = entry.player.name;
+          link.addEventListener('click', function (event) {
+            event.preventDefault();
+            openProfile(entry.player);
+          });
+          li.appendChild(link);
+          li.appendChild(document.createTextNode(' (Ø ' + entry.average.toFixed(1) + ')'));
+
+          if (cat.key === 'leadership' && index < 2) {
+            var role = document.createElement('span');
+            role.className = 'standards-role';
+            role.textContent = ' – ' + (index === 0 ? 'Kapitän-Vorschlag' : 'Stellvertreter-Vorschlag');
+            li.appendChild(role);
+          }
+
+          ol.appendChild(li);
+        });
+        box.appendChild(ol);
+      }
+
+      standardsResultsEl.appendChild(box);
+    });
   }
 
   function renderFilters() {
