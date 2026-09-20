@@ -32,6 +32,51 @@ header p {
   margin-top: 0.5rem;
 }
 
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+}
+
+.filter-field label {
+  color: #555;
+}
+
+.filter-field input,
+.filter-field select {
+  padding: 0.3rem 0.4rem;
+  font-size: 0.85rem;
+}
+
+.filters button {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  height: fit-content;
+}
+
+th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+th.sortable:hover {
+  background: #f0f0f0;
+}
+
 #table-wrapper {
   overflow-x: auto;
   max-height: 70vh;

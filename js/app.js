@@ -3,7 +3,42 @@ document.addEventListener('DOMContentLoaded', function () {
   var statusEl = document.getElementById('import-status');
   var dataSection = document.getElementById('data-section');
   var rowCountEl = document.getElementById('row-count');
+  var filtersEl = document.getElementById('filters');
   var tableWrapper = document.getElementById('table-wrapper');
+
+  var COLUMNS = [
+    { key: 'name', label: 'Spieler', get: function (p) { return p.name; } },
+    { key: 'position', label: 'Position', get: function (p) { return p.position; } },
+    { key: 'age', label: 'Alter', get: function (p) { return p.age; } },
+    {
+      key: 'contractEnd', label: 'Vertragsende',
+      get: function (p) { return p.contractEnd; },
+      display: function (p) { return p.contractEndRaw; }
+    },
+    {
+      key: 'salary', label: 'Gehalt',
+      get: function (p) { return p.salary; },
+      display: function (p) { return p.salaryRaw; }
+    },
+    { key: 'statusActual', label: 'Tatsächliche Einsatzzeiten', get: function (p) { return p.statusActual; } },
+    { key: 'statusExpected', label: 'Einsatzzeiten', get: function (p) { return p.statusExpected; } }
+  ];
+
+  var defaultFilters = function () {
+    return {
+      position: '', ageMin: null, ageMax: null, contractBefore: null,
+      salaryMin: null, salaryMax: null, status: '', attrColumn: '', attrMin: null
+    };
+  };
+
+  var state = {
+    players: [],
+    numericColumns: [],
+    statusOptions: [],
+    filters: defaultFilters(),
+    sortKey: 'name',
+    sortDir: 'asc'
+  };
 
   fileInput.addEventListener('change', function (event) {
     var file = event.target.files[0];
@@ -15,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var reader = new FileReader();
     reader.onload = function (e) {
       var result = parseCSV(e.target.result);
-      renderResult(result, file.name);
+      handleImport(result, file.name);
     };
     reader.onerror = function () {
       statusEl.textContent = 'Fehler beim Lesen der Datei.';
@@ -23,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function () {
     reader.readAsText(file, 'UTF-8');
   });
 
-  function renderResult(result, fileName) {
+  function handleImport(result, fileName) {
     if (result.records.length === 0) {
       statusEl.textContent = 'Keine Datensätze in "' + fileName + '" gefunden.';
       dataSection.hidden = true;
@@ -31,7 +66,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     var hasIdColumn = result.headers.indexOf('Unique ID') !== -1;
-
     var statusLines = [];
     statusLines.push(
       '"' + fileName + '" importiert: ' + result.records.length + ' Spieler, ' +
@@ -50,7 +84,6 @@ document.addEventListener('DOMContentLoaded', function () {
       div.textContent = line;
       statusEl.appendChild(div);
     });
-
     if (result.warnings.length > 0) {
       var warnList = document.createElement('ul');
       warnList.className = 'warnings';
@@ -62,37 +95,181 @@ document.addEventListener('DOMContentLoaded', function () {
       statusEl.appendChild(warnList);
     }
 
-    rowCountEl.textContent = result.records.length;
-    tableWrapper.innerHTML = '';
-    tableWrapper.appendChild(buildTable(result.headers, result.records));
+    state.players = buildPlayers(result.records);
+    state.numericColumns = detectNumericColumns(result.headers, result.records);
+    state.statusOptions = uniqueValues(result.records, 'Tatsächliche Einsatzzeiten');
+    state.filters = defaultFilters();
+    state.sortKey = 'name';
+    state.sortDir = 'asc';
+
+    renderFilters();
+    renderTable();
     dataSection.hidden = false;
   }
 
-  function buildTable(headers, records) {
+  function renderFilters() {
+    filtersEl.innerHTML = '';
+
+    filtersEl.appendChild(makeTextField('Position', state.filters.position, function (v) {
+      state.filters.position = v;
+      renderTable();
+    }, 'z. B. V, ST, OM'));
+
+    filtersEl.appendChild(makeNumberField('Alter min', state.filters.ageMin, function (v) {
+      state.filters.ageMin = v;
+      renderTable();
+    }));
+    filtersEl.appendChild(makeNumberField('Alter max', state.filters.ageMax, function (v) {
+      state.filters.ageMax = v;
+      renderTable();
+    }));
+
+    filtersEl.appendChild(makeDateField('Vertrag endet bis', function (v) {
+      state.filters.contractBefore = v;
+      renderTable();
+    }));
+
+    filtersEl.appendChild(makeNumberField('Gehalt min (€/J.)', state.filters.salaryMin, function (v) {
+      state.filters.salaryMin = v;
+      renderTable();
+    }));
+    filtersEl.appendChild(makeNumberField('Gehalt max (€/J.)', state.filters.salaryMax, function (v) {
+      state.filters.salaryMax = v;
+      renderTable();
+    }));
+
+    filtersEl.appendChild(makeSelectField('Einsatzstatus', ['Alle'].concat(state.statusOptions), function (v) {
+      state.filters.status = v === 'Alle' ? '' : v;
+      renderTable();
+    }));
+
+    filtersEl.appendChild(makeSelectField('Attribut', ['– kein Filter –'].concat(state.numericColumns), function (v) {
+      state.filters.attrColumn = v === '– kein Filter –' ? '' : v;
+      renderTable();
+    }));
+    filtersEl.appendChild(makeNumberField('Mindestwert', state.filters.attrMin, function (v) {
+      state.filters.attrMin = v;
+      renderTable();
+    }));
+
+    var resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.textContent = 'Filter zurücksetzen';
+    resetBtn.addEventListener('click', function () {
+      state.filters = defaultFilters();
+      renderFilters();
+      renderTable();
+    });
+    filtersEl.appendChild(resetBtn);
+  }
+
+  function makeTextField(label, value, onChange, placeholder) {
+    var wrap = document.createElement('div');
+    wrap.className = 'filter-field';
+    var lbl = document.createElement('label');
+    lbl.textContent = label;
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.value = value || '';
+    if (placeholder) input.placeholder = placeholder;
+    input.addEventListener('input', function () { onChange(input.value); });
+    wrap.appendChild(lbl);
+    wrap.appendChild(input);
+    return wrap;
+  }
+
+  function makeNumberField(label, value, onChange) {
+    var wrap = document.createElement('div');
+    wrap.className = 'filter-field';
+    var lbl = document.createElement('label');
+    lbl.textContent = label;
+    var input = document.createElement('input');
+    input.type = 'number';
+    if (value != null) input.value = value;
+    input.addEventListener('input', function () {
+      onChange(input.value === '' ? null : Number(input.value));
+    });
+    wrap.appendChild(lbl);
+    wrap.appendChild(input);
+    return wrap;
+  }
+
+  function makeDateField(label, onChange) {
+    var wrap = document.createElement('div');
+    wrap.className = 'filter-field';
+    var lbl = document.createElement('label');
+    lbl.textContent = label;
+    var input = document.createElement('input');
+    input.type = 'date';
+    input.addEventListener('input', function () {
+      onChange(input.value ? new Date(input.value) : null);
+    });
+    wrap.appendChild(lbl);
+    wrap.appendChild(input);
+    return wrap;
+  }
+
+  function makeSelectField(label, options, onChange) {
+    var wrap = document.createElement('div');
+    wrap.className = 'filter-field';
+    var lbl = document.createElement('label');
+    lbl.textContent = label;
+    var select = document.createElement('select');
+    options.forEach(function (opt) {
+      var o = document.createElement('option');
+      o.value = opt;
+      o.textContent = opt;
+      select.appendChild(o);
+    });
+    select.addEventListener('change', function () { onChange(select.value); });
+    wrap.appendChild(lbl);
+    wrap.appendChild(select);
+    return wrap;
+  }
+
+  function renderTable() {
+    var filtered = filterPlayers(state.players, state.filters);
+    var sorted = sortPlayers(filtered, state.sortKey, state.sortDir, COLUMNS);
+
+    rowCountEl.textContent = filtered.length + ' / ' + state.players.length;
+
+    tableWrapper.innerHTML = '';
     var table = document.createElement('table');
 
     var thead = document.createElement('thead');
     var headRow = document.createElement('tr');
-    headers.forEach(function (h) {
+    COLUMNS.forEach(function (col) {
       var th = document.createElement('th');
-      th.textContent = h;
+      th.className = 'sortable';
+      var arrow = state.sortKey === col.key ? (state.sortDir === 'asc' ? ' ▲' : ' ▼') : '';
+      th.textContent = col.label + arrow;
+      th.addEventListener('click', function () {
+        if (state.sortKey === col.key) {
+          state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          state.sortKey = col.key;
+          state.sortDir = 'asc';
+        }
+        renderTable();
+      });
       headRow.appendChild(th);
     });
     thead.appendChild(headRow);
     table.appendChild(thead);
 
     var tbody = document.createElement('tbody');
-    records.forEach(function (record) {
+    sorted.forEach(function (p) {
       var tr = document.createElement('tr');
-      headers.forEach(function (h) {
+      COLUMNS.forEach(function (col) {
         var td = document.createElement('td');
-        td.textContent = record[h];
+        var text = col.display ? col.display(p) : col.get(p);
+        td.textContent = text == null ? '' : text;
         tr.appendChild(td);
       });
       tbody.appendChild(tr);
     });
     table.appendChild(tbody);
 
-    return table;
+    tableWrapper.appendChild(table);
   }
 });
