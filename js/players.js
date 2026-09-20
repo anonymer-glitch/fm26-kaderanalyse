@@ -82,23 +82,28 @@ function parsePositionSlot(slot) {
   return match ? { code: match[1], side: match[2] || null } : { code: slot, side: null };
 }
 
+// Vergleicht zwei Positions-Slots nach Reihenfolge auf dem Feld (TW -> ST,
+// innerhalb einer Position links -> zentral -> rechts). Wiederverwendet überall,
+// wo nach Position sortiert wird (Slot-Listen, Tabellenspalten).
+function comparePositionSlots(a, b) {
+  var pa = parsePositionSlot(a);
+  var pb = parsePositionSlot(b);
+  var ia = POSITION_ORDER.indexOf(pa.code);
+  var ib = POSITION_ORDER.indexOf(pb.code);
+  if (ia === -1 && ib === -1) return pa.code === pb.code ? 0 : pa.code.localeCompare(pb.code);
+  if (ia === -1) return 1;
+  if (ib === -1) return -1;
+  if (ia !== ib) return ia - ib;
+  var sa = pa.side ? SIDE_ORDER.indexOf(pa.side) : -1;
+  var sb = pb.side ? SIDE_ORDER.indexOf(pb.side) : -1;
+  if (sa === -1 && sb === -1) return 0;
+  if (sa === -1) return -1;
+  if (sb === -1) return 1;
+  return sa - sb;
+}
+
 function sortBySlotOrder(slots) {
-  return slots.slice().sort(function (a, b) {
-    var pa = parsePositionSlot(a);
-    var pb = parsePositionSlot(b);
-    var ia = POSITION_ORDER.indexOf(pa.code);
-    var ib = POSITION_ORDER.indexOf(pb.code);
-    if (ia === -1 && ib === -1) return pa.code === pb.code ? 0 : pa.code.localeCompare(pb.code);
-    if (ia === -1) return 1;
-    if (ib === -1) return -1;
-    if (ia !== ib) return ia - ib;
-    var sa = pa.side ? SIDE_ORDER.indexOf(pa.side) : -1;
-    var sb = pb.side ? SIDE_ORDER.indexOf(pb.side) : -1;
-    if (sa === -1 && sb === -1) return 0;
-    if (sa === -1) return -1;
-    if (sb === -1) return 1;
-    return sa - sb;
-  });
+  return slots.slice().sort(comparePositionSlots);
 }
 
 // Numerischer Rang für "Sortieren nach Position auf dem Feld" (TW -> Abwehr ->

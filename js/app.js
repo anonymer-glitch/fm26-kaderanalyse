@@ -43,6 +43,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   ];
 
+  var QUALITY_COLUMNS = [
+    { key: 'code', label: 'Position', get: function (r) { return r.code; }, compare: comparePositionSlots },
+    { key: 'playerCount', label: 'Spieler', get: function (r) { return r.playerCount; } },
+    { key: 'attributeCount', label: 'Attribute', get: function (r) { return r.attributeCount; } },
+    { key: 'average', label: 'Ø Qualität', get: function (r) { return r.average; } }
+  ];
+
   var HINT_CATEGORIES = [
     { label: 'Vertrag prüfen', key: 'Vertrag prüfen' },
     { label: 'Verkaufskandidaten', key: 'Verkaufskandidat' },
@@ -68,6 +75,8 @@ document.addEventListener('DOMContentLoaded', function () {
     filters: defaultFilters(),
     sortKey: 'name',
     sortDir: 'asc',
+    qualitySortKey: 'average',
+    qualitySortDir: 'desc',
     activeView: 'dashboard'
   };
 
@@ -300,19 +309,44 @@ document.addEventListener('DOMContentLoaded', function () {
     qualityTableWrapperEl.innerHTML = '';
     var results = computePositionQuality(state.players, state.qualityAttributes);
 
+    var col = QUALITY_COLUMNS.filter(function (c) { return c.key === state.qualitySortKey; })[0];
+    var sorted = results.slice().sort(function (a, b) {
+      if (col.compare) return col.compare(col.get(a), col.get(b));
+      var av = col.get(a);
+      var bv = col.get(b);
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      if (av < bv) return -1;
+      if (av > bv) return 1;
+      return 0;
+    });
+    if (state.qualitySortDir === 'desc') sorted.reverse();
+
     var table = document.createElement('table');
     var thead = document.createElement('thead');
     var headRow = document.createElement('tr');
-    ['Position', 'Spieler', 'Attribute', 'Ø Qualität'].forEach(function (h) {
+    QUALITY_COLUMNS.forEach(function (c) {
       var th = document.createElement('th');
-      th.textContent = h;
+      th.className = 'sortable';
+      var arrow = state.qualitySortKey === c.key ? (state.qualitySortDir === 'asc' ? ' ▲' : ' ▼') : '';
+      th.textContent = c.label + arrow;
+      th.addEventListener('click', function () {
+        if (state.qualitySortKey === c.key) {
+          state.qualitySortDir = state.qualitySortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          state.qualitySortKey = c.key;
+          state.qualitySortDir = 'asc';
+        }
+        renderQualityTable();
+      });
       headRow.appendChild(th);
     });
     thead.appendChild(headRow);
     table.appendChild(thead);
 
     var tbody = document.createElement('tbody');
-    results.forEach(function (r) {
+    sorted.forEach(function (r) {
       var tr = document.createElement('tr');
       tr.className = 'clickable-row';
       tr.addEventListener('click', function () { openPositionDetail(r.code); });
