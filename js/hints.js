@@ -119,24 +119,47 @@ function computePositionGaps(players, positionSlots) {
   });
 }
 
-// Fasst Positionslücken und Qualität je Position zu einer Liste "Handlungsbedarf"
-// zusammen: jeder Slot mit zu wenig Spielern und/oder auffällig schwacher
-// Qualität (relativ zum Ø aller Positionen dieses Kaders), sortiert nach
-// Position auf dem Feld.
-function computePositionActionItems(gapResults, qualityResults) {
-  var qualityByCode = {};
-  qualityResults.forEach(function (r) { qualityByCode[r.code] = r; });
+// Berechnet für jeden Positions-Slot den Ø der Durchschnittsnote (dieselbe
+// Kennzahl, die "Leistung je Position" standardmäßig nutzt) - unabhängig davon,
+// welche zusätzlichen Kennzahlen der Nutzer sich dort noch dazu ausgewählt hat,
+// da sich die nicht sinnvoll zu einem Wert mischen lassen (siehe performance.js).
+function computePositionRatings(players) {
+  return sortBySlotOrder(collectPositionSlots(players)).map(function (slot) {
+    var relevantPlayers = players.filter(function (p) {
+      return p.positionSlots.indexOf(slot) !== -1;
+    });
+    var ratings = relevantPlayers.map(function (p) { return p.rating; }).filter(function (r) { return r != null; });
+    var average = ratings.length > 0
+      ? ratings.reduce(function (a, b) { return a + b; }, 0) / ratings.length
+      : null;
+    return { code: slot, playerCount: relevantPlayers.length, average: average };
+  });
+}
 
-  var validAverages = qualityResults
-    .map(function (r) { return r.average; })
-    .filter(function (v) { return v != null; });
-  var mean = validAverages.length > 0
-    ? validAverages.reduce(function (a, b) { return a + b; }, 0) / validAverages.length
-    : null;
+// Fasst Positionslücken, Qualität je Position und Durchschnittsnote je Position
+// zu einer Liste "Handlungsbedarf" zusammen: jeder Slot mit zu wenig Spielern
+// und/oder auffällig schwacher Qualität/Leistung (jeweils relativ zum Ø aller
+// Positionen dieses Kaders), sortiert nach Position auf dem Feld.
+function computePositionActionItems(gapResults, qualityResults, ratingResults) {
+  function byCode(results) {
+    var map = {};
+    results.forEach(function (r) { map[r.code] = r; });
+    return map;
+  }
+  function meanOfAverages(results) {
+    var values = results.map(function (r) { return r.average; }).filter(function (v) { return v != null; });
+    return values.length > 0 ? values.reduce(function (a, b) { return a + b; }, 0) / values.length : null;
+  }
+
+  var qualityByCode = byCode(qualityResults);
+  var qualityMean = meanOfAverages(qualityResults);
+  var ratingByCode = byCode(ratingResults);
+  var ratingMean = meanOfAverages(ratingResults);
 
   var slots = {};
   gapResults.forEach(function (g) { slots[g.code] = true; });
   qualityResults.forEach(function (r) { slots[r.code] = true; });
+  ratingResults.forEach(function (r) { slots[r.code] = true; });
 
   var items = [];
   Object.keys(slots).forEach(function (slot) {
@@ -148,13 +171,20 @@ function computePositionActionItems(gapResults, qualityResults) {
     }
 
     var quality = qualityByCode[slot];
-    if (quality && quality.average != null && mean != null &&
-        quality.average <= mean - HINT_THRESHOLDS.qualityWeakMargin) {
+    if (quality && quality.average != null && qualityMean != null &&
+        quality.average <= qualityMean - HINT_THRESHOLDS.qualityWeakMargin) {
       reasons.push('schwache Qualität (Ø ' + quality.average.toFixed(1) + ')');
     }
 
+    var rating = ratingByCode[slot];
+    if (rating && rating.average != null && ratingMean != null &&
+        rating.average <= ratingMean - HINT_THRESHOLDS.ratingWeakMargin) {
+      reasons.push('schwache Leistung (Ø Note ' + rating.average.toFixed(2) + ')');
+    }
+
     if (reasons.length > 0) {
-      items.push({ slot: slot, playerCount: quality ? quality.playerCount : (gap ? gap.count : 0), reasons: reasons });
+      var playerCount = quality ? quality.playerCount : (rating ? rating.playerCount : (gap ? gap.count : 0));
+      items.push({ slot: slot, playerCount: playerCount, reasons: reasons });
     }
   });
 

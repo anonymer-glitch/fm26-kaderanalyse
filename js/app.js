@@ -331,7 +331,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var gapResults = computePositionGaps(state.players, state.neededPositions);
     var qualityResults = computePositionQuality(state.players, state.qualityAttributes);
-    var actionItems = computePositionActionItems(gapResults, qualityResults);
+    var ratingResults = computePositionRatings(state.players);
+    var actionItems = computePositionActionItems(gapResults, qualityResults, ratingResults);
 
     var posBox = document.createElement('div');
     posBox.className = 'hint-summary-box';
