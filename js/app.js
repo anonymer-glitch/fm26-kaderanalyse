@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   referenceDateInput.addEventListener('change', function () {
-    state.referenceDate = referenceDateInput.value ? new Date(referenceDateInput.value) : null;
+    state.referenceDate = parseGermanDate(referenceDateInput.value);
     if (state.players.length > 0) {
       applyHints(state.players, state.referenceDate);
       renderTable();
