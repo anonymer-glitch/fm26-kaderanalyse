@@ -4,8 +4,6 @@
 // Einstellmöglichkeit in der Oberfläche gibt.
 var HINT_THRESHOLDS = {
   contractWarningMonths: 12,
-  // Starspieler/Schlüsselspieler/Stammspieler gelten als "wichtig für die Mannschaft".
-  importantMaxRank: statusRank('Stammspieler'),
   sellAgeMin: 30,
   sellSalaryPercentile: 0.75,
   loanAgeMax: 21,
@@ -19,6 +17,10 @@ var HINT_THRESHOLDS = {
 };
 
 var SELL_LOW_STATUSES = ['Ergänzungsspieler', 'Nicht benötigt'];
+
+// "Vertrag prüfen" gilt für alle Status außer "Nicht benötigt" - die können ohnehin
+// gehen, der Rest soll (erstmal) gehalten werden.
+var CONTRACT_WARNING_EXCLUDED_STATUSES = ['Nicht benötigt'];
 
 function monthsBetween(from, to) {
   if (!from || !to) return null;
@@ -47,7 +49,7 @@ function applyHints(players, referenceDate) {
     if (referenceDate && p.contractEnd) {
       var months = monthsBetween(referenceDate, p.contractEnd);
       if (months != null && months <= HINT_THRESHOLDS.contractWarningMonths &&
-          statusRank(p.statusActual) <= HINT_THRESHOLDS.importantMaxRank) {
+          CONTRACT_WARNING_EXCLUDED_STATUSES.indexOf(p.statusActual) === -1) {
         hints.push('Vertrag prüfen');
       }
     }
