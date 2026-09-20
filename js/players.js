@@ -17,6 +17,18 @@ function fixMinutesPerGameColumn(records) {
   });
 }
 
+// "Einsätze" kommt im Format "28 (5)" (28 Startelf-Einsätze, 5 Einwechslungen)
+// oder nur "40" (keine Einwechslungen). Für die Gesamtminuten-Schätzung zählt
+// die Summe aus beidem.
+function parseAppearances(str) {
+  if (!str) return null;
+  var match = String(str).trim().match(/^(\d+)(?:\s*\((\d+)\))?$/);
+  if (!match) return null;
+  var starts = parseInt(match[1], 10);
+  var subs = match[2] ? parseInt(match[2], 10) : 0;
+  return { starts: starts, subs: subs, total: starts + subs };
+}
+
 function parseGermanDate(str) {
   if (!str) return null;
   var parts = str.split('.');
@@ -221,6 +233,11 @@ function buildPlayers(records) {
       marketValue: parseMarketValue(record['Transferwert']),
       marketValueRaw: record['Transferwert'] || '',
       rating: parseGermanDecimal(record['Durchschnittsnote – Verein']),
+      totalMinutes: (function () {
+        var appearances = parseAppearances(record['Einsätze']);
+        var minutesPerGame = parseGermanDecimal(record['Min/Sp']);
+        return appearances && minutesPerGame != null ? appearances.total * minutesPerGame : null;
+      })(),
       statusActual: record['Tatsächliche Einsatzzeiten'] || '',
       statusExpected: record['Einsatzzeiten'] || ''
     };

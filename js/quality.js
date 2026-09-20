@@ -57,9 +57,13 @@ function collectRootPositionCodes(players) {
 // Seiten gleich ("V (L)"/"V (Z)"/"V (R)" nutzen dieselbe Attributauswahl) - nur
 // die Ergebnis-Aufschlüsselung erfolgt je Seite, da z.B. "V" als Ganzes eine
 // dünne linke Seite verstecken kann (siehe Positionslücken).
+// valueOf(player, attributeName) liest optional einen anderen Wert als den
+// rohen Spaltenwert aus (z.B. Pro-90-Umrechnung bei Leistungsdaten, siehe
+// performance.js) - Standard: einfach die Spalte als Dezimalzahl lesen.
 // Ergebnis pro Positions-Slot: Spieleranzahl, Anzahl genutzter Attribute, Ø-Wert
 // (1-20, wie FM-Attribute selbst), sortiert von stärkster zu schwächster Position.
-function computePositionQuality(players, qualityAttributesByCode) {
+function computePositionQuality(players, qualityAttributesByCode, valueOf) {
+  valueOf = valueOf || function (p, a) { return parseGermanDecimal(p.raw[a]); };
   var slots = sortBySlotOrder(collectPositionSlots(players));
 
   var results = slots.map(function (slot) {
@@ -73,7 +77,7 @@ function computePositionQuality(players, qualityAttributesByCode) {
       var sum = 0;
       var count = 0;
       attrs.forEach(function (a) {
-        var val = parseGermanDecimal(p.raw[a]);
+        var val = valueOf(p, a);
         if (val != null) {
           sum += val;
           count++;

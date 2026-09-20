@@ -28,13 +28,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
   var code = data.code;
   var attributes = data.attributes || [];
-  var records = data.records || [];
+  var perNinetyAttributes = data.perNinetyAttributes || [];
+  var blend = data.blend !== false;
+  var rows = data.records || []; // { raw, totalMinutes }
 
-  function averageOf(record) {
+  // Wie performanceValueOf in performance.js: absolute Zähler werden auf "pro
+  // 90 Minuten" umgerechnet, alles andere (Raten, Noten, bereits-pro-90-Werte)
+  // unverändert übernommen.
+  function valueOf(row, attrName) {
+    var raw = parseDecimalLocal(row.raw[attrName]);
+    if (raw == null) return null;
+    if (perNinetyAttributes.indexOf(attrName) !== -1) {
+      return row.totalMinutes ? (raw * 90 / row.totalMinutes) : null;
+    }
+    return raw;
+  }
+
+  function averageOf(row) {
     var sum = 0;
     var count = 0;
     attributes.forEach(function (a) {
-      var val = parseDecimalLocal(record[a]);
+      var val = valueOf(row, a);
       if (val != null) {
         sum += val;
         count++;
@@ -43,13 +57,20 @@ document.addEventListener('DOMContentLoaded', function () {
     return count > 0 ? sum / count : null;
   }
 
-  var rows = records
-    .map(function (record) { return { record: record, average: averageOf(record) }; })
+  // Ohne "blend" (unterschiedlich skalierte Leistungskennzahlen) gibt es keinen
+  // sinnvollen Gesamtwert - dann wird nach der ersten gewählten Kennzahl sortiert.
+  var sortAttr = attributes[0];
+  var sortedRows = rows
+    .map(function (row) {
+      return { row: row, average: blend ? averageOf(row) : null, sortValue: sortAttr ? valueOf(row, sortAttr) : null };
+    })
     .sort(function (a, b) {
-      if (a.average == null && b.average == null) return 0;
-      if (a.average == null) return 1;
-      if (b.average == null) return -1;
-      return b.average - a.average;
+      var av = blend ? a.average : a.sortValue;
+      var bv = blend ? b.average : b.sortValue;
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      return bv - av;
     });
 
   container.innerHTML = '';
@@ -60,8 +81,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   var subtitle = document.createElement('p');
   subtitle.className = 'profile-subtitle';
-  subtitle.textContent = records.length + ' Spieler' +
-    (attributes.length ? ' · Kennzahlen: ' + attributes.join(', ') : ' · keine Kennzahlen ausgewählt');
+  subtitle.textContent = rows.length + ' Spieler' +
+    (attributes.length ? ' · Kennzahlen: ' + attributes.join(', ') : ' · keine Kennzahlen ausgewählt') +
+    (perNinetyAttributes.length ? ' (davon pro 90 Min. umgerechnet: ' + perNinetyAttributes.join(', ') + ')' : '');
   container.appendChild(subtitle);
 
   var baseColumns = ['Spieler', 'Position', 'Alter', 'Endet', 'Gehalt', 'Tatsächliche Einsatzzeiten', 'Einsatzzeiten'];
@@ -70,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var table = document.createElement('table');
   var thead = document.createElement('thead');
   var headRow = document.createElement('tr');
-  baseLabels.concat(attributes).concat(['Ø Wert']).forEach(function (h) {
+  baseLabels.concat(attributes).concat(blend ? ['Ø Wert'] : []).forEach(function (h) {
     var th = document.createElement('th');
     th.textContent = h;
     headRow.appendChild(th);
@@ -79,8 +101,8 @@ document.addEventListener('DOMContentLoaded', function () {
   table.appendChild(thead);
 
   var tbody = document.createElement('tbody');
-  rows.forEach(function (row) {
-    var record = row.record;
+  sortedRows.forEach(function (entry) {
+    var record = entry.row.raw;
     var tr = document.createElement('tr');
     tr.className = 'clickable-row';
     tr.addEventListener('click', function () {
@@ -94,14 +116,16 @@ document.addEventListener('DOMContentLoaded', function () {
       tr.appendChild(td);
     });
     attributes.forEach(function (a) {
-      var val = parseDecimalLocal(record[a]);
+      var val = valueOf(entry.row, a);
       var td = document.createElement('td');
-      td.textContent = val == null ? '' : val;
+      td.textContent = val == null ? '' : (perNinetyAttributes.indexOf(a) !== -1 ? val.toFixed(2) : val);
       tr.appendChild(td);
     });
-    var avgTd = document.createElement('td');
-    avgTd.textContent = row.average != null ? row.average.toFixed(2) : '–';
-    tr.appendChild(avgTd);
+    if (blend) {
+      var avgTd = document.createElement('td');
+      avgTd.textContent = entry.average != null ? entry.average.toFixed(2) : '–';
+      tr.appendChild(avgTd);
+    }
 
     tbody.appendChild(tr);
   });

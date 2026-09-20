@@ -63,15 +63,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   ];
 
-  var PERFORMANCE_COLUMNS = [
+  // Basisspalten für "Leistung je Position" - je gewählter Kennzahl kommt eine
+  // eigene Spalte dazu (siehe renderPerformanceTable). Keine Blend-Spalte: die
+  // Kennzahlen haben unterschiedliche Skalen (Note, Prozent, Pro-90-Rate) und
+  // lassen sich nicht sinnvoll zu einem Wert mitteln.
+  var PERFORMANCE_BASE_COLUMNS = [
     { key: 'code', label: 'Position', get: function (r) { return r.code; }, compare: comparePositionSlots },
-    { key: 'playerCount', label: 'Spieler', get: function (r) { return r.playerCount; } },
-    { key: 'attributeCount', label: 'Kennzahlen', get: function (r) { return r.attributeCount; } },
-    {
-      key: 'average', label: 'Ø Leistung',
-      get: function (r) { return r.average; },
-      format: function (r) { return r.average != null ? r.average.toFixed(2) : '–'; }
-    }
+    { key: 'playerCount', label: 'Spieler', get: function (r) { return r.playerCount; } }
   ];
 
   var HINT_CATEGORIES = [
@@ -388,7 +386,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // (gleiche Tabellenform: Position/Spieler/Anzahl-Kennzahlen/Ø-Wert, sortierbar).
   function renderRankingTable(wrapperEl, columns, results, sortKey, sortDir, onHeaderClick, onRowClick) {
     var col = columns.filter(function (c) { return c.key === sortKey; })[0];
-    var sorted = results.slice().sort(function (a, b) {
+    var sorted = !col ? results.slice() : results.slice().sort(function (a, b) {
       if (col.compare) return col.compare(col.get(a), col.get(b));
       var av = col.get(a);
       var bv = col.get(b);
@@ -399,7 +397,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (av > bv) return 1;
       return 0;
     });
-    if (sortDir === 'desc') sorted.reverse();
+    if (col && sortDir === 'desc') sorted.reverse();
 
     wrapperEl.innerHTML = '';
     var table = document.createElement('table');
@@ -454,7 +452,7 @@ document.addEventListener('DOMContentLoaded', function () {
     performanceSettingsBodyEl.innerHTML = '';
     var options = performanceAttributeOptions(state.headers, state.numericColumns);
     performanceSettingsBodyEl.appendChild(makeCheckboxGroupField(
-      'Leistungskennzahlen (gelten für alle Positionen gleich)',
+      'Leistungskennzahlen (jede bekommt ihre eigene Spalte, gelten für alle Positionen gleich)',
       options,
       state.performanceAttributes,
       function (selected) {
@@ -465,8 +463,27 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function renderPerformanceTable() {
-    var results = computePositionQuality(state.players, buildUniformAttributeMap(state.performanceAttributes));
-    renderRankingTable(performanceTableWrapperEl, PERFORMANCE_COLUMNS, results, state.performanceSortKey, state.performanceSortDir,
+    var results = computePositionMetrics(state.players, state.performanceAttributes, performanceValueOf);
+
+    var columns = PERFORMANCE_BASE_COLUMNS.concat(state.performanceAttributes.map(function (attrName) {
+      var isPerNinety = PERFORMANCE_PER90_STATS.indexOf(attrName) !== -1;
+      return {
+        key: 'metric:' + attrName,
+        label: attrName + (isPerNinety ? ' (pro 90)' : ''),
+        get: function (r) { return r.metrics[attrName]; },
+        format: function (r) {
+          var v = r.metrics[attrName];
+          return v != null ? v.toFixed(2) : '–';
+        }
+      };
+    }));
+
+    if (columns.filter(function (c) { return c.key === state.performanceSortKey; }).length === 0) {
+      state.performanceSortKey = 'code';
+      state.performanceSortDir = 'asc';
+    }
+
+    renderRankingTable(performanceTableWrapperEl, columns, results, state.performanceSortKey, state.performanceSortDir,
       function (key) {
         if (state.performanceSortKey === key) {
           state.performanceSortDir = state.performanceSortDir === 'asc' ? 'desc' : 'asc';
@@ -476,18 +493,25 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         renderPerformanceTable();
       },
-      function (r) { openPositionDetail(r.code, state.performanceAttributes); }
+      function (r) { openPositionDetail(r.code, state.performanceAttributes, false); }
     );
   }
 
-  function openPositionDetail(slot, attrs) {
+  // blend: true (Standard) zeigt eine Ø-Wert-Spalte auf position.html - sinnvoll
+  // bei gleich skalierten Werten (Qualitäts-Attribute, 1-20). false unterdrückt
+  // das (Leistungskennzahlen haben unterschiedliche Skalen, siehe performance.js).
+  function openPositionDetail(slot, attrs, blend) {
+    attrs = attrs || [];
+    blend = blend !== false;
     var relevantPlayers = state.players.filter(function (p) {
       return p.positionSlots.indexOf(slot) !== -1;
     });
     var payload = JSON.stringify({
       code: slot,
-      attributes: attrs || [],
-      records: relevantPlayers.map(function (p) { return p.raw; })
+      attributes: attrs,
+      blend: blend,
+      perNinetyAttributes: attrs.filter(function (a) { return PERFORMANCE_PER90_STATS.indexOf(a) !== -1; }),
+      records: relevantPlayers.map(function (p) { return { raw: p.raw, totalMinutes: p.totalMinutes }; })
     });
     window.open('position.html#' + encodeURIComponent(payload), '_blank');
   }
