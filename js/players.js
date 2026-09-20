@@ -28,10 +28,11 @@ function parseGermanDate(str) {
   return new Date(year, month - 1, day);
 }
 
-// Wandelt FM26-Gehaltstexte wie "3,99Mio. €/J." oder "768K €/J." in eine Zahl (€/Jahr) um.
-function parseGehalt(str) {
+// Wandelt FM26-Geldbeträge wie "3,99Mio. €/J.", "768K €/J." oder "24Mio. €" in
+// eine Zahl um (der "/J."-Jahres-Zusatz beim Gehalt wird einfach mit entfernt).
+function parseMoneyAmount(str) {
   if (!str) return null;
-  var cleaned = str.replace('€/J.', '').trim();
+  var cleaned = str.replace('€/J.', '').replace('€', '').trim();
   var multiplier = 1;
   if (/Mio\.?$/i.test(cleaned)) {
     multiplier = 1000000;
@@ -44,6 +45,28 @@ function parseGehalt(str) {
   var num = parseFloat(cleaned);
   if (isNaN(num)) return null;
   return Math.round(num * multiplier);
+}
+
+function parseGehalt(str) {
+  return parseMoneyAmount(str);
+}
+
+// "Transferwert" ist entweder ein einzelner Betrag ("24Mio. €") oder eine Spanne
+// ("23Mio. € - 29Mio. €", auch mit gemischten K/Mio.-Einheiten je Seite). Nimmt
+// den Mittelwert der Spanne als Näherungswert für den Marktwert.
+function parseMarketValue(str) {
+  if (!str) return null;
+  var parts = str.split('-').map(function (s) { return s.trim(); }).filter(Boolean);
+  var values = parts.map(parseMoneyAmount).filter(function (v) { return v != null; });
+  if (values.length === 0) return null;
+  return Math.round(values.reduce(function (a, b) { return a + b; }, 0) / values.length);
+}
+
+// Deutsches Dezimalformat ("7,02", "0,96") in eine Zahl umwandeln.
+function parseGermanDecimal(str) {
+  if (!str) return null;
+  var num = parseFloat(String(str).replace(',', '.'));
+  return isNaN(num) ? null : num;
 }
 
 function isIntegerString(str) {
@@ -195,6 +218,9 @@ function buildPlayers(records) {
       contractEndRaw: record['Endet'] || '',
       salary: parseGehalt(record['Gehalt']),
       salaryRaw: record['Gehalt'] || '',
+      marketValue: parseMarketValue(record['Transferwert']),
+      marketValueRaw: record['Transferwert'] || '',
+      rating: parseGermanDecimal(record['Durchschnittsnote – Verein']),
       statusActual: record['Tatsächliche Einsatzzeiten'] || '',
       statusExpected: record['Einsatzzeiten'] || ''
     };

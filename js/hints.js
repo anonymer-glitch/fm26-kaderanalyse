@@ -13,7 +13,11 @@ var HINT_THRESHOLDS = {
   // Eine Position gilt als "schwache Qualität", wenn ihr Ø-Wert um mindestens
   // diesen Abstand unter dem Ø aller Positionen dieses Kaders liegt (relativ
   // zum eigenen Kader, nicht zu einer absoluten Liga-Norm).
-  qualityWeakMargin: 1.5
+  qualityWeakMargin: 1.5,
+  // Für den Leistungs-Pfad beim Verkaufskandidat: Notenpunkte unter dem
+  // Kader-Ø der Durchschnittsnote, ab denen ein Spieler als "leistet aktuell
+  // wenig" gilt (Notenskala ist deutlich enger als die 1-20-Attributskala).
+  ratingWeakMargin: 0.3
 };
 
 var SELL_LOW_STATUSES = ['Ergänzungsspieler', 'Nicht benötigt'];
@@ -60,6 +64,11 @@ function computeSalaryThreshold(players, percentile) {
 function applyHints(players, referenceDate) {
   var salaryThreshold = computeSalaryThreshold(players, HINT_THRESHOLDS.sellSalaryPercentile);
 
+  var ratings = players.map(function (p) { return p.rating; }).filter(function (r) { return r != null; });
+  var ratingMean = ratings.length > 0
+    ? ratings.reduce(function (a, b) { return a + b; }, 0) / ratings.length
+    : null;
+
   players.forEach(function (p) {
     var hints = [];
 
@@ -71,9 +80,13 @@ function applyHints(players, referenceDate) {
       }
     }
 
-    if (p.age != null && p.age >= HINT_THRESHOLDS.sellAgeMin &&
-        SELL_LOW_STATUSES.indexOf(p.statusActual) !== -1 &&
-        salaryThreshold != null && p.salary != null && p.salary >= salaryThreshold) {
+    var highSalary = salaryThreshold != null && p.salary != null && p.salary >= salaryThreshold;
+    var oldAndSidelined = p.age != null && p.age >= HINT_THRESHOLDS.sellAgeMin &&
+        SELL_LOW_STATUSES.indexOf(p.statusActual) !== -1;
+    var underperforming = p.rating != null && ratingMean != null &&
+        p.rating <= ratingMean - HINT_THRESHOLDS.ratingWeakMargin;
+
+    if (highSalary && (oldAndSidelined || underperforming)) {
       hints.push('Verkaufskandidat');
     }
 

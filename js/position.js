@@ -1,6 +1,14 @@
 // Eigenständige Seite: alle Spieler einer Position, aus dem Dashboard heraus per
-// Klick auf eine Zeile der "Qualität je Position"-Tabelle geöffnet. Bekommt die
-// Daten wie beim Spielerprofil per URL-Hash übergeben (kein Server nötig).
+// Klick auf eine Zeile der "Qualität je Position"- oder "Leistung je Position"-
+// Tabelle geöffnet. Bekommt die Daten wie beim Spielerprofil per URL-Hash
+// übergeben (kein Server nötig). Läuft eigenständig, deshalb ein eigener
+// kleiner Dezimal-Parser statt eines Imports aus players.js.
+function parseDecimalLocal(str) {
+  if (!str) return null;
+  var num = parseFloat(String(str).replace(',', '.'));
+  return isNaN(num) ? null : num;
+}
+
 document.addEventListener('DOMContentLoaded', function () {
   var container = document.getElementById('position-content');
   var hash = window.location.hash.slice(1);
@@ -19,15 +27,15 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   var code = data.code;
-  var qualityAttributes = data.qualityAttributes || [];
+  var attributes = data.attributes || [];
   var records = data.records || [];
 
-  function qualityOf(record) {
+  function averageOf(record) {
     var sum = 0;
     var count = 0;
-    qualityAttributes.forEach(function (a) {
-      var val = parseInt(record[a], 10);
-      if (!isNaN(val)) {
+    attributes.forEach(function (a) {
+      var val = parseDecimalLocal(record[a]);
+      if (val != null) {
         sum += val;
         count++;
       }
@@ -36,12 +44,12 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   var rows = records
-    .map(function (record) { return { record: record, quality: qualityOf(record) }; })
+    .map(function (record) { return { record: record, average: averageOf(record) }; })
     .sort(function (a, b) {
-      if (a.quality == null && b.quality == null) return 0;
-      if (a.quality == null) return 1;
-      if (b.quality == null) return -1;
-      return b.quality - a.quality;
+      if (a.average == null && b.average == null) return 0;
+      if (a.average == null) return 1;
+      if (b.average == null) return -1;
+      return b.average - a.average;
     });
 
   container.innerHTML = '';
@@ -53,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var subtitle = document.createElement('p');
   subtitle.className = 'profile-subtitle';
   subtitle.textContent = records.length + ' Spieler' +
-    (qualityAttributes.length ? ' · Qualitäts-Attribute: ' + qualityAttributes.join(', ') : ' · keine Qualitäts-Attribute ausgewählt');
+    (attributes.length ? ' · Kennzahlen: ' + attributes.join(', ') : ' · keine Kennzahlen ausgewählt');
   container.appendChild(subtitle);
 
   var baseColumns = ['Spieler', 'Position', 'Alter', 'Endet', 'Gehalt', 'Tatsächliche Einsatzzeiten', 'Einsatzzeiten'];
@@ -62,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var table = document.createElement('table');
   var thead = document.createElement('thead');
   var headRow = document.createElement('tr');
-  baseLabels.concat(qualityAttributes).concat(['Ø Qualität']).forEach(function (h) {
+  baseLabels.concat(attributes).concat(['Ø Wert']).forEach(function (h) {
     var th = document.createElement('th');
     th.textContent = h;
     headRow.appendChild(th);
@@ -85,14 +93,14 @@ document.addEventListener('DOMContentLoaded', function () {
       td.textContent = record[col] || '';
       tr.appendChild(td);
     });
-    qualityAttributes.forEach(function (a) {
-      var val = parseInt(record[a], 10);
+    attributes.forEach(function (a) {
+      var val = parseDecimalLocal(record[a]);
       var td = document.createElement('td');
-      td.textContent = isNaN(val) ? '' : val;
+      td.textContent = val == null ? '' : val;
       tr.appendChild(td);
     });
     var avgTd = document.createElement('td');
-    avgTd.textContent = row.quality != null ? row.quality.toFixed(1) : '–';
+    avgTd.textContent = row.average != null ? row.average.toFixed(2) : '–';
     tr.appendChild(avgTd);
 
     tbody.appendChild(tr);

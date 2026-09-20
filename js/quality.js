@@ -73,8 +73,8 @@ function computePositionQuality(players, qualityAttributesByCode) {
       var sum = 0;
       var count = 0;
       attrs.forEach(function (a) {
-        var val = parseInt(p.raw[a], 10);
-        if (!isNaN(val)) {
+        var val = parseGermanDecimal(p.raw[a]);
+        if (val != null) {
           sum += val;
           count++;
         }

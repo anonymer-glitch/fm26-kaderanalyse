@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', function () {
   var qualityTableWrapperEl = document.getElementById('quality-table-wrapper');
   var standardsSettingsBodyEl = document.getElementById('standards-settings-body');
   var standardsResultsEl = document.getElementById('standards-results');
+  var performanceSettingsBodyEl = document.getElementById('performance-settings-body');
+  var performanceTableWrapperEl = document.getElementById('performance-table-wrapper');
 
   var rowCountEl = document.getElementById('row-count');
   var filtersEl = document.getElementById('filters');
@@ -37,6 +39,11 @@ document.addEventListener('DOMContentLoaded', function () {
       get: function (p) { return p.salary; },
       display: function (p) { return p.salaryRaw; }
     },
+    {
+      key: 'marketValue', label: 'Marktwert',
+      get: function (p) { return p.marketValue; },
+      display: function (p) { return p.marketValueRaw; }
+    },
     { key: 'statusActual', label: 'Tatsächliche Einsatzzeiten', get: function (p) { return p.statusActual; } },
     { key: 'statusExpected', label: 'Einsatzzeiten', get: function (p) { return p.statusExpected; } },
     {
@@ -49,7 +56,22 @@ document.addEventListener('DOMContentLoaded', function () {
     { key: 'code', label: 'Position', get: function (r) { return r.code; }, compare: comparePositionSlots },
     { key: 'playerCount', label: 'Spieler', get: function (r) { return r.playerCount; } },
     { key: 'attributeCount', label: 'Attribute', get: function (r) { return r.attributeCount; } },
-    { key: 'average', label: 'Ø Qualität', get: function (r) { return r.average; } }
+    {
+      key: 'average', label: 'Ø Qualität',
+      get: function (r) { return r.average; },
+      format: function (r) { return r.average != null ? r.average.toFixed(1) : '–'; }
+    }
+  ];
+
+  var PERFORMANCE_COLUMNS = [
+    { key: 'code', label: 'Position', get: function (r) { return r.code; }, compare: comparePositionSlots },
+    { key: 'playerCount', label: 'Spieler', get: function (r) { return r.playerCount; } },
+    { key: 'attributeCount', label: 'Kennzahlen', get: function (r) { return r.attributeCount; } },
+    {
+      key: 'average', label: 'Ø Leistung',
+      get: function (r) { return r.average; },
+      format: function (r) { return r.average != null ? r.average.toFixed(2) : '–'; }
+    }
   ];
 
   var HINT_CATEGORIES = [
@@ -74,12 +96,15 @@ document.addEventListener('DOMContentLoaded', function () {
     statusOptions: [],
     qualityAttributes: {},
     standardsAttributes: {},
+    performanceAttributes: [],
     referenceDate: null,
     filters: defaultFilters(),
     sortKey: 'name',
     sortDir: 'asc',
     qualitySortKey: 'average',
     qualitySortDir: 'desc',
+    performanceSortKey: 'average',
+    performanceSortDir: 'desc',
     activeView: 'dashboard'
   };
 
@@ -188,6 +213,10 @@ document.addEventListener('DOMContentLoaded', function () {
       state.standardsAttributes[cat.key] = defaultStandardsAttributes(cat.key, state.numericColumns);
     });
 
+    state.performanceAttributes = defaultPerformanceAttributes(
+      performanceAttributeOptions(state.headers, state.numericColumns)
+    );
+
     applyHints(state.players, state.referenceDate);
 
     renderNeededPositions();
@@ -195,6 +224,8 @@ document.addEventListener('DOMContentLoaded', function () {
     renderHintsSummary();
     renderQualitySettings();
     renderQualityTable();
+    renderPerformanceSettings();
+    renderPerformanceTable();
     renderStandardsSettings();
     renderStandardsResults();
     renderFilters();
@@ -318,7 +349,7 @@ document.addEventListener('DOMContentLoaded', function () {
           link.textContent = item.slot;
           link.addEventListener('click', function (event) {
             event.preventDefault();
-            openPositionDetail(item.slot);
+            openPositionDetail(item.slot, state.qualityAttributes[parsePositionSlot(item.slot).code] || []);
           });
           li.appendChild(link);
         } else {
@@ -349,11 +380,10 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  function renderQualityTable() {
-    qualityTableWrapperEl.innerHTML = '';
-    var results = computePositionQuality(state.players, state.qualityAttributes);
-
-    var col = QUALITY_COLUMNS.filter(function (c) { return c.key === state.qualitySortKey; })[0];
+  // Gemeinsame Render-Logik für "Qualität je Position" und "Leistung je Position"
+  // (gleiche Tabellenform: Position/Spieler/Anzahl-Kennzahlen/Ø-Wert, sortierbar).
+  function renderRankingTable(wrapperEl, columns, results, sortKey, sortDir, onHeaderClick, onRowClick) {
+    var col = columns.filter(function (c) { return c.key === sortKey; })[0];
     var sorted = results.slice().sort(function (a, b) {
       if (col.compare) return col.compare(col.get(a), col.get(b));
       var av = col.get(a);
@@ -365,25 +395,18 @@ document.addEventListener('DOMContentLoaded', function () {
       if (av > bv) return 1;
       return 0;
     });
-    if (state.qualitySortDir === 'desc') sorted.reverse();
+    if (sortDir === 'desc') sorted.reverse();
 
+    wrapperEl.innerHTML = '';
     var table = document.createElement('table');
     var thead = document.createElement('thead');
     var headRow = document.createElement('tr');
-    QUALITY_COLUMNS.forEach(function (c) {
+    columns.forEach(function (c) {
       var th = document.createElement('th');
       th.className = 'sortable';
-      var arrow = state.qualitySortKey === c.key ? (state.qualitySortDir === 'asc' ? ' ▲' : ' ▼') : '';
+      var arrow = sortKey === c.key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : '';
       th.textContent = c.label + arrow;
-      th.addEventListener('click', function () {
-        if (state.qualitySortKey === c.key) {
-          state.qualitySortDir = state.qualitySortDir === 'asc' ? 'desc' : 'asc';
-        } else {
-          state.qualitySortKey = c.key;
-          state.qualitySortDir = 'asc';
-        }
-        renderQualityTable();
-      });
+      th.addEventListener('click', function () { onHeaderClick(c.key); });
       headRow.appendChild(th);
     });
     thead.appendChild(headRow);
@@ -393,27 +416,73 @@ document.addEventListener('DOMContentLoaded', function () {
     sorted.forEach(function (r) {
       var tr = document.createElement('tr');
       tr.className = 'clickable-row';
-      tr.addEventListener('click', function () { openPositionDetail(r.code); });
-      [r.code, r.playerCount, r.attributeCount, r.average != null ? r.average.toFixed(1) : '–'].forEach(function (val) {
+      tr.addEventListener('click', function () { onRowClick(r); });
+      columns.forEach(function (c) {
         var td = document.createElement('td');
-        td.textContent = val;
+        var val = c.format ? c.format(r) : c.get(r);
+        td.textContent = val == null ? '' : val;
         tr.appendChild(td);
       });
       tbody.appendChild(tr);
     });
     table.appendChild(tbody);
 
-    qualityTableWrapperEl.appendChild(table);
+    wrapperEl.appendChild(table);
   }
 
-  function openPositionDetail(slot) {
-    var rootCode = parsePositionSlot(slot).code;
+  function renderQualityTable() {
+    var results = computePositionQuality(state.players, state.qualityAttributes);
+    renderRankingTable(qualityTableWrapperEl, QUALITY_COLUMNS, results, state.qualitySortKey, state.qualitySortDir,
+      function (key) {
+        if (state.qualitySortKey === key) {
+          state.qualitySortDir = state.qualitySortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          state.qualitySortKey = key;
+          state.qualitySortDir = 'asc';
+        }
+        renderQualityTable();
+      },
+      function (r) { openPositionDetail(r.code, state.qualityAttributes[parsePositionSlot(r.code).code] || []); }
+    );
+  }
+
+  function renderPerformanceSettings() {
+    performanceSettingsBodyEl.innerHTML = '';
+    var options = performanceAttributeOptions(state.headers, state.numericColumns);
+    performanceSettingsBodyEl.appendChild(makeCheckboxGroupField(
+      'Leistungskennzahlen (gelten für alle Positionen gleich)',
+      options,
+      state.performanceAttributes,
+      function (selected) {
+        state.performanceAttributes = selected;
+        renderPerformanceTable();
+      }
+    ));
+  }
+
+  function renderPerformanceTable() {
+    var results = computePositionQuality(state.players, buildUniformAttributeMap(state.performanceAttributes));
+    renderRankingTable(performanceTableWrapperEl, PERFORMANCE_COLUMNS, results, state.performanceSortKey, state.performanceSortDir,
+      function (key) {
+        if (state.performanceSortKey === key) {
+          state.performanceSortDir = state.performanceSortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          state.performanceSortKey = key;
+          state.performanceSortDir = 'asc';
+        }
+        renderPerformanceTable();
+      },
+      function (r) { openPositionDetail(r.code, state.performanceAttributes); }
+    );
+  }
+
+  function openPositionDetail(slot, attrs) {
     var relevantPlayers = state.players.filter(function (p) {
       return p.positionSlots.indexOf(slot) !== -1;
     });
     var payload = JSON.stringify({
       code: slot,
-      qualityAttributes: state.qualityAttributes[rootCode] || [],
+      attributes: attrs || [],
       records: relevantPlayers.map(function (p) { return p.raw; })
     });
     window.open('position.html#' + encodeURIComponent(payload), '_blank');

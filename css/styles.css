@@ -125,7 +125,8 @@ header p {
   margin-top: 0.75rem;
 }
 
-#quality-table-wrapper {
+#quality-table-wrapper,
+#performance-table-wrapper {
   overflow-x: auto;
   border: 1px solid #ddd;
   border-radius: 4px;
