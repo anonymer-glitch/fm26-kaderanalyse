@@ -272,6 +272,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var tbody = document.createElement('tbody');
     results.forEach(function (r) {
       var tr = document.createElement('tr');
+      tr.className = 'clickable-row';
+      tr.addEventListener('click', function () { openPositionDetail(r.code); });
       [r.code, r.playerCount, r.attributeCount, r.average != null ? r.average.toFixed(1) : '–'].forEach(function (val) {
         var td = document.createElement('td');
         td.textContent = val;
@@ -282,6 +284,18 @@ document.addEventListener('DOMContentLoaded', function () {
     table.appendChild(tbody);
 
     qualityTableWrapperEl.appendChild(table);
+  }
+
+  function openPositionDetail(code) {
+    var relevantPlayers = state.players.filter(function (p) {
+      return rootCodesForPlayer(p).indexOf(code) !== -1;
+    });
+    var payload = JSON.stringify({
+      code: code,
+      qualityAttributes: state.qualityAttributes[code] || [],
+      records: relevantPlayers.map(function (p) { return p.raw; })
+    });
+    window.open('position.html#' + encodeURIComponent(payload), '_blank');
   }
 
   function renderFilters() {

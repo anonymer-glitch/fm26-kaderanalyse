@@ -255,6 +255,11 @@ tbody tr.clickable-row:hover {
   margin: 0 auto;
 }
 
+.position-page {
+  max-width: none;
+  margin: 0;
+}
+
 #profile-content h1 {
   margin-top: 0;
   margin-bottom: 0.1rem;
