@@ -1,21 +1,21 @@
 // Logik-Schicht: Rangliste für Standardsituationen (Eckbälle, Freistöße,
-// Elfmeter) und Führung (Kapitän/Stellvertreter). FM kennt eigene Attribute für
-// Freistöße, Elfmeter und Führungsqualität - die sind in vielen Exports (auch
-// diesem) nicht enthalten. Die Vorschläge unten sind deshalb eine Näherung mit
-// ähnlichen, tatsächlich vorhandenen Attributen - über die Oberfläche anpassbar,
-// keine feste Bewertungsformel.
+// Elfmeter) und Führung (Kapitän/Stellvertreter). Nutzt die echten FM-Attribute
+// dafür (Freistöße, Elfmeter, Führungsqualitäten), sofern im Export vorhanden -
+// fehlen sie (ältere/kleinere Exports), bleibt die Vorauswahl einfach leer und
+// kann unten manuell (z.B. mit Ersatz-Attributen) gefüllt werden. Keine feste
+// Bewertungsformel, alles über die Oberfläche anpassbar.
 var STANDARDS_ATTRIBUTE_DEFAULTS = {
   corners: ['Ecken'],
-  freeKicks: ['Weitschüsse', 'Technik'],
-  penalties: ['Abschluss', 'Nervenstärke'],
-  leadership: ['Nervenstärke', 'Entscheidungen', 'Teamwork', 'Antizipation']
+  freeKicks: ['Freistöße'],
+  penalties: ['Elfmeter'],
+  leadership: ['Führungsqualitäten']
 };
 
 var STANDARDS_CATEGORIES = [
   { key: 'corners', label: 'Eckbälle' },
-  { key: 'freeKicks', label: 'Freistöße (Näherung, kein Freistoß-Attribut im Export)' },
-  { key: 'penalties', label: 'Elfmeter (Näherung, kein Elfmeter-Attribut im Export)' },
-  { key: 'leadership', label: 'Führung / Kapitän (Näherung, kein Führungsqualität-Attribut im Export)' }
+  { key: 'freeKicks', label: 'Freistöße' },
+  { key: 'penalties', label: 'Elfmeter' },
+  { key: 'leadership', label: 'Führung / Kapitän' }
 ];
 
 function defaultStandardsAttributes(category, availableColumns) {
@@ -30,8 +30,8 @@ function computeStandardsRanking(players, attrs, topN) {
     var sum = 0;
     var count = 0;
     attrs.forEach(function (a) {
-      var val = parseInt(p.raw[a], 10);
-      if (!isNaN(val)) {
+      var val = parseGermanDecimal(p.raw[a]);
+      if (val != null) {
         sum += val;
         count++;
       }
