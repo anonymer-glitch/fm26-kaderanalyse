@@ -24,6 +24,29 @@ header p {
   font-size: 0.95rem;
 }
 
+.reference-date-field {
+  margin-top: 0.75rem;
+}
+
+.position-gaps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.position-gap-chip {
+  background: #eef2ff;
+  border-radius: 4px;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.position-gap-chip.thin {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 .warnings {
   color: #92400e;
   background: #fef3c7;

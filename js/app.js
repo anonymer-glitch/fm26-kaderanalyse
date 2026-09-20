@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', function () {
   var rowCountEl = document.getElementById('row-count');
   var filtersEl = document.getElementById('filters');
   var tableWrapper = document.getElementById('table-wrapper');
+  var positionGapsEl = document.getElementById('position-gaps');
+  var referenceDateInput = document.getElementById('reference-date');
 
   var COLUMNS = [
     { key: 'name', label: 'Spieler', get: function (p) { return p.name; } },
@@ -21,7 +23,11 @@ document.addEventListener('DOMContentLoaded', function () {
       display: function (p) { return p.salaryRaw; }
     },
     { key: 'statusActual', label: 'Tatsächliche Einsatzzeiten', get: function (p) { return p.statusActual; } },
-    { key: 'statusExpected', label: 'Einsatzzeiten', get: function (p) { return p.statusExpected; } }
+    { key: 'statusExpected', label: 'Einsatzzeiten', get: function (p) { return p.statusExpected; } },
+    {
+      key: 'hints', label: 'Hinweise',
+      get: function (p) { return p.hints && p.hints.length ? p.hints.join(', ') : ''; }
+    }
   ];
 
   var defaultFilters = function () {
@@ -37,6 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
     numericColumns: [],
     positionCodes: [],
     statusOptions: [],
+    referenceDate: null,
     filters: defaultFilters(),
     sortKey: 'name',
     sortDir: 'asc'
@@ -45,6 +52,25 @@ document.addEventListener('DOMContentLoaded', function () {
   function openProfile(player) {
     var payload = JSON.stringify({ headers: state.headers, record: player.raw });
     window.open('profile.html#' + encodeURIComponent(payload), '_blank');
+  }
+
+  referenceDateInput.addEventListener('change', function () {
+    state.referenceDate = referenceDateInput.value ? new Date(referenceDateInput.value) : null;
+    if (state.players.length > 0) {
+      applyHints(state.players, state.referenceDate);
+      renderTable();
+    }
+  });
+
+  function renderPositionGaps() {
+    positionGapsEl.innerHTML = '';
+    var gaps = computePositionGaps(state.players, state.positionCodes);
+    gaps.forEach(function (gap) {
+      var chip = document.createElement('span');
+      chip.className = 'position-gap-chip' + (gap.thin ? ' thin' : '');
+      chip.textContent = gap.code + ': ' + gap.count;
+      positionGapsEl.appendChild(chip);
+    });
   }
 
   fileInput.addEventListener('change', function (event) {
@@ -111,7 +137,10 @@ document.addEventListener('DOMContentLoaded', function () {
     state.sortKey = 'name';
     state.sortDir = 'asc';
 
+    applyHints(state.players, state.referenceDate);
+
     renderFilters();
+    renderPositionGaps();
     renderTable();
     dataSection.hidden = false;
   }

@@ -93,6 +93,13 @@ var PLAYING_TIME_ORDER = [
   'Nicht benötigt'
 ];
 
+// Rang eines Einsatzstatus in PLAYING_TIME_ORDER (0 = meiste Einsatzzeit).
+// Unbekannte Werte bekommen den schlechtesten Rang.
+function statusRank(status) {
+  var idx = PLAYING_TIME_ORDER.indexOf(status);
+  return idx === -1 ? PLAYING_TIME_ORDER.length : idx;
+}
+
 function sortByPlayingTime(values) {
   return values.slice().sort(function (a, b) {
     var ia = PLAYING_TIME_ORDER.indexOf(a);
