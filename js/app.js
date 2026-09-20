@@ -136,6 +136,8 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
+    fixMinutesPerGameColumn(result.records);
+
     var hasIdColumn = result.headers.indexOf('Unique ID') !== -1;
     var statusLines = [];
     statusLines.push(

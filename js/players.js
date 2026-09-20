@@ -1,6 +1,22 @@
 // Logik-Schicht: wandelt generische CSV-Records in typisierte Spieler-Objekte um
 // und liefert Hilfsfunktionen für Filter/Sortierung. Kennt keine UI-Details.
 
+// Bekannter Fehler im "Min/Sp"-Export (FM26PlayerExport): der Wert ist eine
+// Ganzzahl (Minuten pro Spiel), aber es werden fälschlich lange, bedeutungslose
+// Nachkommastellen mit exportiert (z.B. "77.2424242424242" statt "77"). Wird
+// direkt beim Import bereinigt, damit die Spalte überall als saubere Zahl
+// ankommt (Sortierung, Attribut-Filter, Qualität je Position, ...).
+function fixMinutesPerGameColumn(records) {
+  records.forEach(function (r) {
+    if (r['Min/Sp'] != null && r['Min/Sp'] !== '') {
+      var truncated = parseInt(r['Min/Sp'], 10);
+      if (!isNaN(truncated)) {
+        r['Min/Sp'] = String(truncated);
+      }
+    }
+  });
+}
+
 function parseGermanDate(str) {
   if (!str) return null;
   var parts = str.split('.');
