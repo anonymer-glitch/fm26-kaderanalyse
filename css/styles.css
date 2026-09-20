@@ -142,49 +142,12 @@ tbody tr.clickable-row:hover {
   background: #eef2ff;
 }
 
-.modal-overlay[hidden] {
-  display: none;
-}
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-  padding: 1rem;
-}
-
-.modal {
-  position: relative;
-  background: #fff;
-  border-radius: 6px;
-  padding: 1.5rem;
-  width: 100%;
+.profile-page {
   max-width: 640px;
-  max-height: 85vh;
-  overflow-y: auto;
+  margin: 0 auto;
 }
 
-.modal-close {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.75rem;
-  border: none;
-  background: none;
-  font-size: 1.5rem;
-  line-height: 1;
-  cursor: pointer;
-  color: #555;
-}
-
-.modal-close:hover {
-  color: #000;
-}
-
-#profile-content h2 {
+#profile-content h1 {
   margin-top: 0;
   margin-bottom: 0.1rem;
 }
