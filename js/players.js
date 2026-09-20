@@ -101,6 +101,18 @@ function sortBySlotOrder(slots) {
   });
 }
 
+// Numerischer Rang für "Sortieren nach Position auf dem Feld" (TW -> Abwehr ->
+// Mittelfeld -> Sturm, innerhalb einer Position links -> zentral -> rechts).
+// Nutzt die Idealposition des Spielers (immer eine einzelne Position, anders als
+// das oft mehrere Positionen umfassende Positionsfeld).
+function positionSortRank(player) {
+  var slot = parsePositionSlot(player.idealPosition || '');
+  var codeRank = POSITION_ORDER.indexOf(slot.code);
+  var sideRank = slot.side ? SIDE_ORDER.indexOf(slot.side) : -1;
+  if (codeRank === -1) return POSITION_ORDER.length * 10;
+  return codeRank * 10 + (sideRank === -1 ? 5 : sideRank);
+}
+
 // Annahme/Vermutung zur Reihenfolge der FM26-Einsatzstatus-Kategorien nach Einsatzzeit
 // (viel -> wenig). Nicht offiziell bestätigt - bei Bedarf hier einfach anpassen.
 var PLAYING_TIME_ORDER = [

@@ -19,7 +19,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
   var COLUMNS = [
     { key: 'name', label: 'Spieler', get: function (p) { return p.name; } },
-    { key: 'position', label: 'Position', get: function (p) { return p.position; } },
+    {
+      key: 'position', label: 'Position',
+      get: function (p) { return positionSortRank(p); },
+      display: function (p) { return p.position; }
+    },
     { key: 'age', label: 'Alter', get: function (p) { return p.age; } },
     {
       key: 'contractEnd', label: 'Vertragsende',
