@@ -4,7 +4,16 @@ Lokale Web-App zur Analyse des eigenen Football-Manager-26-Kaders auf Basis von 
 
 ## Status
 
-V1-Funktionsumfang umgesetzt: CSV-Import, Kaderübersicht mit Filtern/Sortierung, Spielerprofil, Entscheidungs-Hinweise und Positionslücken-Übersicht.
+V1-Funktionsumfang umgesetzt: CSV-Import, Dashboard (Positionslücken, Entscheidungs-Hinweise, Qualität je Position), Kaderübersicht mit Filtern/Sortierung, Spielerprofil.
+
+## Navigation
+
+Nach dem Import zeigt die App zwei umschaltbare Ansichten (Buttons oben, kein Seitenwechsel, da beide dieselben Daten im Speicher brauchen):
+
+- **Dashboard** – Startansicht: Positionslücken, Entscheidungs-Hinweise, Qualität je Position
+- **Kaderübersicht** – die filterbare/sortierbare Tabelle
+
+Weitere Ansichten (z. B. später eine Verlaufs-Ansicht) lassen sich als zusätzlicher Button ergänzen, ohne Bestehendes umzubauen.
 
 ## Grundsatzentscheidungen
 
@@ -33,8 +42,9 @@ Drei getrennte Bereiche, damit spätere Erweiterungen bestehende Bereiche nicht 
   - Vertrag prüfen (Vertragsende bald + Spieler wichtig für die Mannschaft)
   - Verkaufskandidat (hohes Alter + niedriger Einsatzstatus + hohes Gehalt)
   - Verleihkandidat (junger Spieler + niedriger Einsatzstatus)
-  - Positionslücke (Position im Kader dünn besetzt, nur für manuell als "benötigt" markierte Positionen)
-- Positionslücken-Übersicht
+  - Positionslücke (Position im Kader dünn besetzt/fehlend, nur für manuell als "benötigt" markierte Positionen)
+- Positionslücken-Übersicht (3-stufig: fehlt / dünn / ok)
+- Qualität je Position: Ø-Wert frei wählbarer Attribute je Position (Vorschlag aus FM-Community-Guides als editierbarer Startpunkt, keine feste Bewertungsformel)
 
 ### Explizit nicht in V1
 
