@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', function () {
     statusOptions: [],
     qualityAttributes: {},
     standardsAttributes: {},
-    performanceAttributes: [],
+    performanceAttributes: {},
     referenceDate: null,
     filters: defaultFilters(),
     sortKey: 'name',
@@ -211,9 +211,11 @@ document.addEventListener('DOMContentLoaded', function () {
       state.standardsAttributes[cat.key] = defaultStandardsAttributes(cat.key, state.numericColumns);
     });
 
-    state.performanceAttributes = defaultPerformanceAttributes(
-      performanceAttributeOptions(state.headers, state.numericColumns)
-    );
+    state.performanceAttributes = {};
+    var performanceOptions = performanceAttributeOptions(state.headers, state.numericColumns);
+    collectRootPositionCodes(state.players).forEach(function (code) {
+      state.performanceAttributes[code] = defaultPerformanceAttributes(code, performanceOptions);
+    });
 
     applyHints(state.players, state.referenceDate);
 
@@ -452,21 +454,35 @@ document.addEventListener('DOMContentLoaded', function () {
   function renderPerformanceSettings() {
     performanceSettingsBodyEl.innerHTML = '';
     var options = performanceAttributeOptions(state.headers, state.numericColumns);
-    performanceSettingsBodyEl.appendChild(makeCheckboxGroupField(
-      'Leistungskennzahlen (jede bekommt ihre eigene Spalte, gelten für alle Positionen gleich)',
-      options,
-      state.performanceAttributes,
-      function (selected) {
-        state.performanceAttributes = selected;
-        renderPerformanceTable();
-      }
-    ));
+    collectRootPositionCodes(state.players).forEach(function (code) {
+      performanceSettingsBodyEl.appendChild(makeCheckboxGroupField(
+        code,
+        options,
+        state.performanceAttributes[code] || [],
+        function (selected) {
+          state.performanceAttributes[code] = selected;
+          renderPerformanceTable();
+        }
+      ));
+    });
   }
 
   function renderPerformanceTable() {
-    var results = computePositionMetrics(state.players, state.performanceAttributes, performanceValueOf);
+    // Durchschnittsnote ist für jede Position fest dabei (eigene Spalte unten),
+    // zusätzlich zu den je Position gewählten Kennzahlen.
+    var attrsByCode = {};
+    var extraMetrics = [];
+    collectRootPositionCodes(state.players).forEach(function (code) {
+      var extra = state.performanceAttributes[code] || [];
+      attrsByCode[code] = [PERFORMANCE_PINNED_ATTRIBUTE].concat(extra);
+      extra.forEach(function (a) {
+        if (extraMetrics.indexOf(a) === -1) extraMetrics.push(a);
+      });
+    });
 
-    var columns = PERFORMANCE_BASE_COLUMNS.concat(state.performanceAttributes.map(function (attrName) {
+    var results = computePositionMetrics(state.players, attrsByCode, performanceValueOf);
+
+    function metricColumn(attrName) {
       var isPerNinety = PERFORMANCE_PER90_STATS.indexOf(attrName) !== -1;
       return {
         key: 'metric:' + attrName,
@@ -477,7 +493,11 @@ document.addEventListener('DOMContentLoaded', function () {
           return v != null ? v.toFixed(2) : '–';
         }
       };
-    }));
+    }
+
+    var columns = PERFORMANCE_BASE_COLUMNS
+      .concat([metricColumn(PERFORMANCE_PINNED_ATTRIBUTE)])
+      .concat(extraMetrics.map(metricColumn));
 
     if (columns.filter(function (c) { return c.key === state.performanceSortKey; }).length === 0) {
       state.performanceSortKey = 'code';
@@ -494,7 +514,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         renderPerformanceTable();
       },
-      function (r) { openPositionDetail(r.code, state.performanceAttributes, false); }
+      function (r) { openPositionDetail(r.code, attrsByCode[parsePositionSlot(r.code).code] || [], false); }
     );
   }
 

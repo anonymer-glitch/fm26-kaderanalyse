@@ -4,15 +4,32 @@
 // 0-100, Pro-90-Raten 0-10). Diese Werte lassen sich NICHT sinnvoll zu einem
 // einzigen Ø mitteln (unterschiedliche Skalen würden sich gegenseitig verzerren).
 // Deshalb: jede gewählte Kennzahl bekommt ihre eigene Spalte/ihren eigenen
-// Positions-Durchschnitt, statt in einen Blend-Wert einzufließen.
-var PERFORMANCE_ATTRIBUTE_DEFAULTS = ['Durchschnittsnote – Verein'];
+// Positions-Durchschnitt, statt in einen Blend-Wert einzufließen. Die
+// Durchschnittsnote ist immer und für jede Position fest dabei (fixe Spalte in
+// app.js) - die Vorschläge unten sind zusätzliche, je Position unterschiedlich
+// relevante Kennzahlen (Innenverteidiger: Zweikämpfe, Stürmer: Torgefahr, ...),
+// damit eine Schwäche schon ohne manuelles Suchen auffällt. Erste Einschätzung,
+// über die Oberfläche je Position anpassbar.
+var PERFORMANCE_ATTRIBUTE_DEFAULTS = {
+  TW: ['Abgewehrte Bälle pro 90 Minuten', 'Zu-Null-Spiele'],
+  V: ['Anteil erfolgreicher Zweikämpfe', 'Geklärte Bälle pro 90 Minuten', 'Prozentual gewonnene Kopfbälle'],
+  FV: ['Anteil angekommener Flanken aus dem Spiel', 'Ballgewinne pro 90 Minuten'],
+  DM: ['Anteil erfolgreicher Zweikämpfe', 'Ballgewinne pro 90 Minuten'],
+  M: ['Ballgewinne pro 90 Minuten', 'Erspielte Großchancen'],
+  OM: ['Erspielte Großchancen', 'Dribblings / 90', 'Anteil Schüsse aufs Tor'],
+  ST: ['Tore', 'Anteil Schüsse aufs Tor']
+};
+
+// Immer als fixe Spalte dabei, deshalb aus der Kennzahlen-Auswahl ausgenommen.
+var PERFORMANCE_PINNED_ATTRIBUTE = 'Durchschnittsnote – Verein';
 
 // Spalten, die (auch) Dezimalwerte enthalten können und deshalb nicht sicher in
 // den generisch erkannten Ganzzahl-Spalten (numericColumns) landen - werden für
 // die Kennzahlen-Auswahl trotzdem angeboten, sofern im Export vorhanden.
 var PERFORMANCE_DECIMAL_COLUMNS = [
   'Durchschnittsnote – Verein', 'Abgewehrte Bälle pro 90 Minuten', 'Geklärte Bälle pro 90 Minuten',
-  'Ballgewinne pro 90 Minuten', 'Lauf/90', 'Dribblings / 90', 'Sprints/90', 'xG', 'Elfmeterquote'
+  'Ballgewinne pro 90 Minuten', 'Lauf/90', 'Dribblings / 90', 'Sprints/90', 'xG', 'Elfmeterquote',
+  'Anteil Schüsse aufs Tor'
 ];
 
 // Absolute Zähler (keine Rate/kein Prozentwert), die vor der Mittelwertbildung
@@ -30,11 +47,14 @@ function performanceAttributeOptions(headers, numericColumns) {
       options.push(col);
     }
   });
+  var pinnedIdx = options.indexOf(PERFORMANCE_PINNED_ATTRIBUTE);
+  if (pinnedIdx !== -1) options.splice(pinnedIdx, 1);
   return options;
 }
 
-function defaultPerformanceAttributes(availableColumns) {
-  return PERFORMANCE_ATTRIBUTE_DEFAULTS.filter(function (a) { return availableColumns.indexOf(a) !== -1; });
+function defaultPerformanceAttributes(rootCode, availableColumns) {
+  var suggested = PERFORMANCE_ATTRIBUTE_DEFAULTS[rootCode] || [];
+  return suggested.filter(function (a) { return availableColumns.indexOf(a) !== -1; });
 }
 
 // Liest den Wert eines Spielers für eine Leistungskennzahl - rechnet absolute
@@ -49,12 +69,17 @@ function performanceValueOf(player, attrName) {
   return raw;
 }
 
-// Für jeden Positions-Slot: Spieleranzahl plus je gewählter Kennzahl deren
-// eigener Positions-Durchschnitt (kein Blend-Wert über mehrere Kennzahlen).
-function computePositionMetrics(players, attrs, valueOf) {
+// attrsByCode ist je Wurzel-Position eine eigene Kennzahlen-Liste (anders als
+// Qualität muss das hier nicht dieselbe Auswahl für alle Seiten sein - könnte
+// später verfeinert werden, aktuell wie bei Qualität pro Wurzel-Position).
+// Für jeden Positions-Slot: Spieleranzahl plus je Kennzahl deren eigener
+// Positions-Durchschnitt (kein Blend-Wert über mehrere Kennzahlen).
+function computePositionMetrics(players, attrsByCode, valueOf) {
   var slots = sortBySlotOrder(collectPositionSlots(players));
 
   return slots.map(function (slot) {
+    var rootCode = parsePositionSlot(slot).code;
+    var attrs = attrsByCode[rootCode] || [];
     var relevantPlayers = players.filter(function (p) {
       return p.positionSlots.indexOf(slot) !== -1;
     });
