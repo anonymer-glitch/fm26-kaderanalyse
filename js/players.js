@@ -79,6 +79,68 @@ function sortByPositionOrder(codes) {
   });
 }
 
+// Wie extractPositionCodes, behält aber die Seitenangabe pro Code als eigenen
+// "Slot" bei (z.B. "V/FV (R)" -> "V (R)", "FV (R)"; "DM, M/OM (Z)" -> "DM",
+// "M (Z)", "OM (Z)"). Für die benötigten Positionen bei der Lückenanalyse, wo
+// z.B. "V (Z)" und "V (L)" getrennt betrachtet werden sollen.
+function extractPositionSlots(positionStr) {
+  if (!positionStr) return [];
+  var slots = [];
+  positionStr.split(',').forEach(function (segment) {
+    var trimmedSegment = segment.trim();
+    var sideMatch = trimmedSegment.match(/\(([^)]*)\)/);
+    var side = sideMatch ? sideMatch[1].trim() : null;
+    var codesPart = trimmedSegment.replace(/\([^)]*\)/g, '').trim();
+    codesPart.split('/').forEach(function (code) {
+      var trimmedCode = code.trim();
+      if (!trimmedCode) return;
+      slots.push(side ? (trimmedCode + ' (' + side + ')') : trimmedCode);
+    });
+  });
+  return slots;
+}
+
+function collectPositionSlots(players) {
+  var seen = {};
+  var result = [];
+  players.forEach(function (p) {
+    p.positionSlots.forEach(function (slot) {
+      if (!seen[slot]) {
+        seen[slot] = true;
+        result.push(slot);
+      }
+    });
+  });
+  return result;
+}
+
+// Links -> Zentral -> Rechts, passend zur Leserichtung eines Formationsbilds.
+var SIDE_ORDER = ['L', 'Z', 'R'];
+
+function parsePositionSlot(slot) {
+  var match = slot.match(/^(\S+)(?:\s*\(([^)]*)\))?$/);
+  return match ? { code: match[1], side: match[2] || null } : { code: slot, side: null };
+}
+
+function sortBySlotOrder(slots) {
+  return slots.slice().sort(function (a, b) {
+    var pa = parsePositionSlot(a);
+    var pb = parsePositionSlot(b);
+    var ia = POSITION_ORDER.indexOf(pa.code);
+    var ib = POSITION_ORDER.indexOf(pb.code);
+    if (ia === -1 && ib === -1) return pa.code === pb.code ? 0 : pa.code.localeCompare(pb.code);
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    if (ia !== ib) return ia - ib;
+    var sa = pa.side ? SIDE_ORDER.indexOf(pa.side) : -1;
+    var sb = pb.side ? SIDE_ORDER.indexOf(pb.side) : -1;
+    if (sa === -1 && sb === -1) return 0;
+    if (sa === -1) return -1;
+    if (sb === -1) return 1;
+    return sa - sb;
+  });
+}
+
 // Annahme/Vermutung zur Reihenfolge der FM26-Einsatzstatus-Kategorien nach Einsatzzeit
 // (viel -> wenig). Nicht offiziell bestätigt - bei Bedarf hier einfach anpassen.
 var PLAYING_TIME_ORDER = [
@@ -135,6 +197,7 @@ function buildPlayers(records) {
       position: record['Position'] || '',
       idealPosition: record['Idealpos'] || '',
       positionCodes: extractPositionCodes(record['Position']),
+      positionSlots: extractPositionSlots(record['Position']),
       age: isNaN(age) ? null : age,
       contractEnd: parseGermanDate(record['Endet']),
       contractEndRaw: record['Endet'] || '',

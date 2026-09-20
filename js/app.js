@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
     headers: [],
     numericColumns: [],
     positionCodes: [],
+    positionSlots: [],
     neededPositions: [],
     statusOptions: [],
     referenceDate: null,
@@ -68,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function () {
     neededPositionsEl.innerHTML = '';
     neededPositionsEl.appendChild(makeCheckboxGroupField(
       'Benötigte Positionen (für Lücken-Analyse, z.B. bei 3er-Kette keine Außenverteidiger nötig)',
-      state.positionCodes,
+      state.positionSlots,
       state.neededPositions,
       function (selected) {
         state.neededPositions = selected;
@@ -147,7 +148,8 @@ document.addEventListener('DOMContentLoaded', function () {
     state.players = buildPlayers(result.records);
     state.numericColumns = detectNumericColumns(result.headers, result.records);
     state.positionCodes = sortByPositionOrder(collectPositionCodes(state.players));
-    state.neededPositions = state.positionCodes.slice();
+    state.positionSlots = sortBySlotOrder(collectPositionSlots(state.players));
+    state.neededPositions = state.positionSlots.slice();
     state.statusOptions = sortByPlayingTime(uniqueValues(result.records, 'Tatsächliche Einsatzzeiten'));
     state.filters = defaultFilters();
     state.sortKey = 'name';

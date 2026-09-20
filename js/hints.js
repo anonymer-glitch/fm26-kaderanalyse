@@ -64,11 +64,11 @@ function applyHints(players, referenceDate) {
 }
 
 // Für jeden Positionscode: wie viele Spieler im Kader sind dort einsetzbar.
-function computePositionGaps(players, positionCodes) {
-  return positionCodes.map(function (code) {
+function computePositionGaps(players, positionSlots) {
+  return positionSlots.map(function (slot) {
     var count = players.filter(function (p) {
-      return p.positionCodes.indexOf(code) !== -1;
+      return p.positionSlots.indexOf(slot) !== -1;
     }).length;
-    return { code: code, count: count, thin: count < HINT_THRESHOLDS.positionThinCount };
+    return { code: slot, count: count, thin: count < HINT_THRESHOLDS.positionThinCount };
   });
 }
