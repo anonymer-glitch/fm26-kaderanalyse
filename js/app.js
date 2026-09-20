@@ -5,6 +5,9 @@ document.addEventListener('DOMContentLoaded', function () {
   var rowCountEl = document.getElementById('row-count');
   var filtersEl = document.getElementById('filters');
   var tableWrapper = document.getElementById('table-wrapper');
+  var profileModal = document.getElementById('profile-modal');
+  var profileContent = document.getElementById('profile-content');
+  var profileCloseBtn = document.getElementById('profile-close');
 
   var COLUMNS = [
     { key: 'name', label: 'Spieler', get: function (p) { return p.name; } },
@@ -33,6 +36,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   var state = {
     players: [],
+    headers: [],
     numericColumns: [],
     positionCodes: [],
     statusOptions: [],
@@ -40,6 +44,45 @@ document.addEventListener('DOMContentLoaded', function () {
     sortKey: 'name',
     sortDir: 'asc'
   };
+
+  function openProfile(player) {
+    profileContent.innerHTML = '';
+
+    var title = document.createElement('h2');
+    title.textContent = player.name;
+    profileContent.appendChild(title);
+
+    var subtitle = document.createElement('p');
+    subtitle.className = 'profile-subtitle';
+    subtitle.textContent = [player.position, player.raw['Nation']].filter(Boolean).join(' · ');
+    profileContent.appendChild(subtitle);
+
+    var dl = document.createElement('dl');
+    dl.className = 'profile-fields';
+    state.headers.forEach(function (h) {
+      var dt = document.createElement('dt');
+      dt.textContent = h;
+      var dd = document.createElement('dd');
+      dd.textContent = player.raw[h] || '';
+      dl.appendChild(dt);
+      dl.appendChild(dd);
+    });
+    profileContent.appendChild(dl);
+
+    profileModal.hidden = false;
+  }
+
+  function closeProfile() {
+    profileModal.hidden = true;
+  }
+
+  profileCloseBtn.addEventListener('click', closeProfile);
+  profileModal.addEventListener('click', function (event) {
+    if (event.target === profileModal) closeProfile();
+  });
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && !profileModal.hidden) closeProfile();
+  });
 
   fileInput.addEventListener('change', function (event) {
     var file = event.target.files[0];
@@ -96,6 +139,7 @@ document.addEventListener('DOMContentLoaded', function () {
       statusEl.appendChild(warnList);
     }
 
+    state.headers = result.headers;
     state.players = buildPlayers(result.records);
     state.numericColumns = detectNumericColumns(result.headers, result.records);
     state.positionCodes = sortByPositionOrder(collectPositionCodes(state.players));
@@ -283,6 +327,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var tbody = document.createElement('tbody');
     sorted.forEach(function (p) {
       var tr = document.createElement('tr');
+      tr.className = 'clickable-row';
+      tr.addEventListener('click', function () { openProfile(p); });
       columns.forEach(function (col) {
         var td = document.createElement('td');
         var text = col.display ? col.display(p) : col.get(p);
