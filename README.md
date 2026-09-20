@@ -63,12 +63,19 @@ Jeder Entscheidungs-Hinweis zeigt direkt in der Liste, welche Werte ihn ausgelö
 - Formations-Presets (z. B. "3er-Kette", "4-3-3"), die die benötigten Positionen automatisch vorauswählen, statt sie manuell anzuhaken
 - Einstellbare Schwellenwerte für Entscheidungs-Hinweise über die Oberfläche
 - Design/Optik-Überarbeitung: Typografie, Farbschema, evtl. Dark Mode, responsiveres Layout; Diagramme statt nur Tabellen (z. B. Altersverteilung, Gehaltsstruktur, Vertragslaufzeiten)
+- Druck-/Exportansicht: Dashboard oder Kaderübersicht sauber als PDF/Bild ausgeben, z. B. zum Teilen oder Ausdrucken
 - Spieler-Vergleich: 2-3 Spieler explizit nebeneinander gegenüberstellen (bisher nur implizit über die Kaderübersicht-Tabelle möglich)
 
-### Braucht zuerst eine persistente Speicherung (siehe Hinweis unten)
+### Braucht zuerst eine persistente Speicherung (Entscheidung bereits getroffen)
 
 - Verlaufs-Import: mehrere Zeitpunkte pro Spieler speichern und vergleichen
 - Notizen/eigene Tags je Spieler (z. B. "beobachten", "auf keinen Fall verkaufen"), über Re-Importe hinweg erhalten, verknüpft über `Unique ID`
 - "Neu seit letztem Import"-Erkennung / einfacher Versionsvergleich zwischen zwei Importen (Vorstufe zum vollen Verlaufs-Import)
+- Letzten Import automatisch merken: App zeigt beim Öffnen direkt den Stand vom letzten Mal, ohne dass die CSV erneut ausgewählt werden muss
 
-**Warum diese drei zusammengehören:** Die App merkt sich aktuell nichts über das Schließen/Neuladen hinweg (komplett zustandslos, jeder Import startet bei null). Für alle drei Punkte oben müsste sie sich etwas dauerhaft merken - den letzten Importstand für den Versionsvergleich, mehrere Zeitpunkte für den Verlauf, die Notizen unabhängig vom jeweils aktuellen Import. Technisch liefe das am ehesten über den lokalen Speicher des Browsers (localStorage/IndexedDB) - bleibt komplett lokal auf diesem Rechner, kein Server nötig, passt zum bisherigen Prinzip. Einschränkung: an diesen einen Browser/dieses Profil auf diesem Rechner gebunden - bei Browserwechsel, anderem Rechner oder gelöschten Browserdaten sind gespeicherte Notizen/Verläufe weg (kein automatisches Backup). Das wäre die erste echte Persistenz-Entscheidung der App und sollte vor der Umsetzung gemeinsam besprochen werden (u. a. ob zusätzlich ein Export/Import der gespeicherten Daten als Backup/Übertragung sinnvoll ist).
+**Warum diese vier zusammengehören und wie sie gelöst werden:** Die App merkt sich aktuell nichts über das Schließen/Neuladen hinweg (komplett zustandslos, jeder Import startet bei null). Geplante Lösung:
+
+- **Automatisch, ohne Zutun:** Browser-eigener lokaler Speicher (localStorage/IndexedDB) hält Kaderstand, Notizen und Verlauf. Beim Öffnen ist alles direkt wieder da - kein manuelles Hochladen, kein Klicken.
+- **Zusätzlich als Sicherheitsnetz:** ein Exportieren/Importieren-Button für eine Sicherungsdatei - nicht für den Alltag gedacht, sondern für Rechnerwechsel, Backup, oder falls der Browser-Speicher mal geleert wird/verloren geht. Diese Datei kann der Nutzer selbst z. B. in einen OneDrive-Ordner legen, ganz ohne dass die App eine eigene Cloud-Anbindung braucht.
+- **Bewusst nicht:** eine echte OneDrive-/Cloud-Anmeldung direkt in der App (Microsoft-Login, Azure-App-Registrierung, Internetzugriff nötig). Deutlich mehr Aufwand/Fragilität (Token-Ablauf, Login-Fehler, keine Offline-Nutzung mehr) für denselben Alltagsnutzen, den die automatische lokale Speicherung bereits liefert. Bleibt als Option offen, falls der Bedarf sich mal ändert.
+- Bleibt an diesen einen Browser/dieses Profil auf diesem Rechner gebunden - bei Browserwechsel oder gelöschten Browserdaten ist der automatisch gespeicherte Stand weg (dafür ist die Export-Datei da).
