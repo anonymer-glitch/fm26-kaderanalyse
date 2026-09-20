@@ -138,6 +138,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     filtersEl.appendChild(makeSelectField('Attribut', ['– kein Filter –'].concat(state.numericColumns), function (v) {
       state.filters.attrColumn = v === '– kein Filter –' ? '' : v;
+      if (!state.filters.attrColumn && state.sortKey === 'attr') {
+        state.sortKey = 'name';
+        state.sortDir = 'asc';
+      }
       renderTable();
     }));
     filtersEl.appendChild(makeNumberField('Mindestwert', state.filters.attrMin, function (v) {
@@ -239,8 +243,21 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function renderTable() {
+    var columns = COLUMNS.slice();
+    if (state.filters.attrColumn) {
+      var attrName = state.filters.attrColumn;
+      columns.push({
+        key: 'attr',
+        label: attrName,
+        get: function (p) {
+          var val = parseInt(p.raw[attrName], 10);
+          return isNaN(val) ? null : val;
+        }
+      });
+    }
+
     var filtered = filterPlayers(state.players, state.filters);
-    var sorted = sortPlayers(filtered, state.sortKey, state.sortDir, COLUMNS);
+    var sorted = sortPlayers(filtered, state.sortKey, state.sortDir, columns);
 
     rowCountEl.textContent = filtered.length + ' / ' + state.players.length;
 
@@ -249,7 +266,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var thead = document.createElement('thead');
     var headRow = document.createElement('tr');
-    COLUMNS.forEach(function (col) {
+    columns.forEach(function (col) {
       var th = document.createElement('th');
       th.className = 'sortable';
       var arrow = state.sortKey === col.key ? (state.sortDir === 'asc' ? ' ▲' : ' ▼') : '';
@@ -271,7 +288,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var tbody = document.createElement('tbody');
     sorted.forEach(function (p) {
       var tr = document.createElement('tr');
-      COLUMNS.forEach(function (col) {
+      columns.forEach(function (col) {
         var td = document.createElement('td');
         var text = col.display ? col.display(p) : col.get(p);
         td.textContent = text == null ? '' : text;
