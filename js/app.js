@@ -26,14 +26,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
   var defaultFilters = function () {
     return {
-      position: '', ageMin: null, ageMax: null, contractBefore: null,
-      salaryMin: null, salaryMax: null, status: '', attrColumn: '', attrMin: null
+      positions: [], ageMin: null, ageMax: null, contractBefore: null,
+      status: '', attrColumn: '', attrMin: null
     };
   };
 
   var state = {
     players: [],
     numericColumns: [],
+    positionCodes: [],
     statusOptions: [],
     filters: defaultFilters(),
     sortKey: 'name',
@@ -97,7 +98,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     state.players = buildPlayers(result.records);
     state.numericColumns = detectNumericColumns(result.headers, result.records);
-    state.statusOptions = uniqueValues(result.records, 'Tatsächliche Einsatzzeiten');
+    state.positionCodes = collectPositionCodes(state.players);
+    state.statusOptions = sortByPlayingTime(uniqueValues(result.records, 'Tatsächliche Einsatzzeiten'));
     state.filters = defaultFilters();
     state.sortKey = 'name';
     state.sortDir = 'asc';
@@ -110,10 +112,10 @@ document.addEventListener('DOMContentLoaded', function () {
   function renderFilters() {
     filtersEl.innerHTML = '';
 
-    filtersEl.appendChild(makeTextField('Position', state.filters.position, function (v) {
-      state.filters.position = v;
+    filtersEl.appendChild(makeCheckboxGroupField('Position', state.positionCodes, state.filters.positions, function (selected) {
+      state.filters.positions = selected;
       renderTable();
-    }, 'z. B. V, ST, OM'));
+    }));
 
     filtersEl.appendChild(makeNumberField('Alter min', state.filters.ageMin, function (v) {
       state.filters.ageMin = v;
@@ -126,15 +128,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     filtersEl.appendChild(makeDateField('Vertrag endet bis', function (v) {
       state.filters.contractBefore = v;
-      renderTable();
-    }));
-
-    filtersEl.appendChild(makeNumberField('Gehalt min (€/J.)', state.filters.salaryMin, function (v) {
-      state.filters.salaryMin = v;
-      renderTable();
-    }));
-    filtersEl.appendChild(makeNumberField('Gehalt max (€/J.)', state.filters.salaryMax, function (v) {
-      state.filters.salaryMax = v;
       renderTable();
     }));
 
@@ -163,18 +156,36 @@ document.addEventListener('DOMContentLoaded', function () {
     filtersEl.appendChild(resetBtn);
   }
 
-  function makeTextField(label, value, onChange, placeholder) {
+  function makeCheckboxGroupField(label, options, selected, onChange) {
     var wrap = document.createElement('div');
     wrap.className = 'filter-field';
     var lbl = document.createElement('label');
     lbl.textContent = label;
-    var input = document.createElement('input');
-    input.type = 'text';
-    input.value = value || '';
-    if (placeholder) input.placeholder = placeholder;
-    input.addEventListener('input', function () { onChange(input.value); });
+    var group = document.createElement('div');
+    group.className = 'checkbox-group';
+
+    function currentSelection() {
+      return Array.from(group.querySelectorAll('input[type=checkbox]'))
+        .filter(function (b) { return b.checked; })
+        .map(function (b) { return b.dataset.value; });
+    }
+
+    options.forEach(function (opt) {
+      var chip = document.createElement('label');
+      chip.className = 'checkbox-chip';
+      var box = document.createElement('input');
+      box.type = 'checkbox';
+      box.dataset.value = opt;
+      box.checked = selected.indexOf(opt) !== -1;
+      box.addEventListener('change', function () {
+        onChange(currentSelection());
+      });
+      chip.appendChild(box);
+      chip.appendChild(document.createTextNode(opt));
+      group.appendChild(chip);
+    });
     wrap.appendChild(lbl);
-    wrap.appendChild(input);
+    wrap.appendChild(group);
     return wrap;
   }
 

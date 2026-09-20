@@ -34,6 +34,61 @@ function isIntegerString(str) {
   return /^-?\d+$/.test((str || '').trim());
 }
 
+// Zerlegt FM26-Positionsangaben wie "DM, M/OM (Z)" oder "V/FV (R)" in einzelne
+// Positionscodes ("DM", "M", "OM", "V", "FV" ...) ohne Seitenangabe. Wird aus den
+// Daten abgeleitet statt einer festen Liste von FM-Positionscodes.
+function extractPositionCodes(positionStr) {
+  if (!positionStr) return [];
+  var codes = [];
+  positionStr.split(',').forEach(function (segment) {
+    var withoutSide = segment.replace(/\([^)]*\)/g, '');
+    withoutSide.split('/').forEach(function (code) {
+      var trimmed = code.trim();
+      if (trimmed) codes.push(trimmed);
+    });
+  });
+  return codes;
+}
+
+function collectPositionCodes(players) {
+  var seen = {};
+  var result = [];
+  players.forEach(function (p) {
+    p.positionCodes.forEach(function (code) {
+      if (!seen[code]) {
+        seen[code] = true;
+        result.push(code);
+      }
+    });
+  });
+  return result.sort();
+}
+
+// Annahme/Vermutung zur Reihenfolge der FM26-Einsatzstatus-Kategorien nach Einsatzzeit
+// (viel -> wenig). Nicht offiziell bestätigt - bei Bedarf hier einfach anpassen.
+var PLAYING_TIME_ORDER = [
+  'Starspieler',
+  'Schlüsselspieler',
+  'Stammspieler',
+  'Rotationsspieler',
+  'Joker',
+  'Ergänzungsspieler',
+  'Talent vor Durchbruch',
+  'Nachwuchsspieler',
+  'Nicht benötigt'
+];
+
+function sortByPlayingTime(values) {
+  return values.slice().sort(function (a, b) {
+    var ia = PLAYING_TIME_ORDER.indexOf(a);
+    var ib = PLAYING_TIME_ORDER.indexOf(b);
+    if (ia === -1 && ib === -1) return a.localeCompare(b);
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
+}
+
 // Spalten, die zwar rein numerisch aussehen, aber keine Spieler-Attribute/Leistungswerte sind.
 var NON_ATTRIBUTE_COLUMNS = ['Unique ID', 'Alter'];
 
@@ -57,6 +112,7 @@ function buildPlayers(records) {
       name: record['Spieler'] || '',
       position: record['Position'] || '',
       idealPosition: record['Idealpos'] || '',
+      positionCodes: extractPositionCodes(record['Position']),
       age: isNaN(age) ? null : age,
       contractEnd: parseGermanDate(record['Endet']),
       contractEndRaw: record['Endet'] || '',
@@ -83,16 +139,15 @@ function uniqueValues(records, column) {
 
 function filterPlayers(players, filters) {
   return players.filter(function (p) {
-    if (filters.position) {
-      var needle = filters.position.toLowerCase();
-      var hay = (p.position + ' ' + p.idealPosition).toLowerCase();
-      if (hay.indexOf(needle) === -1) return false;
+    if (filters.positions && filters.positions.length > 0) {
+      var matches = p.positionCodes.some(function (code) {
+        return filters.positions.indexOf(code) !== -1;
+      });
+      if (!matches) return false;
     }
     if (filters.ageMin != null && (p.age == null || p.age < filters.ageMin)) return false;
     if (filters.ageMax != null && (p.age == null || p.age > filters.ageMax)) return false;
     if (filters.contractBefore && (!p.contractEnd || p.contractEnd > filters.contractBefore)) return false;
-    if (filters.salaryMin != null && (p.salary == null || p.salary < filters.salaryMin)) return false;
-    if (filters.salaryMax != null && (p.salary == null || p.salary > filters.salaryMax)) return false;
     if (filters.status && p.statusActual !== filters.status) return false;
     if (filters.attrColumn && filters.attrMin != null) {
       var val = parseInt(p.raw[filters.attrColumn], 10);
