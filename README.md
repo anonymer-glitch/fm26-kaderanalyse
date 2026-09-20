@@ -58,8 +58,17 @@ Jeder Entscheidungs-Hinweis zeigt direkt in der Liste, welche Werte ihn ausgelö
 
 ## Erweiterungspunkte (für später, nicht in V1 umgesetzt)
 
-- Verlaufs-Import: mehrere Zeitpunkte pro Spieler speichern und vergleichen
 - Gehalt-vs-Marktwert-Hinweis (Marktwert ist jetzt als Spalte da, aber noch kein automatischer Hinweis daraus - bewusst keine geratene Ratio-Schwelle ohne Rückmeldung)
 - Transfer-Scouting (Spieler außerhalb des eigenen Kaders)
 - Formations-Presets (z. B. "3er-Kette", "4-3-3"), die die benötigten Positionen automatisch vorauswählen, statt sie manuell anzuhaken
 - Einstellbare Schwellenwerte für Entscheidungs-Hinweise über die Oberfläche
+- Design/Optik-Überarbeitung: Typografie, Farbschema, evtl. Dark Mode, responsiveres Layout; Diagramme statt nur Tabellen (z. B. Altersverteilung, Gehaltsstruktur, Vertragslaufzeiten)
+- Spieler-Vergleich: 2-3 Spieler explizit nebeneinander gegenüberstellen (bisher nur implizit über die Kaderübersicht-Tabelle möglich)
+
+### Braucht zuerst eine persistente Speicherung (siehe Hinweis unten)
+
+- Verlaufs-Import: mehrere Zeitpunkte pro Spieler speichern und vergleichen
+- Notizen/eigene Tags je Spieler (z. B. "beobachten", "auf keinen Fall verkaufen"), über Re-Importe hinweg erhalten, verknüpft über `Unique ID`
+- "Neu seit letztem Import"-Erkennung / einfacher Versionsvergleich zwischen zwei Importen (Vorstufe zum vollen Verlaufs-Import)
+
+**Warum diese drei zusammengehören:** Die App merkt sich aktuell nichts über das Schließen/Neuladen hinweg (komplett zustandslos, jeder Import startet bei null). Für alle drei Punkte oben müsste sie sich etwas dauerhaft merken - den letzten Importstand für den Versionsvergleich, mehrere Zeitpunkte für den Verlauf, die Notizen unabhängig vom jeweils aktuellen Import. Technisch liefe das am ehesten über den lokalen Speicher des Browsers (localStorage/IndexedDB) - bleibt komplett lokal auf diesem Rechner, kein Server nötig, passt zum bisherigen Prinzip. Einschränkung: an diesen einen Browser/dieses Profil auf diesem Rechner gebunden - bei Browserwechsel, anderem Rechner oder gelöschten Browserdaten sind gespeicherte Notizen/Verläufe weg (kein automatisches Backup). Das wäre die erste echte Persistenz-Entscheidung der App und sollte vor der Umsetzung gemeinsam besprochen werden (u. a. ob zusätzlich ein Export/Import der gespeicherten Daten als Backup/Übertragung sinnvoll ist).
