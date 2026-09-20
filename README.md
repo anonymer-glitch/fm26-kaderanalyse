@@ -4,7 +4,7 @@ Lokale Web-App zur Analyse des eigenen Football-Manager-26-Kaders auf Basis von 
 
 ## Status
 
-Projekt in Planung/früher Aufbau. Noch kein Feature-Code, aktuell nur Projektstruktur und Dokumentation.
+V1-Funktionsumfang umgesetzt: CSV-Import, Kaderübersicht mit Filtern/Sortierung, Spielerprofil, Entscheidungs-Hinweise und Positionslücken-Übersicht.
 
 ## Grundsatzentscheidungen
 
@@ -33,12 +33,12 @@ Drei getrennte Bereiche, damit spätere Erweiterungen bestehende Bereiche nicht 
   - Vertrag prüfen (Vertragsende bald + Spieler wichtig für die Mannschaft)
   - Verkaufskandidat (hohes Alter + niedriger Einsatzstatus + hohes Gehalt)
   - Verleihkandidat (junger Spieler + niedriger Einsatzstatus)
-  - Positionslücke (Position im Kader dünn besetzt)
+  - Positionslücke (Position im Kader dünn besetzt, nur für manuell als "benötigt" markierte Positionen)
 - Positionslücken-Übersicht
 
 ### Explizit nicht in V1
 
-Transfer-Scouting (Spieler außerhalb des eigenen Kaders), Taktik-Analyse, Verlaufsspeicherung über mehrere Importe, marktwertbasierte Bewertung (Marktwert fehlt aktuell im Export), echte Spielminuten-Statistiken.
+Transfer-Scouting (Spieler außerhalb des eigenen Kaders), automatische Taktik-/Formationserkennung, Verlaufsspeicherung über mehrere Importe, marktwertbasierte Bewertung (Marktwert fehlt aktuell im Export), echte Spielminuten-Statistiken.
 
 ## Erweiterungspunkte (für später, nicht in V1 umgesetzt)
 
@@ -46,5 +46,5 @@ Transfer-Scouting (Spieler außerhalb des eigenen Kaders), Taktik-Analyse, Verla
 - Marktwert-Daten ergänzen, sobald im Export verfügbar
 - Echte Spielminuten/Statistiken statt nur Einsatzstatus-Kategorien
 - Transfer-Scouting (Spieler außerhalb des eigenen Kaders)
-- Taktik-Analyse
+- Formations-Presets (z. B. "3er-Kette", "4-3-3"), die die benötigten Positionen automatisch vorauswählen, statt sie manuell anzuhaken
 - Einstellbare Schwellenwerte für Entscheidungs-Hinweise über die Oberfläche
