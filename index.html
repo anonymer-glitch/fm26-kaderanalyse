@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FM26 Kaderanalyse</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header>
+    <h1>FM26 Kaderanalyse</h1>
+    <p>FM26-CSV-Export importieren und Kader anzeigen</p>
+  </header>
+
+  <main>
+    <section id="import-section">
+      <label for="csv-file">CSV-Datei auswählen:</label>
+      <input type="file" id="csv-file" accept=".csv">
+      <div id="import-status"></div>
+    </section>
+
+    <section id="data-section" hidden>
+      <h2>Importierte Daten (<span id="row-count">0</span> Spieler)</h2>
+      <div id="table-wrapper"></div>
+    </section>
+  </main>
+
+  <script src="js/csvParser.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
