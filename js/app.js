@@ -211,11 +211,9 @@ document.addEventListener('DOMContentLoaded', function () {
       state.standardsAttributes[cat.key] = defaultStandardsAttributes(cat.key, state.numericColumns);
     });
 
+    // Keine Vorauswahl mehr - die Durchschnittsnote (fixe Spalte) reicht als
+    // Standard, alles Weitere wählt man bei Bedarf selbst dazu.
     state.performanceAttributes = {};
-    var performanceOptions = performanceAttributeOptions(state.headers, state.numericColumns);
-    collectRootPositionCodes(state.players).forEach(function (code) {
-      state.performanceAttributes[code] = defaultPerformanceAttributes(code, performanceOptions);
-    });
 
     applyHints(state.players, state.referenceDate);
 
@@ -453,8 +451,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function renderPerformanceSettings() {
     performanceSettingsBodyEl.innerHTML = '';
-    var options = performanceAttributeOptions(state.headers, state.numericColumns);
     collectRootPositionCodes(state.players).forEach(function (code) {
+      var options = performanceAttributeOptionsForPosition(state.headers, code);
       performanceSettingsBodyEl.appendChild(makeCheckboxGroupField(
         code,
         options,

@@ -4,33 +4,105 @@
 // 0-100, Pro-90-Raten 0-10). Diese Werte lassen sich NICHT sinnvoll zu einem
 // einzigen Ø mitteln (unterschiedliche Skalen würden sich gegenseitig verzerren).
 // Deshalb: jede gewählte Kennzahl bekommt ihre eigene Spalte/ihren eigenen
-// Positions-Durchschnitt, statt in einen Blend-Wert einzufließen. Die
-// Durchschnittsnote ist immer und für jede Position fest dabei (fixe Spalte in
-// app.js) - die Vorschläge unten sind zusätzliche, je Position unterschiedlich
-// relevante Kennzahlen (Innenverteidiger: Zweikämpfe, Stürmer: Torgefahr, ...),
-// damit eine Schwäche schon ohne manuelles Suchen auffällt. Erste Einschätzung,
-// über die Oberfläche je Position anpassbar.
-var PERFORMANCE_ATTRIBUTE_DEFAULTS = {
-  TW: ['Abgewehrte Bälle pro 90 Minuten', 'Zu-Null-Spiele'],
-  V: ['Anteil erfolgreicher Zweikämpfe', 'Geklärte Bälle pro 90 Minuten', 'Prozentual gewonnene Kopfbälle'],
-  FV: ['Anteil angekommener Flanken aus dem Spiel', 'Ballgewinne pro 90 Minuten'],
-  DM: ['Anteil erfolgreicher Zweikämpfe', 'Ballgewinne pro 90 Minuten'],
-  M: ['Ballgewinne pro 90 Minuten', 'Erspielte Großchancen'],
-  OM: ['Erspielte Großchancen', 'Dribblings / 90', 'Anteil Schüsse aufs Tor'],
-  ST: ['Tore', 'Anteil Schüsse aufs Tor']
-};
+// Positions-Durchschnitt, statt in einen Blend-Wert einzufließen.
+//
+// Die Durchschnittsnote ist immer und für jede Position fest dabei (fixe Spalte
+// in app.js, siehe PERFORMANCE_PINNED_ATTRIBUTE) - sie ist bereits ein von FM
+// positionsbewusst berechneter Wert und reicht für den schnellen Überblick.
+// Alles andere hier ist rein manuell zuwählbar (kein Startpunkt mehr
+// vorausgewählt), nur die Reihenfolge der Checkboxen ist je Position thematisch
+// sortiert (z.B. Zweikampf-Werte zuerst bei Verteidigern), damit man bei Bedarf
+// schnell die passende Kennzahl findet.
 
-// Immer als fixe Spalte dabei, deshalb aus der Kennzahlen-Auswahl ausgenommen.
 var PERFORMANCE_PINNED_ATTRIBUTE = 'Durchschnittsnote – Verein';
 
-// Spalten, die (auch) Dezimalwerte enthalten können und deshalb nicht sicher in
-// den generisch erkannten Ganzzahl-Spalten (numericColumns) landen - werden für
-// die Kennzahlen-Auswahl trotzdem angeboten, sofern im Export vorhanden.
-var PERFORMANCE_DECIMAL_COLUMNS = [
-  'Durchschnittsnote – Verein', 'Abgewehrte Bälle pro 90 Minuten', 'Geklärte Bälle pro 90 Minuten',
-  'Ballgewinne pro 90 Minuten', 'Lauf/90', 'Dribblings / 90', 'Sprints/90', 'xG', 'Elfmeterquote',
-  'Anteil Schüsse aufs Tor'
+// Echte Saison-Leistungsdaten - bewusst getrennt von den FM-Attributen (Technik,
+// Tackling, Freistöße, Führungsqualitäten, ...), die zu Qualität je Position und
+// Standardsituationen gehören, nicht hierher. Thematisch gruppiert; die
+// Reihenfolge INNERHALB einer Gruppe ist die Anzeige-Reihenfolge in der Auswahl.
+var PERFORMANCE_CATEGORIES = [
+  {
+    key: 'zweikampf',
+    label: 'Zweikampf & Verteidigung',
+    columns: [
+      'Anteil erfolgreicher Zweikämpfe', 'Gewonnene Zweikämpfe', 'Entscheidende Zweikämpfe',
+      'Geklärte Bälle pro 90 Minuten', 'Prozentual gewonnene Kopfbälle', 'Versuchte Kopfballduelle',
+      'Ballgewinne pro 90 Minuten', 'Blk', 'Fehler mit Torfolge', 'PrsErf', 'PrsV'
+    ]
+  },
+  {
+    key: 'fluegel',
+    label: 'Flügel & Flanken',
+    columns: ['Anteil angekommener Flanken aus dem Spiel', 'Versuchte Flanken']
+  },
+  {
+    key: 'offensive',
+    label: 'Offensive & Torgefahr',
+    columns: [
+      'Tore', 'Anteil Schüsse aufs Tor', 'Schüsse', 'xG', 'Erspielte Großchancen',
+      'Dribblings / 90', 'Sprints/90', 'Elfmeter insgesamt', 'Elfmeterquote'
+    ]
+  },
+  {
+    key: 'torwart',
+    label: 'Torwart',
+    columns: ['Abgewehrte Bälle pro 90 Minuten', 'Zu-Null-Spiele', 'Parierte Elfmeter']
+  },
+  {
+    key: 'allgemein',
+    label: 'Allgemein',
+    columns: [
+      'Lauf/90', 'Gefoult worden', 'Fouls', 'Gelbe Karten', 'Rote Karten',
+      'Gewonnene Spiele (%)', 'Spieler des Spiels', 'Start11'
+    ]
+  }
 ];
+
+// Je Wurzel-Position, welche Kategorie zuerst in der Checkbox-Liste steht (Rest
+// folgt in der Reihenfolge oben). Eine Annahme zur fußballerischen Relevanz -
+// über die Kategorien-Zuordnung oben jederzeit anpassbar.
+var PERFORMANCE_CATEGORY_PRIORITY = {
+  TW: ['torwart', 'allgemein', 'zweikampf', 'fluegel', 'offensive'],
+  V: ['zweikampf', 'allgemein', 'fluegel', 'offensive', 'torwart'],
+  FV: ['fluegel', 'zweikampf', 'allgemein', 'offensive', 'torwart'],
+  DM: ['zweikampf', 'allgemein', 'offensive', 'fluegel', 'torwart'],
+  M: ['zweikampf', 'offensive', 'allgemein', 'fluegel', 'torwart'],
+  OM: ['offensive', 'fluegel', 'zweikampf', 'allgemein', 'torwart'],
+  ST: ['offensive', 'allgemein', 'zweikampf', 'fluegel', 'torwart']
+};
+
+// Alle echten Leistungsspalten (unabhängig von Position), sofern im Export vorhanden.
+function performanceAttributeOptions(headers) {
+  var options = [];
+  PERFORMANCE_CATEGORIES.forEach(function (cat) {
+    cat.columns.forEach(function (col) {
+      if (headers.indexOf(col) !== -1 && options.indexOf(col) === -1) {
+        options.push(col);
+      }
+    });
+  });
+  return options;
+}
+
+// Dieselben Spalten wie performanceAttributeOptions, aber je Position so
+// sortiert, dass die für diese Position wichtigste Kategorie zuerst kommt.
+function performanceAttributeOptionsForPosition(headers, rootCode) {
+  var order = PERFORMANCE_CATEGORY_PRIORITY[rootCode] || PERFORMANCE_CATEGORIES.map(function (c) { return c.key; });
+  var byKey = {};
+  PERFORMANCE_CATEGORIES.forEach(function (cat) { byKey[cat.key] = cat; });
+
+  var options = [];
+  order.forEach(function (key) {
+    var cat = byKey[key];
+    if (!cat) return;
+    cat.columns.forEach(function (col) {
+      if (headers.indexOf(col) !== -1 && options.indexOf(col) === -1) {
+        options.push(col);
+      }
+    });
+  });
+  return options;
+}
 
 // Absolute Zähler (keine Rate/kein Prozentwert), die vor der Mittelwertbildung
 // auf "pro 90 Minuten" umgerechnet werden - sonst hätte ein Vielspieler allein
@@ -39,23 +111,6 @@ var PERFORMANCE_PER90_STATS = [
   'Gewonnene Zweikämpfe', 'Entscheidende Zweikämpfe', 'Schüsse', 'Erspielte Großchancen',
   'Versuchte Flanken', 'Fouls', 'Gefoult worden', 'Tore', 'Zu-Null-Spiele', 'Spieler des Spiels'
 ];
-
-function performanceAttributeOptions(headers, numericColumns) {
-  var options = numericColumns.slice();
-  PERFORMANCE_DECIMAL_COLUMNS.forEach(function (col) {
-    if (headers.indexOf(col) !== -1 && options.indexOf(col) === -1) {
-      options.push(col);
-    }
-  });
-  var pinnedIdx = options.indexOf(PERFORMANCE_PINNED_ATTRIBUTE);
-  if (pinnedIdx !== -1) options.splice(pinnedIdx, 1);
-  return options;
-}
-
-function defaultPerformanceAttributes(rootCode, availableColumns) {
-  var suggested = PERFORMANCE_ATTRIBUTE_DEFAULTS[rootCode] || [];
-  return suggested.filter(function (a) { return availableColumns.indexOf(a) !== -1; });
-}
 
 // Liest den Wert eines Spielers für eine Leistungskennzahl - rechnet absolute
 // Zähler (PERFORMANCE_PER90_STATS) auf "pro 90 Minuten" um, alles andere
@@ -69,11 +124,9 @@ function performanceValueOf(player, attrName) {
   return raw;
 }
 
-// attrsByCode ist je Wurzel-Position eine eigene Kennzahlen-Liste (anders als
-// Qualität muss das hier nicht dieselbe Auswahl für alle Seiten sein - könnte
-// später verfeinert werden, aktuell wie bei Qualität pro Wurzel-Position).
-// Für jeden Positions-Slot: Spieleranzahl plus je Kennzahl deren eigener
-// Positions-Durchschnitt (kein Blend-Wert über mehrere Kennzahlen).
+// attrsByCode ist je Wurzel-Position eine eigene Kennzahlen-Liste. Für jeden
+// Positions-Slot: Spieleranzahl plus je Kennzahl deren eigener Positions-
+// Durchschnitt (kein Blend-Wert über mehrere Kennzahlen).
 function computePositionMetrics(players, attrsByCode, valueOf) {
   var slots = sortBySlotOrder(collectPositionSlots(players));
 
