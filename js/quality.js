@@ -53,16 +53,20 @@ function collectRootPositionCodes(players) {
   });
 }
 
-// qualityAttributesByCode: { 'TW': ['Reflexe', ...], 'V': [...], ... }
-// Ergebnis pro Position: Spieleranzahl, Anzahl genutzter Attribute, Ø-Wert (1-20,
-// wie FM-Attribute selbst), sortiert von stärkster zu schwächster Position.
+// qualityAttributesByCode ist je Wurzel-Position (z.B. "V"), gilt also für alle
+// Seiten gleich ("V (L)"/"V (Z)"/"V (R)" nutzen dieselbe Attributauswahl) - nur
+// die Ergebnis-Aufschlüsselung erfolgt je Seite, da z.B. "V" als Ganzes eine
+// dünne linke Seite verstecken kann (siehe Positionslücken).
+// Ergebnis pro Positions-Slot: Spieleranzahl, Anzahl genutzter Attribute, Ø-Wert
+// (1-20, wie FM-Attribute selbst), sortiert von stärkster zu schwächster Position.
 function computePositionQuality(players, qualityAttributesByCode) {
-  var codes = collectRootPositionCodes(players);
+  var slots = sortBySlotOrder(collectPositionSlots(players));
 
-  var results = codes.map(function (code) {
-    var attrs = qualityAttributesByCode[code] || [];
+  var results = slots.map(function (slot) {
+    var rootCode = parsePositionSlot(slot).code;
+    var attrs = qualityAttributesByCode[rootCode] || [];
     var relevantPlayers = players.filter(function (p) {
-      return rootCodesForPlayer(p).indexOf(code) !== -1;
+      return p.positionSlots.indexOf(slot) !== -1;
     });
 
     var playerAverages = relevantPlayers.map(function (p) {
@@ -82,7 +86,7 @@ function computePositionQuality(players, qualityAttributesByCode) {
       ? playerAverages.reduce(function (a, b) { return a + b; }, 0) / playerAverages.length
       : null;
 
-    return { code: code, playerCount: relevantPlayers.length, attributeCount: attrs.length, average: average };
+    return { code: slot, playerCount: relevantPlayers.length, attributeCount: attrs.length, average: average };
   });
 
   results.sort(function (a, b) {

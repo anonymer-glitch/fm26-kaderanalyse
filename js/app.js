@@ -192,6 +192,7 @@ document.addEventListener('DOMContentLoaded', function () {
       function (selected) {
         state.neededPositions = selected;
         renderPositionGaps();
+        renderHintsSummary();
       }
     ));
   }
@@ -241,6 +242,42 @@ document.addEventListener('DOMContentLoaded', function () {
 
       hintsSummaryEl.appendChild(box);
     });
+
+    var gapResults = computePositionGaps(state.players, state.neededPositions);
+    var qualityResults = computePositionQuality(state.players, state.qualityAttributes);
+    var actionItems = computePositionActionItems(gapResults, qualityResults);
+
+    var posBox = document.createElement('div');
+    posBox.className = 'hint-summary-box';
+
+    var posTitle = document.createElement('div');
+    posTitle.className = 'hint-summary-title';
+    posTitle.textContent = 'Position: Handlungsbedarf (' + actionItems.length + ')';
+    posBox.appendChild(posTitle);
+
+    if (actionItems.length > 0) {
+      var posList = document.createElement('ul');
+      actionItems.forEach(function (item) {
+        var li = document.createElement('li');
+        if (item.playerCount > 0) {
+          var link = document.createElement('a');
+          link.href = '#';
+          link.textContent = item.slot;
+          link.addEventListener('click', function (event) {
+            event.preventDefault();
+            openPositionDetail(item.slot);
+          });
+          li.appendChild(link);
+        } else {
+          li.appendChild(document.createTextNode(item.slot));
+        }
+        li.appendChild(document.createTextNode(' – ' + item.reasons.join(', ')));
+        posList.appendChild(li);
+      });
+      posBox.appendChild(posList);
+    }
+
+    hintsSummaryEl.appendChild(posBox);
   }
 
   function renderQualitySettings() {
@@ -253,6 +290,7 @@ document.addEventListener('DOMContentLoaded', function () {
         function (selected) {
           state.qualityAttributes[code] = selected;
           renderQualityTable();
+          renderHintsSummary();
         }
       ));
     });
@@ -290,13 +328,14 @@ document.addEventListener('DOMContentLoaded', function () {
     qualityTableWrapperEl.appendChild(table);
   }
 
-  function openPositionDetail(code) {
+  function openPositionDetail(slot) {
+    var rootCode = parsePositionSlot(slot).code;
     var relevantPlayers = state.players.filter(function (p) {
-      return rootCodesForPlayer(p).indexOf(code) !== -1;
+      return p.positionSlots.indexOf(slot) !== -1;
     });
     var payload = JSON.stringify({
-      code: code,
-      qualityAttributes: state.qualityAttributes[code] || [],
+      code: slot,
+      qualityAttributes: state.qualityAttributes[rootCode] || [],
       records: relevantPlayers.map(function (p) { return p.raw; })
     });
     window.open('position.html#' + encodeURIComponent(payload), '_blank');

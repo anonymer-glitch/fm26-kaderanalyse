@@ -11,7 +11,11 @@ var HINT_THRESHOLDS = {
   loanAgeMax: 21,
   // alles unterhalb "Stammspieler" gilt für den Verleih-Hinweis als "niedriger Einsatzstatus".
   loanMinRank: statusRank('Stammspieler') + 1,
-  positionThinCount: 2
+  positionThinCount: 2,
+  // Eine Position gilt als "schwache Qualität", wenn ihr Ø-Wert um mindestens
+  // diesen Abstand unter dem Ø aller Positionen dieses Kaders liegt (relativ
+  // zum eigenen Kader, nicht zu einer absoluten Liga-Norm).
+  qualityWeakMargin: 1.5
 };
 
 var SELL_LOW_STATUSES = ['Ergänzungsspieler', 'Nicht benötigt'];
@@ -72,5 +76,50 @@ function computePositionGaps(players, positionSlots) {
     }).length;
     var severity = count === 0 ? 'missing' : (count < HINT_THRESHOLDS.positionThinCount ? 'thin' : 'ok');
     return { code: slot, count: count, severity: severity };
+  });
+}
+
+// Fasst Positionslücken und Qualität je Position zu einer Liste "Handlungsbedarf"
+// zusammen: jeder Slot mit zu wenig Spielern und/oder auffällig schwacher
+// Qualität (relativ zum Ø aller Positionen dieses Kaders), sortiert nach
+// Position auf dem Feld.
+function computePositionActionItems(gapResults, qualityResults) {
+  var qualityByCode = {};
+  qualityResults.forEach(function (r) { qualityByCode[r.code] = r; });
+
+  var validAverages = qualityResults
+    .map(function (r) { return r.average; })
+    .filter(function (v) { return v != null; });
+  var mean = validAverages.length > 0
+    ? validAverages.reduce(function (a, b) { return a + b; }, 0) / validAverages.length
+    : null;
+
+  var slots = {};
+  gapResults.forEach(function (g) { slots[g.code] = true; });
+  qualityResults.forEach(function (r) { slots[r.code] = true; });
+
+  var items = [];
+  Object.keys(slots).forEach(function (slot) {
+    var reasons = [];
+
+    var gap = gapResults.filter(function (g) { return g.code === slot; })[0];
+    if (gap && gap.severity !== 'ok') {
+      reasons.push(gap.severity === 'missing' ? 'keine Spieler' : 'nur ' + gap.count + ' Spieler');
+    }
+
+    var quality = qualityByCode[slot];
+    if (quality && quality.average != null && mean != null &&
+        quality.average <= mean - HINT_THRESHOLDS.qualityWeakMargin) {
+      reasons.push('schwache Qualität (Ø ' + quality.average.toFixed(1) + ')');
+    }
+
+    if (reasons.length > 0) {
+      items.push({ slot: slot, playerCount: quality ? quality.playerCount : (gap ? gap.count : 0), reasons: reasons });
+    }
+  });
+
+  var order = sortBySlotOrder(items.map(function (i) { return i.slot; }));
+  return order.map(function (slot) {
+    return items.filter(function (i) { return i.slot === slot; })[0];
   });
 }
