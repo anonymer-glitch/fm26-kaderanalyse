@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>FM26 Kaderanalyse</title>
-  <link rel="stylesheet" href="css/styles.css?v=12">
+  <link rel="stylesheet" href="css/styles.css?v=13">
 </head>
 <body>
   <header>
@@ -55,10 +55,13 @@
         <h3>Taktik</h3>
         <p class="standards-note">Stelle deine Taktik auf dem Feld zusammen (Formations-Preset oder frei per Drag &amp; Drop) - daraus ergeben sich die benötigten Positionen für die Lücken-Analyse.</p>
         <div id="tactics-presets" class="tactics-presets"></div>
-        <div id="tactics-board" class="tactics-board"></div>
-
-        <h3>Kadertiefe</h3>
-        <div id="position-gaps" class="position-gaps"></div>
+        <div class="tactics-layout">
+          <div id="tactics-board" class="tactics-board"></div>
+          <div class="tactics-sidebar">
+            <h4>Kadertiefe</h4>
+            <div id="position-gaps" class="position-gaps"></div>
+          </div>
+        </div>
       </section>
 
       <section id="dashboard-tab-qualitaet" class="dashboard-tab" hidden>
@@ -98,14 +101,14 @@
     </section>
   </main>
 
-  <script src="js/csvParser.js?v=12"></script>
-  <script src="js/players.js?v=12"></script>
-  <script src="js/tactics.js?v=12"></script>
-  <script src="js/hints.js?v=12"></script>
-  <script src="js/quality.js?v=12"></script>
-  <script src="js/performance.js?v=12"></script>
-  <script src="js/standards.js?v=12"></script>
-  <script src="js/storage.js?v=12"></script>
-  <script src="js/app.js?v=12"></script>
+  <script src="js/csvParser.js?v=13"></script>
+  <script src="js/players.js?v=13"></script>
+  <script src="js/tactics.js?v=13"></script>
+  <script src="js/hints.js?v=13"></script>
+  <script src="js/quality.js?v=13"></script>
+  <script src="js/performance.js?v=13"></script>
+  <script src="js/standards.js?v=13"></script>
+  <script src="js/storage.js?v=13"></script>
+  <script src="js/app.js?v=13"></script>
 </body>
 </html>

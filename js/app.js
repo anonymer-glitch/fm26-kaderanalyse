@@ -118,10 +118,10 @@ document.addEventListener('DOMContentLoaded', function () {
     filters: defaultFilters(),
     sortKey: 'name',
     sortDir: 'asc',
-    qualitySortKey: 'average',
-    qualitySortDir: 'desc',
-    performanceSortKey: 'average',
-    performanceSortDir: 'desc',
+    qualitySortKey: 'code',
+    qualitySortDir: 'asc',
+    performanceSortKey: 'code',
+    performanceSortDir: 'asc',
     activeView: 'dashboard',
     activeDashboardTab: 'taktik'
   };
