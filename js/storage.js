@@ -68,7 +68,7 @@ function rotateAndSaveCsvToStorage(fileName, csvText) {
   storageSet('csvFileName', fileName);
   storageSet('csvText', csvText);
   storageSet('csvImportedAt', new Date().toISOString());
-  // Abgehakte Entscheidungs-Hinweise gehören zum aktuellen Import - bei einem
+  // Abgehakter Handlungsbedarf gehört zum aktuellen Import - bei einem
   // neuen Import ändert sich die Datenbasis ohnehin, alte Häkchen wären nicht
   // mehr aussagekräftig (siehe loadResolvedHintsSet weiter unten).
   storageRemove('resolvedHints');
@@ -143,7 +143,7 @@ function saveNoteForPlayer(id, text) {
   storageSet('notes', JSON.stringify(notes));
 }
 
-// Abgehakte Entscheidungs-Hinweise ("erledigt für diesen Import") - anders als
+// Abgehakter Handlungsbedarf ("erledigt für diesen Import") - anders als
 // Notizen NICHT über Re-Importe hinweg gültig, da sich die Datenbasis dann
 // ändert (siehe rotateAndSaveCsvToStorage, das dies bei jedem neuen Import
 // leert). Schlüssel sind z.B. "Vertrag prüfen:123" oder "handlungsbedarf:TW".

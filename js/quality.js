@@ -57,21 +57,23 @@ function collectRootPositionCodes(players) {
 // Seiten gleich ("V (L)"/"V (Z)"/"V (R)" nutzen dieselbe Attributauswahl) - nur
 // die Ergebnis-Aufschlüsselung erfolgt je Seite, da z.B. "V" als Ganzes eine
 // dünne linke Seite verstecken kann (siehe Positionslücken).
+// neededSlots kommt vom Taktik-Board (state.neededPositionCounts) - nur diese
+// Positionen werden angezeigt, damit die Tabelle zur eingestellten Taktik passt
+// statt jede im Kader vorkommende Position aufzulisten (siehe playersMatchingSlot
+// in hints.js für die Wurzel-Code-Zuordnung bei seitenlosen Positionen wie "ST").
 // valueOf(player, attributeName) liest optional einen anderen Wert als den
 // rohen Spaltenwert aus (z.B. Pro-90-Umrechnung bei Leistungsdaten, siehe
 // performance.js) - Standard: einfach die Spalte als Dezimalzahl lesen.
 // Ergebnis pro Positions-Slot: Spieleranzahl, Anzahl genutzter Attribute, Ø-Wert
 // (1-20, wie FM-Attribute selbst), sortiert von stärkster zu schwächster Position.
-function computePositionQuality(players, qualityAttributesByCode, valueOf) {
+function computePositionQuality(players, qualityAttributesByCode, neededSlots, valueOf) {
   valueOf = valueOf || function (p, a) { return parseGermanDecimal(p.raw[a]); };
-  var slots = sortBySlotOrder(collectPositionSlots(players));
+  var slots = sortBySlotOrder(neededSlots.map(function (n) { return n.slot; }));
 
   var results = slots.map(function (slot) {
     var rootCode = parsePositionSlot(slot).code;
     var attrs = qualityAttributesByCode[rootCode] || [];
-    var relevantPlayers = players.filter(function (p) {
-      return p.positionSlots.indexOf(slot) !== -1;
-    });
+    var relevantPlayers = playersMatchingSlot(players, slot);
 
     var playerAverages = relevantPlayers.map(function (p) {
       var sum = 0;

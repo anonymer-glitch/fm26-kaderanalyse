@@ -4,7 +4,7 @@ Lokale Web-App zur Analyse des eigenen Football-Manager-26-Kaders auf Basis von 
 
 ## Status
 
-V1-Funktionsumfang umgesetzt: CSV-Import, Dashboard (Kadertiefe, Entscheidungs-Hinweise, Qualität je Position, Leistung je Position, Standardsituationen & Führung), Kaderübersicht mit Filtern/Sortierung/Marktwert, Spielerprofil.
+V1-Funktionsumfang umgesetzt: CSV-Import, Dashboard (Kadertiefe, Handlungsbedarf, Qualität je Position, Leistung je Position, Standardsituationen & Führung), Kaderübersicht mit Filtern/Sortierung/Marktwert, Spielerprofil.
 
 Der Export ist mittlerweile deutlich reichhaltiger als beim V1-Start (113 statt 46 Spalten): u. a. echte Saison-Leistungsdaten (`Durchschnittsnote – Verein`, xG, ...) und Marktwert (`Transferwert`) sind jetzt dabei. `Lsp Eins`/`Lsp Tore`/`U-Lsp`/`U-Tore` bleiben Länderspiele über die Gesamtkarriere (weiterhin ungeeignet für Saison-Leistung).
 
@@ -13,7 +13,7 @@ Der Export ist mittlerweile deutlich reichhaltiger als beim V1-Start (113 statt 
 Nach dem Import zeigt die App eine einzige, flache Reiter-Leiste (kein Seitenwechsel, alle Reiter teilen sich dieselben Daten im Speicher):
 
 - **Übersicht** – Vergleich zum letzten Import
-- **Entscheidungs-Hinweise**
+- **Handlungsbedarf** (früher "Entscheidungs-Hinweise" genannt - das klang nach passiven Denkanstößen, tatsächlich sind es konkrete Handlungsaufforderungen)
 - **Taktik & Kadertiefe** – das Taktik-Board mit direkt daneben der resultierenden Kadertiefe-Analyse
 - **Qualität je Position**
 - **Leistung je Position**
@@ -35,7 +35,7 @@ Bewusst eine einzige Reiter-Ebene statt verschachtelter Unterreiter (so vorher k
 Drei getrennte Bereiche, damit spätere Erweiterungen bestehende Bereiche nicht anfassen müssen:
 
 - **Import** – CSV → generisches Datenmodell (spaltenname-basiert, tolerant gegenüber wechselnder Spaltenauswahl)
-- **Logik** – reine Auswertungsfunktionen (Filter, Kennzahlen, regelbasierte Entscheidungs-Hinweise): Daten rein, Ergebnis raus, unabhängig von der Oberfläche
+- **Logik** – reine Auswertungsfunktionen (Filter, Kennzahlen, regelbasierter Handlungsbedarf): Daten rein, Ergebnis raus, unabhängig von der Oberfläche
 - **UI** – Anzeige/Ansichten (Kaderübersicht, Spielerprofil, Vergleich, Hinweise)
 
 ## V1-Funktionsumfang
@@ -45,31 +45,33 @@ Drei getrennte Bereiche, damit spätere Erweiterungen bestehende Bereiche nicht 
 - Spielerprofil: Detailansicht mit allen verfügbaren Feldern
 - Filter & Sortierung (Position, Alter, Vertrag, Gehalt, Einsatzstatus, Attribute)
 - Vergleichsansicht mehrerer Spieler
-- Entscheidungs-Hinweise (regelbasiert, transparent, Schwellenwerte später einstellbar):
+- Handlungsbedarf (regelbasiert, transparent, Schwellenwerte später einstellbar):
   - Vertrag prüfen (Vertragsende bald + Spieler wichtig für die Mannschaft)
   - Verkaufskandidat: Status "Nicht benötigt" (immer) ODER hohes Gehalt für eine kleine Rolle ("Ergänzungsspieler", unabhängig vom Alter) ODER [hohes Gehalt ODER hoher Marktwert] + unterdurchschnittliche Leistungsnote ("verkaufen solange der Wert hoch ist")
   - Verleihkandidat: Alter ≤ 21 + Status niedriger als "Rotationsspieler" (der bleibt im Kader), aber nicht "Nicht benötigt" (der ist immer Verkaufskandidat, nie gleichzeitig Verleihkandidat)
   - Status-Diskrepanz: `Tatsächliche Einsatzzeiten` und `Einsatzzeiten` (vereinbarter/erwarteter Status) liegen mindestens 3 Stufen auseinander - unabhängig von der Richtung, da die Daten keine eindeutig "problematische" Richtung zeigen
   - Auslaufende Verträge: alle Spieler, deren Vertrag in derselben Saison wie das gesetzte Spieldatum endet (früher "Vertragsballung" genannt - der Name suggerierte fälschlich einen Schwellenwert, tatsächlich werden einfach alle aufgelistet)
+  - Position: Handlungsbedarf (Positionslücke und/oder auffällig schwache Qualität/Leistung relativ zum Kader-Ø) - beschränkt sich strikt auf die aktuell auf dem Taktik-Board eingestellten Positionen (siehe unten), damit z. B. ein nicht ausgewählter Flügelverteidiger nicht fälschlich als Handlungsbedarf auftaucht
+  - Spieler ohne Position in der Taktik: listet Spieler, die auf keiner aktuell benötigten Position spielen können (z. B. ein reiner zentraler Mittelfeldspieler bei einer Taktik ohne M-Position) - diese Spieler tauchen sonst nirgends mehr auf, seit Qualität/Leistung/Position: Handlungsbedarf auf die Taktik beschränkt sind
   - Jede Zeile hat ein Häkchen zum Markieren als "erledigt" (durchgestrichen, bleibt aber sichtbar) - gilt nur für den aktuellen Import, wird beim nächsten Import automatisch geleert, da sich die Datenbasis dann ohnehin ändert
   - Positionslücke (Kadertiefe reicht nicht für die auf dem Taktik-Board eingestellte Formation, siehe unten)
 - Taktik-Board: Fußballfeld zum Zusammenstellen der benötigten Positionen samt Starter-Anzahl, als sichtbares Raster aus Zeilen (TW/V/DM·FV/M/OM/ST) und Spalten (links/zentral/rechts). Formations-Presets (4-4-2, 4-3-3, 4-2-3-1, 3-5-2/Dreierkette, 5-3-2, 4-1-4-1) setzen automatisch passende Marker; danach frei per Drag & Drop verschiebbar. Zieht man einen Marker in eine andere Zeile, wandelt er sich in den dortigen Positions-Typ um (z.B. Stürmer nach hinten ins Mittelfeld gezogen wird zu "M"); die Spalte bestimmt die Seite. Sonderfall DM-Zeile: zentral bleibt es "DM", außen wird automatisch daraus ein Flügelverteidiger ("FV") - DM ist dadurch immer rein zentral. Marker-Beschriftung aktualisiert sich live. Mehrere Marker im selben Feld (z.B. 2x "V" zentral) zählen als 2 Innenverteidiger-Starter. Die Lücken-Prüfung zählt bei seitenlosen Positionen (TW/DM/ST) jeden Spieler mit passendem Wurzel-Code, auch wenn der Export ihm zusätzlich eine Seite gibt (z.B. "ST (RL)")
 - Vergleich zum letzten Import: zeigt zuerst, mit welchem Zeitpunkt verglichen wird (Datum/Uhrzeit des vorherigen Uploads), dann Neuzugänge, Abgänge, Status- und Vertragsänderungen gegenüber dem direkt vorherigen Import (verknüpft über `Unique ID`), plus eine sortierbare (Klick auf Tabellenkopf) Ansicht des kompletten letzten Imports zum Nachschlagen. Zusätzlich: ist "Einsätze" bei einem Spieler 0 oder leer (Saison hat noch keine Pflichtspiele), wird übergangsweise seine Durchschnittsnote der Vorsaison übernommen, erkennbar am angehängten "*" (z. B. im Spielerprofil) - verschwindet automatisch, sobald echte neue Daten da sind
 - Kadertiefe-Übersicht (direkt neben dem Taktik-Board): Ziel-Kadertiefe je Position = Starter-Anzahl aus der Taktik × 2 (Rotation/Ausfallsicherheit), 4-stufige Ampel (fehlt / dünn = Formation nicht mal bespielbar / knapp = Starter gedeckt, keine Rotation / ok = Zieltiefe erreicht). Jede Kachel ist anklickbar und zeigt darunter die passenden Spieler als normale Tabelle (dieselbe Zuordnung wie die Zählung selbst) - nochmal anklicken blendet sie wieder aus
-- Qualität je Position: Ø-Wert frei wählbarer Attribute je Position (Vorschlag aus FM-Community-Guides als editierbarer Startpunkt, keine feste Bewertungsformel), standardmäßig nach der Positionsspalte sortiert (Feldreihenfolge TW → ST)
-- Leistung je Position: Durchschnittsnote fest je Position (reicht als Überblick, da FM sie schon positionsbewusst berechnet); bei Bedarf zusätzliche Leistungskennzahlen manuell zuwählbar, je Position thematisch sortiert (Verteidiger: Zweikampf zuerst, Stürmer: Offensive zuerst, ...) - eine Spalte pro Kennzahl statt einem Blend-Wert (unterschiedliche Skalen wie Note/Prozent/Pro-90-Rate lassen sich nicht sinnvoll mitteln). Absolute Zähler (z. B. Gewonnene Zweikämpfe) werden automatisch auf "pro 90 Minuten" umgerechnet. Standardmäßig ebenfalls nach der Positionsspalte sortiert (Feldreihenfolge TW → ST)
+- Qualität je Position: Ø-Wert frei wählbarer Attribute je Position (Vorschlag aus FM-Community-Guides als editierbarer Startpunkt, keine feste Bewertungsformel), standardmäßig nach der Positionsspalte sortiert (Feldreihenfolge TW → ST). Zeigt nur die aktuell auf dem Taktik-Board benötigten Positionen (keine Position aus dem Kader, die in der eingestellten Taktik gar nicht vorkommt) - passende Spieler ohne Positions-Treffer werden stattdessen als Vermerk über der Tabelle gezählt und tauchen im Handlungsbedarf-Reiter als eigene Liste auf
+- Leistung je Position: Durchschnittsnote fest je Position (reicht als Überblick, da FM sie schon positionsbewusst berechnet); bei Bedarf zusätzliche Leistungskennzahlen manuell zuwählbar, je Position thematisch sortiert (Verteidiger: Zweikampf zuerst, Stürmer: Offensive zuerst, ...) - eine Spalte pro Kennzahl statt einem Blend-Wert (unterschiedliche Skalen wie Note/Prozent/Pro-90-Rate lassen sich nicht sinnvoll mitteln). Absolute Zähler (z. B. Gewonnene Zweikämpfe) werden automatisch auf "pro 90 Minuten" umgerechnet. Standardmäßig ebenfalls nach der Positionsspalte sortiert (Feldreihenfolge TW → ST). Dieselbe Taktik-Beschränkung und derselbe Vermerk wie bei Qualität je Position
 - Standardsituationen & Führung: Top-5-Vorschläge für Eckbälle, Freistöße, Elfmeter und Führung (Kapitän/Stellvertreter), je Kategorie frei wählbare Attribute. Freistöße/Elfmeter/Führung nutzen mangels eigener FM-Attribute im Export eine Näherung aus ähnlichen Attributen (klar gekennzeichnet)
 
 ### Explizit nicht in V1
 
 Transfer-Scouting (Spieler außerhalb des eigenen Kaders), automatische Taktik-/Formationserkennung, Verlaufsspeicherung über mehrere Importe.
 
-Jeder Entscheidungs-Hinweis zeigt direkt in der Liste, welche Werte ihn ausgelöst haben (z. B. Gehalt + Note vs. Kader-Ø beim Verkaufskandidat), statt nur den Spielernamen.
+Jeder Handlungsbedarf-Eintrag zeigt direkt in der Liste, welche Werte ihn ausgelöst haben (z. B. Gehalt + Note vs. Kader-Ø beim Verkaufskandidat), statt nur den Spielernamen.
 
 ## Erweiterungspunkte (für später, nicht in V1 umgesetzt)
 
 - Transfer-Scouting (Spieler außerhalb des eigenen Kaders)
-- Einstellbare Schwellenwerte für Entscheidungs-Hinweise über die Oberfläche
+- Einstellbare Schwellenwerte für Handlungsbedarf über die Oberfläche
 - Design/Optik-Überarbeitung: Typografie, Farbschema, evtl. Dark Mode, responsiveres Layout; Diagramme statt nur Tabellen (z. B. Altersverteilung, Gehaltsstruktur, Vertragslaufzeiten)
 - Druck-/Exportansicht: Dashboard oder Kaderübersicht sauber als PDF/Bild ausgeben, z. B. zum Teilen oder Ausdrucken
 - Spieler-Vergleich: 2-3 Spieler explizit nebeneinander gegenüberstellen (bisher nur implizit über die Kaderübersicht-Tabelle möglich)

@@ -1,4 +1,4 @@
-// Logik-Schicht: regelbasierte Entscheidungs-Hinweise. Jede Regel ist bewusst
+// Logik-Schicht: regelbasierter Handlungsbedarf. Jede Regel ist bewusst
 // einfach und nachvollziehbar (keine Blackbox-Bewertung). Alle Schwellenwerte
 // sind eine erste Einschätzung/Annahme - hier zentral anpassbar, bis es eine
 // Einstellmöglichkeit in der Oberfläche gibt.
@@ -195,11 +195,9 @@ function computePositionGaps(players, needed) {
 // Kennzahl, die "Leistung je Position" standardmäßig nutzt) - unabhängig davon,
 // welche zusätzlichen Kennzahlen der Nutzer sich dort noch dazu ausgewählt hat,
 // da sich die nicht sinnvoll zu einem Wert mischen lassen (siehe performance.js).
-function computePositionRatings(players) {
-  return sortBySlotOrder(collectPositionSlots(players)).map(function (slot) {
-    var relevantPlayers = players.filter(function (p) {
-      return p.positionSlots.indexOf(slot) !== -1;
-    });
+function computePositionRatings(players, neededSlots) {
+  return sortBySlotOrder(neededSlots.map(function (n) { return n.slot; })).map(function (slot) {
+    var relevantPlayers = playersMatchingSlot(players, slot);
     var ratings = relevantPlayers.map(function (p) { return p.rating; }).filter(function (r) { return r != null; });
     var average = ratings.length > 0
       ? ratings.reduce(function (a, b) { return a + b; }, 0) / ratings.length
@@ -228,10 +226,12 @@ function computePositionActionItems(gapResults, qualityResults, ratingResults) {
   var ratingByCode = byCode(ratingResults);
   var ratingMean = meanOfAverages(ratingResults);
 
+  // Slot-Universum kommt allein aus den Positionslücken (bereits auf die
+  // aktuelle Taktik beschränkt, siehe computePositionGaps) - Qualität und
+  // Leistung sind seit der Taktik-Einschränkung ohnehin dieselbe Menge,
+  // aber gapResults bleibt die eine verbindliche Quelle.
   var slots = {};
   gapResults.forEach(function (g) { slots[g.code] = true; });
-  qualityResults.forEach(function (r) { slots[r.code] = true; });
-  ratingResults.forEach(function (r) { slots[r.code] = true; });
 
   var items = [];
   Object.keys(slots).forEach(function (slot) {
@@ -270,4 +270,18 @@ function computePositionActionItems(gapResults, qualityResults, ratingResults) {
   return order.map(function (slot) {
     return items.filter(function (i) { return i.slot === slot; })[0];
   });
+}
+
+// Spieler, die auf keiner der aktuell in der Taktik benötigten Positionen
+// spielen können - diese tauchen in Positionslücken, Qualität, Leistung und
+// Handlungsbedarf sonst nirgends auf, weil diese jetzt alle auf die Taktik
+// beschränkt sind. Eigener Hinweis dafür (siehe app.js).
+function playersWithoutTacticPosition(players, neededSlots) {
+  var matchedIds = {};
+  neededSlots.forEach(function (n) {
+    playersMatchingSlot(players, n.slot).forEach(function (p) {
+      if (p.id != null) matchedIds[p.id] = true;
+    });
+  });
+  return players.filter(function (p) { return p.id == null || !matchedIds[p.id]; });
 }

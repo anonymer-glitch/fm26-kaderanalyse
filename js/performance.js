@@ -126,16 +126,16 @@ function performanceValueOf(player, attrName) {
 
 // attrsByCode ist je Wurzel-Position eine eigene Kennzahlen-Liste. Für jeden
 // Positions-Slot: Spieleranzahl plus je Kennzahl deren eigener Positions-
-// Durchschnitt (kein Blend-Wert über mehrere Kennzahlen).
-function computePositionMetrics(players, attrsByCode, valueOf) {
-  var slots = sortBySlotOrder(collectPositionSlots(players));
+// Durchschnitt (kein Blend-Wert über mehrere Kennzahlen). neededSlots kommt
+// vom Taktik-Board (state.neededPositionCounts) - siehe computePositionQuality
+// in quality.js für dieselbe Einschränkung/Begründung.
+function computePositionMetrics(players, attrsByCode, neededSlots, valueOf) {
+  var slots = sortBySlotOrder(neededSlots.map(function (n) { return n.slot; }));
 
   return slots.map(function (slot) {
     var rootCode = parsePositionSlot(slot).code;
     var attrs = attrsByCode[rootCode] || [];
-    var relevantPlayers = players.filter(function (p) {
-      return p.positionSlots.indexOf(slot) !== -1;
-    });
+    var relevantPlayers = playersMatchingSlot(players, slot);
 
     var metrics = {};
     attrs.forEach(function (a) {

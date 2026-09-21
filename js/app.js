@@ -17,10 +17,12 @@ document.addEventListener('DOMContentLoaded', function () {
   var hintsSummaryEl = document.getElementById('hints-summary');
   var qualitySettingsBodyEl = document.getElementById('quality-settings-body');
   var qualityTableWrapperEl = document.getElementById('quality-table-wrapper');
+  var qualityNoTacticNoteEl = document.getElementById('quality-no-tactic-note');
   var standardsSettingsBodyEl = document.getElementById('standards-settings-body');
   var standardsResultsEl = document.getElementById('standards-results');
   var performanceSettingsBodyEl = document.getElementById('performance-settings-body');
   var performanceTableWrapperEl = document.getElementById('performance-table-wrapper');
+  var performanceNoTacticNoteEl = document.getElementById('performance-no-tactic-note');
 
   var rowCountEl = document.getElementById('row-count');
   var filtersEl = document.getElementById('filters');
@@ -532,13 +534,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Nach jeder Änderung am Taktik-Board (Preset, hinzugefügter/entfernter Marker,
   // Drag & Drop) neu berechnen und alles betroffene neu rendern - die Positions-
-  // lücken und der "Handlungsbedarf"-Hinweis hängen direkt an state.neededPositionCounts.
+  // lücken, der "Handlungsbedarf"-Hinweis sowie Qualität und Leistung je Position
+  // hängen alle direkt an state.neededPositionCounts.
   function updateTactics() {
     state.neededPositionCounts = neededPositionCountsFromMarkers(state.tacticMarkers);
     saveTacticMarkersToStorage(state.tacticMarkers);
     renderTacticsBoard();
     renderPositionGaps();
     renderHintsSummary();
+    renderQualityTable();
+    renderPerformanceTable();
   }
 
   function applyFormation(name) {
@@ -885,8 +890,8 @@ document.addEventListener('DOMContentLoaded', function () {
     hintsSummaryEl.appendChild(clusterBox);
 
     var gapResults = computePositionGaps(state.players, state.neededPositionCounts);
-    var qualityResults = computePositionQuality(state.players, state.qualityAttributes);
-    var ratingResults = computePositionRatings(state.players);
+    var qualityResults = computePositionQuality(state.players, state.qualityAttributes, state.neededPositionCounts);
+    var ratingResults = computePositionRatings(state.players, state.neededPositionCounts);
     var actionItems = computePositionActionItems(gapResults, qualityResults, ratingResults);
 
     var posBox = document.createElement('div');
@@ -923,6 +928,38 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     hintsSummaryEl.appendChild(posBox);
+
+    var noTacticPlayers = playersWithoutTacticPosition(state.players, state.neededPositionCounts);
+    var noTacticBox = document.createElement('div');
+    noTacticBox.className = 'hint-summary-box';
+
+    var noTacticTitle = document.createElement('div');
+    noTacticTitle.className = 'hint-summary-title';
+    noTacticTitle.textContent = 'Spieler ohne Position in der Taktik (' + noTacticPlayers.length + ')';
+    noTacticBox.appendChild(noTacticTitle);
+
+    if (noTacticPlayers.length > 0) {
+      var noTacticList = document.createElement('ul');
+      noTacticPlayers.forEach(function (p) {
+        var key = 'noTacticPosition:' + p.id;
+        var li = document.createElement('li');
+        li.className = state.resolvedHints[key] ? 'resolved' : '';
+        li.appendChild(makeResolvedCheckbox(key));
+        var link = document.createElement('a');
+        link.href = '#';
+        link.textContent = p.name;
+        link.addEventListener('click', function (event) {
+          event.preventDefault();
+          openProfile(p);
+        });
+        li.appendChild(link);
+        li.appendChild(document.createTextNode(' – ' + p.positionSlots.join(', ')));
+        noTacticList.appendChild(li);
+      });
+      noTacticBox.appendChild(noTacticList);
+    }
+
+    hintsSummaryEl.appendChild(noTacticBox);
   }
 
   function renderQualitySettings() {
@@ -991,8 +1028,26 @@ document.addEventListener('DOMContentLoaded', function () {
     wrapperEl.appendChild(table);
   }
 
+  // Kurzer Vermerk über/unter der Qualitäts-/Leistungstabelle, dass es Spieler
+  // gibt, die auf keiner aktuell benötigten Position spielen können - diese
+  // tauchen absichtlich nicht als eigene Zeile auf (siehe playersWithoutTacticPosition),
+  // damit die Tabelle die Taktikübersicht zeigt statt jede Kader-Position.
+  function renderNoTacticNote(el) {
+    var count = playersWithoutTacticPosition(state.players, state.neededPositionCounts).length;
+    if (count > 0) {
+      el.hidden = false;
+      el.textContent = count === 1
+        ? 'Hinweis: 1 Spieler im Kader passt auf keine Position der aktuellen Taktik (siehe "Handlungsbedarf").'
+        : 'Hinweis: ' + count + ' Spieler im Kader passen auf keine Position der aktuellen Taktik (siehe "Handlungsbedarf").';
+    } else {
+      el.hidden = true;
+      el.textContent = '';
+    }
+  }
+
   function renderQualityTable() {
-    var results = computePositionQuality(state.players, state.qualityAttributes);
+    renderNoTacticNote(qualityNoTacticNoteEl);
+    var results = computePositionQuality(state.players, state.qualityAttributes, state.neededPositionCounts);
     renderRankingTable(qualityTableWrapperEl, QUALITY_COLUMNS, results, state.qualitySortKey, state.qualitySortDir,
       function (key) {
         if (state.qualitySortKey === key) {
@@ -1024,6 +1079,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function renderPerformanceTable() {
+    renderNoTacticNote(performanceNoTacticNoteEl);
     // Durchschnittsnote ist für jede Position fest dabei (eigene Spalte unten),
     // zusätzlich zu den je Position gewählten Kennzahlen.
     var attrsByCode = {};
@@ -1036,7 +1092,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     });
 
-    var results = computePositionMetrics(state.players, attrsByCode, performanceValueOf);
+    var results = computePositionMetrics(state.players, attrsByCode, state.neededPositionCounts, performanceValueOf);
 
     function metricColumn(attrName) {
       var isPerNinety = PERFORMANCE_PER90_STATS.indexOf(attrName) !== -1;
