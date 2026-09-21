@@ -12,7 +12,8 @@ Der Export ist mittlerweile deutlich reichhaltiger als beim V1-Start (113 statt 
 
 Nach dem Import zeigt die App eine einzige, flache Reiter-Leiste (kein Seitenwechsel, alle Reiter teilen sich dieselben Daten im Speicher):
 
-- **Übersicht** – schneller Blick auf "was muss ich gerade wissen": Vergleich zum letzten Import, Entscheidungs-Hinweise
+- **Übersicht** – Vergleich zum letzten Import
+- **Entscheidungs-Hinweise**
 - **Taktik & Kadertiefe** – das Taktik-Board mit direkt daneben der resultierenden Kadertiefe-Analyse
 - **Qualität je Position**
 - **Leistung je Position**

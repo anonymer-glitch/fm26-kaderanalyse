@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>FM26 Kaderanalyse</title>
-  <link rel="stylesheet" href="css/styles.css?v=14">
+  <link rel="stylesheet" href="css/styles.css?v=15">
 </head>
 <body>
   <header>
@@ -32,6 +32,7 @@
 
     <nav id="view-nav" class="view-nav" hidden>
       <button type="button" data-tab="uebersicht" class="view-nav-btn">Übersicht</button>
+      <button type="button" data-tab="hinweise" class="view-nav-btn">Entscheidungs-Hinweise</button>
       <button type="button" data-tab="taktik" class="view-nav-btn">Taktik &amp; Kadertiefe</button>
       <button type="button" data-tab="qualitaet" class="view-nav-btn">Qualität je Position</button>
       <button type="button" data-tab="leistung" class="view-nav-btn">Leistung je Position</button>
@@ -44,8 +45,10 @@
 
       <h3>Vergleich zum letzten Import</h3>
       <div id="import-comparison"></div>
+    </section>
 
-      <h3>Entscheidungs-Hinweise</h3>
+    <section id="tab-hinweise" class="app-tab" hidden>
+      <h2>Entscheidungs-Hinweise</h2>
       <div id="hints-summary" class="hints-summary"></div>
     </section>
 
@@ -98,14 +101,14 @@
     </section>
   </main>
 
-  <script src="js/csvParser.js?v=14"></script>
-  <script src="js/players.js?v=14"></script>
-  <script src="js/tactics.js?v=14"></script>
-  <script src="js/hints.js?v=14"></script>
-  <script src="js/quality.js?v=14"></script>
-  <script src="js/performance.js?v=14"></script>
-  <script src="js/standards.js?v=14"></script>
-  <script src="js/storage.js?v=14"></script>
-  <script src="js/app.js?v=14"></script>
+  <script src="js/csvParser.js?v=15"></script>
+  <script src="js/players.js?v=15"></script>
+  <script src="js/tactics.js?v=15"></script>
+  <script src="js/hints.js?v=15"></script>
+  <script src="js/quality.js?v=15"></script>
+  <script src="js/performance.js?v=15"></script>
+  <script src="js/standards.js?v=15"></script>
+  <script src="js/storage.js?v=15"></script>
+  <script src="js/app.js?v=15"></script>
 </body>
 </html>
