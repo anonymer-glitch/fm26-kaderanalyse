@@ -7,8 +7,10 @@ var HINT_THRESHOLDS = {
   // Gilt für Gehalt und Marktwert gleichermaßen (oberstes Viertel im Kader).
   sellValuePercentile: 0.75,
   loanAgeMax: 21,
-  // alles unterhalb "Stammspieler" gilt für den Verleih-Hinweis als "niedriger Einsatzstatus".
-  loanMinRank: statusRank('Stammspieler') + 1,
+  // Alles unterhalb "Rotationsspieler" gilt für den Verleih-Hinweis als "niedriger
+  // Einsatzstatus" - Rotationsspieler selbst soll im Kader bleiben (bekommt schon
+  // regelmäßig Einsätze), "Nicht benötigt" wird separat immer zum Verkaufskandidat.
+  loanMinRank: statusRank('Rotationsspieler') + 1,
   positionThinCount: 2,
   // Eine Position gilt als "schwache Qualität", wenn ihr Ø-Wert um mindestens
   // diesen Abstand unter dem Ø aller Positionen dieses Kaders liegt (relativ
@@ -20,7 +22,12 @@ var HINT_THRESHOLDS = {
   ratingWeakMargin: 0.3
 };
 
-var SELL_LOW_STATUSES = ['Ergänzungsspieler', 'Nicht benötigt'];
+// "Nicht benötigt" ist ein eigener, immer greifender Auslöser (siehe applyHints) -
+// hier nur noch für den gehaltsabhängigen "kleine Rolle"-Pfad.
+var SELL_LOW_STATUSES = ['Ergänzungsspieler'];
+
+// Status, die immer (unabhängig von Gehalt/Marktwert/Note) Verkaufskandidat auslösen.
+var ALWAYS_SELL_STATUSES = ['Nicht benötigt'];
 
 // "Vertrag prüfen" gilt für alle Status außer "Nicht benötigt" - die können ohnehin
 // gehen, der Rest soll (erstmal) gehalten werden.
@@ -97,10 +104,14 @@ function applyHints(players, referenceDate) {
     // solange er da ist, statt weiter auf eine Erholung zu warten.
     var expensiveForRole = highSalary && lowRoleStatus;
     var valueVsPerformance = (highSalary || highMarketValue) && underperforming;
+    var notNeeded = ALWAYS_SELL_STATUSES.indexOf(p.statusActual) !== -1;
 
-    if (expensiveForRole || valueVsPerformance) {
+    if (notNeeded || expensiveForRole || valueVsPerformance) {
       hints.push('Verkaufskandidat');
       var sellReasons = [];
+      if (notNeeded) {
+        sellReasons.push('Status "' + p.statusActual + '" - kein Teil der Kaderplanung');
+      }
       if (expensiveForRole) {
         sellReasons.push('Gehalt ' + p.salaryRaw + ' (oberstes Viertel) für kleine Rolle (' + p.statusActual + ')');
       }
@@ -113,8 +124,12 @@ function applyHints(players, referenceDate) {
       hintReasons['Verkaufskandidat'] = sellReasons.join(' + ');
     }
 
+    // "Nicht benötigt" ist oben schon immer Verkaufskandidat - hier bewusst
+    // ausgeschlossen, damit ein Spieler nicht gleichzeitig als Verleih- UND
+    // Verkaufskandidat auftaucht.
     if (p.age != null && p.age <= HINT_THRESHOLDS.loanAgeMax &&
-        statusRank(p.statusActual) >= HINT_THRESHOLDS.loanMinRank) {
+        statusRank(p.statusActual) >= HINT_THRESHOLDS.loanMinRank &&
+        ALWAYS_SELL_STATUSES.indexOf(p.statusActual) === -1) {
       hints.push('Verleihkandidat');
       hintReasons['Verleihkandidat'] = 'Alter ' + p.age + ' + Status ' + p.statusActual;
     }
