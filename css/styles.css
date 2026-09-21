@@ -504,6 +504,27 @@ tbody tr.clickable-row:hover {
   color: #555;
 }
 
+.profile-note-label {
+  display: block;
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.profile-note {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 4rem;
+  margin-top: 0.3rem;
+  padding: 0.5rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: vertical;
+}
+
 .profile-fields {
   display: grid;
   grid-template-columns: minmax(140px, 40%) 1fr;

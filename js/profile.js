@@ -1,6 +1,8 @@
 // Eigenständige Seite für ein Spielerprofil. Bekommt die Daten eines einzelnen
-// Spielers per URL-Hash von der Kaderübersicht übergeben (kein Server, kein
-// gemeinsamer Speicher zwischen den Tabs nötig).
+// Spielers per URL-Hash von der Kaderübersicht übergeben (kein Server nötig).
+// Die Notiz ist die eine Ausnahme, die tatsächlich geteilten Speicher braucht
+// (localStorage, siehe storage.js) - damit sie auch beim nächsten Import bzw.
+// im Dashboard-Tab sichtbar bleibt.
 document.addEventListener('DOMContentLoaded', function () {
   var container = document.getElementById('profile-content');
   var hash = window.location.hash.slice(1);
@@ -31,6 +33,24 @@ document.addEventListener('DOMContentLoaded', function () {
   subtitle.className = 'profile-subtitle';
   subtitle.textContent = [record['Position'], record['Nation']].filter(Boolean).join(' · ');
   container.appendChild(subtitle);
+
+  var playerId = record['Unique ID'] || null;
+  if (playerId) {
+    var noteLabel = document.createElement('label');
+    noteLabel.className = 'profile-note-label';
+    noteLabel.textContent = 'Notiz (z. B. "beobachten", "auf keinen Fall verkaufen")';
+    noteLabel.setAttribute('for', 'profile-note');
+    container.appendChild(noteLabel);
+
+    var noteField = document.createElement('textarea');
+    noteField.id = 'profile-note';
+    noteField.className = 'profile-note';
+    noteField.value = loadNotesMap()[playerId] || '';
+    noteField.addEventListener('change', function () {
+      saveNoteForPlayer(playerId, noteField.value.trim());
+    });
+    container.appendChild(noteField);
+  }
 
   var dl = document.createElement('dl');
   dl.className = 'profile-fields';

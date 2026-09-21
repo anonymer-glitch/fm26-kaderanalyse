@@ -53,6 +53,10 @@ document.addEventListener('DOMContentLoaded', function () {
     { key: 'statusActual', label: 'Tatsächliche Einsatzzeiten', get: function (p) { return p.statusActual; } },
     { key: 'statusExpected', label: 'Einsatzzeiten', get: function (p) { return p.statusExpected; } },
     {
+      key: 'note', label: 'Notiz',
+      get: function (p) { return p.id != null ? (state.notes[p.id] || '') : ''; }
+    },
+    {
       key: 'hints', label: 'Hinweise',
       get: function (p) { return p.hints && p.hints.length ? p.hints.join(', ') : ''; }
     }
@@ -94,6 +98,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   var state = {
     players: [],
+    notes: loadNotesMap(),
     previousPlayers: [],
     previousImportedAt: null,
     previousImportSortKey: 'name',
@@ -135,6 +140,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
   Array.from(navEl.querySelectorAll('.view-nav-btn')).forEach(function (btn) {
     btn.addEventListener('click', function () { switchView(btn.dataset.view); });
+  });
+
+  // Notizen werden im separaten Spielerprofil-Tab bearbeitet (siehe profile.js) -
+  // dieses "storage"-Event feuert nur in ANDEREN Tabs, wenn sich localStorage
+  // ändert, und hält so die Notiz-Spalte hier aktuell, ohne dass man neu laden muss.
+  window.addEventListener('storage', function (event) {
+    if (event.key === STORAGE_PREFIX + 'notes') {
+      state.notes = loadNotesMap();
+      if (state.players.length > 0) renderTable();
+    }
   });
 
   referenceDateInput.addEventListener('change', function () {
@@ -228,6 +243,11 @@ document.addEventListener('DOMContentLoaded', function () {
           : null;
         restoreCsvSlotsFromBackup({ fileName: fileName, csvText: data.csvText, importedAt: data.csvImportedAt }, previousInfo);
         loadCurrentIntoApp(fileName, data.csvText, previousInfo);
+      }
+      if (data.notes) {
+        storageSet('notes', JSON.stringify(data.notes));
+        state.notes = data.notes;
+        if (state.players.length > 0) renderTable();
       }
       applyLoadedTacticAndDate(data.tacticMarkers, data.referenceDate);
     };
@@ -407,6 +427,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     fixMinutesPerGameColumn(result.records);
     applyPreviousSeasonRatingFallback(result.records, previousRatingById);
+
+    // Notizen frisch aus dem Speicher laden statt der beim App-Start geladenen
+    // Kopie zu vertrauen - der "storage"-Event für Cross-Tab-Sync feuert nur in
+    // ANDEREN Tabs, nie im eigenen, ein Import hier muss trotzdem den aktuellen
+    // Stand sehen (z.B. nach einer Notiz im selben Tab kurz zuvor).
+    state.notes = loadNotesMap();
 
     var hasIdColumn = result.headers.indexOf('Unique ID') !== -1;
     var statusLines = [];

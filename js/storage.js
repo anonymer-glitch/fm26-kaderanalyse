@@ -112,6 +112,33 @@ function loadReferenceDateFromStorage() {
   return storageGet('referenceDate') || '';
 }
 
+// Notizen je Spieler, verknüpft über "Unique ID" - bleiben über Re-Importe
+// hinweg erhalten (anders als der Kaderstand selbst, der bei jedem Import
+// überschrieben wird). Wird sowohl vom Dashboard-Tab als auch vom separaten
+// Spielerprofil-Tab genutzt (siehe profile.js) - beide teilen sich denselben
+// localStorage, ein "storage"-Event hält den Dashboard-Tab bei Änderungen im
+// Profil-Tab auf dem Laufenden (siehe app.js).
+function loadNotesMap() {
+  var raw = storageGet('notes');
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw) || {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveNoteForPlayer(id, text) {
+  if (id == null) return;
+  var notes = loadNotesMap();
+  if (text) {
+    notes[id] = text;
+  } else {
+    delete notes[id];
+  }
+  storageSet('notes', JSON.stringify(notes));
+}
+
 function clearStoredKader() {
   storageRemove('csvFileName');
   storageRemove('csvText');
@@ -121,6 +148,7 @@ function clearStoredKader() {
   storageRemove('previousCsvImportedAt');
   storageRemove('tacticMarkers');
   storageRemove('referenceDate');
+  storageRemove('notes');
 }
 
 // Backup-Datei: fasst den gesamten gespeicherten Stand in einem JSON-Objekt
@@ -140,7 +168,8 @@ function buildBackupPayload() {
     previousCsvText: previous ? previous.csvText : null,
     previousCsvImportedAt: previous ? previous.importedAt : null,
     tacticMarkers: loadTacticMarkersFromStorage(),
-    referenceDate: loadReferenceDateFromStorage()
+    referenceDate: loadReferenceDateFromStorage(),
+    notes: loadNotesMap()
   }, null, 2);
 }
 

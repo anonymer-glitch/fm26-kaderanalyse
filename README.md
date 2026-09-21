@@ -79,7 +79,8 @@ Bleibt an diesen einen Browser/dieses Profil auf diesem Rechner gebunden - bei B
 
 **Umgesetzt:** Vergleich zum letzten Import (Neuzugänge/Abgänge/Status-/Vertragsänderungen) und Durchschnittsnote-Fallback aus der Vorsaison - siehe oben im Funktionsumfang. Bewusst nur *einen* Schritt zurück (kein voller Verlauf über mehrere Zeitpunkte) - reicht für "was hat sich seit dem letzten Mal geändert" und den Saisonwechsel-Fall, ohne die Komplexität einer echten Historie.
 
+**Ebenfalls umgesetzt:** Notizen je Spieler (Freitext, z. B. "beobachten", "auf keinen Fall verkaufen") - editierbar im Spielerprofil, sichtbar als eigene Spalte in der Kaderübersicht. Verknüpft über `Unique ID`, bleiben deshalb über Re-Importe hinweg erhalten (anders als der Kaderstand selbst) und wandern mit in die Sicherungsdatei. Werden beim "Gespeicherten Kader löschen" mit zurückgesetzt. Ein `storage`-Event hält die Kaderübersicht aktuell, wenn eine Notiz im separaten Spielerprofil-Tab geändert wird.
+
 **Nächste Schritte, falls gewünscht:**
 
 - Voller Verlaufs-Import: mehr als einen Zeitpunkt zurück speichern und durchblättern/vergleichen (statt nur "aktuell vs. direkt davor")
-- Notizen/eigene Tags je Spieler (z. B. "beobachten", "auf keinen Fall verkaufen"), über Re-Importe hinweg erhalten, verknüpft über `Unique ID`
