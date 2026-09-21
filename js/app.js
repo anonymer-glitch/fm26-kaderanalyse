@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function () {
     headers: [],
     numericColumns: [],
     positionSlots: [],
-    neededPositions: [],
+    neededPositionCounts: [],
     tacticMarkers: [],
     activeFormation: null,
     statusOptions: [],
@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function () {
     state.positionSlots = sortBySlotOrder(collectPositionSlots(state.players));
     state.activeFormation = '4-4-2';
     state.tacticMarkers = formationMarkers(state.activeFormation);
-    state.neededPositions = neededPositionsFromMarkers(state.tacticMarkers);
+    state.neededPositionCounts = neededPositionCountsFromMarkers(state.tacticMarkers);
     state.statusOptions = sortByPlayingTime(uniqueValues(result.records, 'Tatsächliche Einsatzzeiten'));
     state.filters = defaultFilters();
     state.sortKey = 'name';
@@ -242,9 +242,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Nach jeder Änderung am Taktik-Board (Preset, hinzugefügter/entfernter Marker,
   // Drag & Drop) neu berechnen und alles betroffene neu rendern - die Positions-
-  // lücken und der "Handlungsbedarf"-Hinweis hängen direkt an state.neededPositions.
+  // lücken und der "Handlungsbedarf"-Hinweis hängen direkt an state.neededPositionCounts.
   function updateTactics() {
-    state.neededPositions = neededPositionsFromMarkers(state.tacticMarkers);
+    state.neededPositionCounts = neededPositionCountsFromMarkers(state.tacticMarkers);
     renderTacticsBoard();
     renderPositionGaps();
     renderHintsSummary();
@@ -304,7 +304,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // das Feld verlässt (z.B. schnelle Bewegung an den Rand).
   function makeMarkerDraggable(el, marker) {
     el.addEventListener('pointerdown', function (event) {
-      if (event.target !== el) return; // nicht beim Klick auf den Entfernen-Button
+      if (event.target.classList.contains('tactic-marker-remove')) return; // nicht beim Klick auf den Entfernen-Button
       event.preventDefault();
       el.setPointerCapture(event.pointerId);
       var rect = tacticsBoardEl.getBoundingClientRect();
@@ -316,6 +316,10 @@ document.addEventListener('DOMContentLoaded', function () {
         marker.y = y;
         el.style.left = x + '%';
         el.style.top = y + '%';
+        // Live-Update, damit sofort sichtbar ist, wie sich die Position beim
+        // Zonenwechsel verändert (z.B. "V (L)" -> "V (Z)").
+        el.querySelector('.tactic-marker-label').textContent = markerToSlot(marker);
+        el.title = markerToSlot(marker);
       }
       function onUp() {
         el.removeEventListener('pointermove', onMove);
@@ -345,13 +349,34 @@ document.addEventListener('DOMContentLoaded', function () {
     tacticsBoardEl.appendChild(boxTop);
     tacticsBoardEl.appendChild(boxBottom);
 
+    // Zonenlinien + Beschriftung (links/zentral/rechts) - macht sichtbar, welche
+    // Zone ein verschobener Marker gerade zugeordnet bekommt (siehe markerToSlot).
+    TACTICS_ZONE_BOUNDARIES.forEach(function (boundary) {
+      var line = document.createElement('div');
+      line.className = 'tactics-zone-line';
+      line.style.left = boundary + '%';
+      tacticsBoardEl.appendChild(line);
+    });
+    var zoneMidpoints = [TACTICS_ZONE_BOUNDARIES[0] / 2, 50, (TACTICS_ZONE_BOUNDARIES[1] + 100) / 2];
+    ['L', 'Z', 'R'].forEach(function (label, i) {
+      var zoneLabel = document.createElement('div');
+      zoneLabel.className = 'tactics-zone-label';
+      zoneLabel.style.left = zoneMidpoints[i] + '%';
+      zoneLabel.textContent = label;
+      tacticsBoardEl.appendChild(zoneLabel);
+    });
+
     state.tacticMarkers.forEach(function (marker) {
       var el = document.createElement('div');
       el.className = 'tactic-marker';
       el.style.left = marker.x + '%';
       el.style.top = marker.y + '%';
-      el.textContent = marker.code;
       el.title = markerToSlot(marker);
+
+      var label = document.createElement('span');
+      label.className = 'tactic-marker-label';
+      label.textContent = markerToSlot(marker);
+      el.appendChild(label);
 
       var removeBtn = document.createElement('span');
       removeBtn.className = 'tactic-marker-remove';
@@ -370,11 +395,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function renderPositionGaps() {
     positionGapsEl.innerHTML = '';
-    var gaps = computePositionGaps(state.players, state.neededPositions);
+    var gaps = computePositionGaps(state.players, state.neededPositionCounts);
     gaps.forEach(function (gap) {
       var chip = document.createElement('span');
       chip.className = 'position-gap-chip' + (gap.severity !== 'ok' ? ' ' + gap.severity : '');
-      chip.textContent = gap.code + ': ' + gap.count;
+      chip.title = gap.neededStarters + ' Starter benötigt, Zieltiefe ' + gap.target;
+      chip.textContent = gap.code + ': ' + gap.count + '/' + gap.target;
       positionGapsEl.appendChild(chip);
     });
   }
@@ -450,7 +476,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     hintsSummaryEl.appendChild(clusterBox);
 
-    var gapResults = computePositionGaps(state.players, state.neededPositions);
+    var gapResults = computePositionGaps(state.players, state.neededPositionCounts);
     var qualityResults = computePositionQuality(state.players, state.qualityAttributes);
     var ratingResults = computePositionRatings(state.players);
     var actionItems = computePositionActionItems(gapResults, qualityResults, ratingResults);

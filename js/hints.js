@@ -11,7 +11,10 @@ var HINT_THRESHOLDS = {
   // Einsatzstatus" - Rotationsspieler selbst soll im Kader bleiben (bekommt schon
   // regelmäßig Einsätze), "Nicht benötigt" wird separat immer zum Verkaufskandidat.
   loanMinRank: statusRank('Rotationsspieler') + 1,
-  positionThinCount: 2,
+  // Ziel-Kadertiefe je Positions-Slot = benötigte Starter (aus dem Taktik-Board,
+  // z.B. 2 Marker auf "V (Z)" = 2 Starter) mal diesem Faktor - z.B. 2 Starter auf
+  // Innenverteidiger -> Zieltiefe 4 im Kader für Rotation/Ausfallsicherheit.
+  positionDepthMultiplier: 2,
   // Eine Position gilt als "schwache Qualität", wenn ihr Ø-Wert um mindestens
   // diesen Abstand unter dem Ø aller Positionen dieses Kaders liegt (relativ
   // zum eigenen Kader, nicht zu einer absoluten Liga-Norm).
@@ -152,15 +155,25 @@ function applyHints(players, referenceDate) {
   });
 }
 
-// Für jeden Positionscode: wie viele Spieler im Kader sind dort einsetzbar.
-// severity: 'missing' (0 Spieler), 'thin' (weniger als positionThinCount), 'ok'.
-function computePositionGaps(players, positionSlots) {
-  return positionSlots.map(function (slot) {
+// Für jeden Positions-Slot (mit Starter-Anzahl aus dem Taktik-Board, siehe
+// neededPositionCountsFromMarkers): wie viele Spieler im Kader sind dort
+// einsetzbar, gemessen an der Kadertiefe, die die aktuelle Taktik braucht.
+// Ziel-Kadertiefe = Starter-Anzahl * positionDepthMultiplier. Ampel:
+// 'missing' (0 Spieler) -> 'thin' (weniger als die Starter selbst, Taktik nicht
+// bespielbar) -> 'tight' (Starter gedeckt, aber keine Rotation) -> 'ok' (Ziel
+// erreicht).
+function computePositionGaps(players, needed) {
+  return needed.map(function (n) {
     var count = players.filter(function (p) {
-      return p.positionSlots.indexOf(slot) !== -1;
+      return p.positionSlots.indexOf(n.slot) !== -1;
     }).length;
-    var severity = count === 0 ? 'missing' : (count < HINT_THRESHOLDS.positionThinCount ? 'thin' : 'ok');
-    return { code: slot, count: count, severity: severity };
+    var target = n.count * HINT_THRESHOLDS.positionDepthMultiplier;
+    var severity;
+    if (count === 0) severity = 'missing';
+    else if (count < n.count) severity = 'thin';
+    else if (count < target) severity = 'tight';
+    else severity = 'ok';
+    return { code: n.slot, count: count, neededStarters: n.count, target: target, severity: severity };
   });
 }
 
@@ -212,7 +225,13 @@ function computePositionActionItems(gapResults, qualityResults, ratingResults) {
 
     var gap = gapResults.filter(function (g) { return g.code === slot; })[0];
     if (gap && gap.severity !== 'ok') {
-      reasons.push(gap.severity === 'missing' ? 'keine Spieler' : 'nur ' + gap.count + ' Spieler');
+      if (gap.severity === 'missing') {
+        reasons.push('keine Spieler');
+      } else if (gap.severity === 'thin') {
+        reasons.push('nur ' + gap.count + ' von ' + gap.neededStarters + ' Startern besetzt');
+      } else {
+        reasons.push('nur ' + gap.count + ' Spieler (Ziel ' + gap.target + ' für Rotation)');
+      }
     }
 
     var quality = qualityByCode[slot];

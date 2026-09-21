@@ -57,9 +57,15 @@ var FORMATIONS = {
 // Seitenangabe vor (siehe extractPositionSlots in players.js).
 var TACTICS_SIDED_CODES = ['V', 'FV', 'M', 'OM'];
 
+// Grenzen der drei Zonen in Prozent der Feldbreite - z.B. macht ein "V"-Marker
+// links von TACTICS_ZONE_BOUNDARIES[0] einen Außenverteidiger ("V (L)"), einer
+// dazwischen einen Innenverteidiger ("V (Z)"). Auch fürs Einzeichnen der
+// Zonenlinien auf dem Board genutzt (siehe renderTacticsBoard in app.js).
+var TACTICS_ZONE_BOUNDARIES = [38, 62];
+
 function tacticsSideForX(x) {
-  if (x < 38) return 'L';
-  if (x > 62) return 'R';
+  if (x < TACTICS_ZONE_BOUNDARIES[0]) return 'L';
+  if (x > TACTICS_ZONE_BOUNDARIES[1]) return 'R';
   return 'Z';
 }
 
@@ -84,17 +90,16 @@ function formationMarkers(name) {
   });
 }
 
-// Eindeutige, nach Position auf dem Feld sortierte Liste benötigter Slots aus den
-// aktuell auf dem Board platzierten Markern.
-function neededPositionsFromMarkers(markers) {
-  var seen = {};
-  var result = [];
+// Wie viele Starter pro Positions-Slot aktuell auf dem Board stehen (mehrere
+// Marker im selben Slot, z.B. 2x "V" in der Zentral-Zone, zählen als 2 Starter
+// auf "V (Z)") - Grundlage für die Kadertiefe-Prüfung in computePositionGaps.
+function neededPositionCountsFromMarkers(markers) {
+  var counts = {};
   markers.forEach(function (m) {
     var slot = markerToSlot(m);
-    if (!seen[slot]) {
-      seen[slot] = true;
-      result.push(slot);
-    }
+    counts[slot] = (counts[slot] || 0) + 1;
   });
-  return sortBySlotOrder(result);
+  return sortBySlotOrder(Object.keys(counts)).map(function (slot) {
+    return { slot: slot, count: counts[slot] };
+  });
 }

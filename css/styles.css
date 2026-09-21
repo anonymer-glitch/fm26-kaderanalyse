@@ -121,20 +121,37 @@ header p {
   border-bottom: none;
 }
 
+.tactics-zone-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-left: 1px dashed rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+}
+
+.tactics-zone-label {
+  position: absolute;
+  top: 0.3rem;
+  transform: translateX(-50%);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.7rem;
+  font-weight: 600;
+  pointer-events: none;
+}
+
 .tactic-marker {
   position: absolute;
-  width: 34px;
-  height: 34px;
-  margin-left: -17px;
-  margin-top: -17px;
-  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  padding: 0.3rem 0.5rem;
+  border-radius: 14px;
   background: #1a1a1a;
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 600;
+  white-space: nowrap;
   cursor: grab;
   user-select: none;
   touch-action: none;
@@ -171,6 +188,11 @@ header p {
   border-radius: 4px;
   padding: 0.25rem 0.6rem;
   font-size: 0.85rem;
+}
+
+.position-gap-chip.tight {
+  background: #fef9c3;
+  color: #854d0e;
 }
 
 .position-gap-chip.thin {
