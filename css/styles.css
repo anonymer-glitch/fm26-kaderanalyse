@@ -271,6 +271,12 @@ header p {
   margin-bottom: 0.5rem;
 }
 
+#dashboard-tab-nav {
+  margin-top: 2rem;
+  border-top: 1px solid #ddd;
+  padding-top: 1.5rem;
+}
+
 .hints-summary {
   display: flex;
   flex-wrap: wrap;

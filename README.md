@@ -12,7 +12,7 @@ Der Export ist mittlerweile deutlich reichhaltiger als beim V1-Start (113 statt 
 
 Nach dem Import zeigt die App zwei umschaltbare Ansichten (Buttons oben, kein Seitenwechsel, da beide dieselben Daten im Speicher brauchen):
 
-- **Dashboard** – Startansicht: Kadertiefe, Entscheidungs-Hinweise, Qualität je Position
+- **Dashboard** – Startansicht: oben immer sichtbar der schnelle Überblick (Vergleich zum letzten Import, Entscheidungs-Hinweise), darunter als Unterreiter die Bereiche zum gezielten Vertiefen (Taktik & Kadertiefe, Qualität je Position, Leistung je Position, Standardsituationen & Führung). Reine Sichtbarkeits-Umschaltung - jede Sektion rendert unabhängig davon weiter, ob ihr Reiter gerade sichtbar ist
 - **Kaderübersicht** – die filterbare/sortierbare Tabelle
 
 Weitere Ansichten (z. B. später eine Verlaufs-Ansicht) lassen sich als zusätzlicher Button ergänzen, ohne Bestehendes umzubauen.

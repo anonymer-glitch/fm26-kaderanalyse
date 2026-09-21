@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>FM26 Kaderanalyse</title>
-  <link rel="stylesheet" href="css/styles.css?v=11">
+  <link rel="stylesheet" href="css/styles.css?v=12">
 </head>
 <body>
   <header>
@@ -41,39 +41,54 @@
       <h3>Vergleich zum letzten Import</h3>
       <div id="import-comparison"></div>
 
-      <h3>Taktik</h3>
-      <p class="standards-note">Stelle deine Taktik auf dem Feld zusammen (Formations-Preset oder frei per Drag &amp; Drop) - daraus ergeben sich die benötigten Positionen für die Lücken-Analyse.</p>
-      <div id="tactics-presets" class="tactics-presets"></div>
-      <div id="tactics-board" class="tactics-board"></div>
-
-      <h3>Kadertiefe</h3>
-      <div id="position-gaps" class="position-gaps"></div>
-
       <h3>Entscheidungs-Hinweise</h3>
       <div id="hints-summary" class="hints-summary"></div>
 
-      <h3>Qualität je Position</h3>
-      <details id="quality-settings" class="quality-settings">
-        <summary>Attribute je Position anpassen (Startpunkt, editierbar)</summary>
-        <div id="quality-settings-body"></div>
-      </details>
-      <div id="quality-table-wrapper"></div>
+      <nav id="dashboard-tab-nav" class="view-nav">
+        <button type="button" data-tab="taktik" class="view-nav-btn dashboard-tab-btn">Taktik &amp; Kadertiefe</button>
+        <button type="button" data-tab="qualitaet" class="view-nav-btn dashboard-tab-btn">Qualität je Position</button>
+        <button type="button" data-tab="leistung" class="view-nav-btn dashboard-tab-btn">Leistung je Position</button>
+        <button type="button" data-tab="standards" class="view-nav-btn dashboard-tab-btn">Standardsituationen &amp; Führung</button>
+      </nav>
 
-      <h3>Leistung je Position</h3>
-      <p class="standards-note">Auf Basis echter Saisondaten (z. B. Durchschnittsnote) statt Attributen/Potenzial. Hat ein Spieler diese Saison noch keine Spiele gemacht, wird übergangsweise seine Vorsaison-Note verwendet, erkennbar am "*" (z. B. im Spielerprofil) - verschwindet automatisch, sobald echte neue Daten da sind.</p>
-      <details id="performance-settings" class="quality-settings">
-        <summary>Leistungskennzahlen anpassen (Startpunkt, editierbar)</summary>
-        <div id="performance-settings-body"></div>
-      </details>
-      <div id="performance-table-wrapper"></div>
+      <section id="dashboard-tab-taktik" class="dashboard-tab">
+        <h3>Taktik</h3>
+        <p class="standards-note">Stelle deine Taktik auf dem Feld zusammen (Formations-Preset oder frei per Drag &amp; Drop) - daraus ergeben sich die benötigten Positionen für die Lücken-Analyse.</p>
+        <div id="tactics-presets" class="tactics-presets"></div>
+        <div id="tactics-board" class="tactics-board"></div>
 
-      <h3>Standardsituationen &amp; Führung</h3>
-      <p class="standards-note">Nutzt die echten FM-Attribute (Freistöße, Elfmeter, Führungsqualitäten), sofern im Export vorhanden. Fehlen sie, bleibt die Vorauswahl leer – du kannst unten trotzdem Ersatz-Attribute wählen.</p>
-      <details id="standards-settings" class="quality-settings">
-        <summary>Attribute je Kategorie anpassen (Startpunkt, editierbar)</summary>
-        <div id="standards-settings-body"></div>
-      </details>
-      <div id="standards-results" class="standards-results"></div>
+        <h3>Kadertiefe</h3>
+        <div id="position-gaps" class="position-gaps"></div>
+      </section>
+
+      <section id="dashboard-tab-qualitaet" class="dashboard-tab" hidden>
+        <h3>Qualität je Position</h3>
+        <details id="quality-settings" class="quality-settings">
+          <summary>Attribute je Position anpassen (Startpunkt, editierbar)</summary>
+          <div id="quality-settings-body"></div>
+        </details>
+        <div id="quality-table-wrapper"></div>
+      </section>
+
+      <section id="dashboard-tab-leistung" class="dashboard-tab" hidden>
+        <h3>Leistung je Position</h3>
+        <p class="standards-note">Auf Basis echter Saisondaten (z. B. Durchschnittsnote) statt Attributen/Potenzial. Hat ein Spieler diese Saison noch keine Spiele gemacht, wird übergangsweise seine Vorsaison-Note verwendet, erkennbar am "*" (z. B. im Spielerprofil) - verschwindet automatisch, sobald echte neue Daten da sind.</p>
+        <details id="performance-settings" class="quality-settings">
+          <summary>Leistungskennzahlen anpassen (Startpunkt, editierbar)</summary>
+          <div id="performance-settings-body"></div>
+        </details>
+        <div id="performance-table-wrapper"></div>
+      </section>
+
+      <section id="dashboard-tab-standards" class="dashboard-tab" hidden>
+        <h3>Standardsituationen &amp; Führung</h3>
+        <p class="standards-note">Nutzt die echten FM-Attribute (Freistöße, Elfmeter, Führungsqualitäten), sofern im Export vorhanden. Fehlen sie, bleibt die Vorauswahl leer – du kannst unten trotzdem Ersatz-Attribute wählen.</p>
+        <details id="standards-settings" class="quality-settings">
+          <summary>Attribute je Kategorie anpassen (Startpunkt, editierbar)</summary>
+          <div id="standards-settings-body"></div>
+        </details>
+        <div id="standards-results" class="standards-results"></div>
+      </section>
     </section>
 
     <section id="kader-view" hidden>
@@ -83,14 +98,14 @@
     </section>
   </main>
 
-  <script src="js/csvParser.js?v=11"></script>
-  <script src="js/players.js?v=11"></script>
-  <script src="js/tactics.js?v=11"></script>
-  <script src="js/hints.js?v=11"></script>
-  <script src="js/quality.js?v=11"></script>
-  <script src="js/performance.js?v=11"></script>
-  <script src="js/standards.js?v=11"></script>
-  <script src="js/storage.js?v=11"></script>
-  <script src="js/app.js?v=11"></script>
+  <script src="js/csvParser.js?v=12"></script>
+  <script src="js/players.js?v=12"></script>
+  <script src="js/tactics.js?v=12"></script>
+  <script src="js/hints.js?v=12"></script>
+  <script src="js/quality.js?v=12"></script>
+  <script src="js/performance.js?v=12"></script>
+  <script src="js/standards.js?v=12"></script>
+  <script src="js/storage.js?v=12"></script>
+  <script src="js/app.js?v=12"></script>
 </body>
 </html>

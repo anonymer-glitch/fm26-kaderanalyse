@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var navEl = document.getElementById('view-nav');
   var dashboardViewEl = document.getElementById('dashboard-view');
   var kaderViewEl = document.getElementById('kader-view');
+  var dashboardTabNavEl = document.getElementById('dashboard-tab-nav');
 
   var importComparisonEl = document.getElementById('import-comparison');
   var tacticsPresetsEl = document.getElementById('tactics-presets');
@@ -121,7 +122,8 @@ document.addEventListener('DOMContentLoaded', function () {
     qualitySortDir: 'desc',
     performanceSortKey: 'average',
     performanceSortDir: 'desc',
-    activeView: 'dashboard'
+    activeView: 'dashboard',
+    activeDashboardTab: 'taktik'
   };
 
   function openProfile(player) {
@@ -137,6 +139,26 @@ document.addEventListener('DOMContentLoaded', function () {
       btn.classList.toggle('active', btn.dataset.view === view);
     });
   }
+
+  // Dashboard-Unterreiter: Taktik & Kadertiefe / Qualität / Leistung /
+  // Standardsituationen. Trennt "was muss ich gerade wissen" (Vergleich +
+  // Hinweise, immer sichtbar) von "damit will ich mich gezielt beschäftigen"
+  // (die vier Reiter). Reine Sichtbarkeits-Umschaltung - die Render-Funktionen
+  // jeder Sektion bleiben unverändert und laufen unabhängig davon weiter.
+  function switchDashboardTab(tab) {
+    state.activeDashboardTab = tab;
+    Array.from(document.querySelectorAll('.dashboard-tab')).forEach(function (section) {
+      section.hidden = section.id !== 'dashboard-tab-' + tab;
+    });
+    Array.from(dashboardTabNavEl.querySelectorAll('.dashboard-tab-btn')).forEach(function (btn) {
+      btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+  }
+
+  Array.from(dashboardTabNavEl.querySelectorAll('.dashboard-tab-btn')).forEach(function (btn) {
+    btn.addEventListener('click', function () { switchDashboardTab(btn.dataset.tab); });
+  });
+  switchDashboardTab('taktik');
 
   Array.from(navEl.querySelectorAll('.view-nav-btn')).forEach(function (btn) {
     btn.addEventListener('click', function () { switchView(btn.dataset.view); });
