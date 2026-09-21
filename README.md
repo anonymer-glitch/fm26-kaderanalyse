@@ -58,7 +58,7 @@ Jeder Entscheidungs-Hinweis zeigt direkt in der Liste, welche Werte ihn ausgelö
 
 ## Erweiterungspunkte (für später, nicht in V1 umgesetzt)
 
-- Gehalt-vs-Marktwert-Hinweis (Marktwert ist jetzt als Spalte da, aber noch kein automatischer Hinweis daraus - bewusst keine geratene Ratio-Schwelle ohne Rückmeldung)
+- Entscheidungs-Hinweis "Verkaufen solange der Wert hoch ist": hoher Marktwert und/oder hohes Gehalt bei gleichzeitig unterdurchschnittlicher Note → Verkaufsempfehlung, Begründung "spart Gehalt UND nutzt den (noch) hohen Marktwert, bevor er bei weiter schwacher Leistung sinkt - das Geld lässt sich in einen tatsächlich leistungsstarken Spieler investieren". Baut auf dem bestehenden Verkaufskandidat-Hinweis auf (der nutzt bisher nur das Gehalt-Perzentil, nicht den Marktwert direkt)
 - Transfer-Scouting (Spieler außerhalb des eigenen Kaders)
 - Formations-Presets (z. B. "3er-Kette", "4-3-3"), die die benötigten Positionen automatisch vorauswählen, statt sie manuell anzuhaken
 - Einstellbare Schwellenwerte für Entscheidungs-Hinweise über die Oberfläche
@@ -68,7 +68,7 @@ Jeder Entscheidungs-Hinweis zeigt direkt in der Liste, welche Werte ihn ausgelö
 
 ### Braucht zuerst eine persistente Speicherung (Entscheidung bereits getroffen)
 
-- Verlaufs-Import: mehrere Zeitpunkte pro Spieler speichern und vergleichen
+- Verlaufs-Import: mehrere Zeitpunkte pro Spieler speichern und vergleichen. Wichtiger Anwendungsfall: die Durchschnittsnote wird zum Saisonwechsel zurückgesetzt - direkt im neuen Transferfenster ist sie deshalb kaum aussagekräftig (zu wenige Spiele). Mit gespeicherten alten Importen könnte man dort übergangsweise die Note der Vorsaison als Referenz heranziehen, statt ganz ohne Leistungsdaten dazustehen
 - Notizen/eigene Tags je Spieler (z. B. "beobachten", "auf keinen Fall verkaufen"), über Re-Importe hinweg erhalten, verknüpft über `Unique ID`
 - "Neu seit letztem Import"-Erkennung / einfacher Versionsvergleich zwischen zwei Importen (Vorstufe zum vollen Verlaufs-Import)
 - Letzten Import automatisch merken: App zeigt beim Öffnen direkt den Stand vom letzten Mal, ohne dass die CSV erneut ausgewählt werden muss
