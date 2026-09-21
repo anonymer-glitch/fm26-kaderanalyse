@@ -75,7 +75,8 @@ document.addEventListener('DOMContentLoaded', function () {
   var HINT_CATEGORIES = [
     { label: 'Vertrag prüfen', key: 'Vertrag prüfen' },
     { label: 'Verkaufskandidaten', key: 'Verkaufskandidat' },
-    { label: 'Verleihkandidaten', key: 'Verleihkandidat' }
+    { label: 'Verleihkandidaten', key: 'Verleihkandidat' },
+    { label: 'Status-Diskrepanz', key: 'Status-Diskrepanz' }
   ];
 
   var defaultFilters = function () {

@@ -19,7 +19,11 @@ var HINT_THRESHOLDS = {
   // Für den Leistungs-Pfad beim Verkaufskandidat: Notenpunkte unter dem
   // Kader-Ø der Durchschnittsnote, ab denen ein Spieler als "leistet aktuell
   // wenig" gilt (Notenskala ist deutlich enger als die 1-20-Attributskala).
-  ratingWeakMargin: 0.3
+  ratingWeakMargin: 0.3,
+  // Mindestabstand (in Stufen von PLAYING_TIME_ORDER, insgesamt 9 Stufen)
+  // zwischen "Tatsächliche Einsatzzeiten" und "Einsatzzeiten", ab dem die
+  // Diskrepanz als auffällig gilt.
+  statusGapMinDiff: 3
 };
 
 // "Nicht benötigt" ist ein eigener, immer greifender Auslöser (siehe applyHints) -
@@ -132,6 +136,15 @@ function applyHints(players, referenceDate) {
         ALWAYS_SELL_STATUSES.indexOf(p.statusActual) === -1) {
       hints.push('Verleihkandidat');
       hintReasons['Verleihkandidat'] = 'Alter ' + p.age + ' + Status ' + p.statusActual;
+    }
+
+    if (p.statusActual && p.statusExpected) {
+      var statusGap = statusRank(p.statusActual) - statusRank(p.statusExpected);
+      if (Math.abs(statusGap) >= HINT_THRESHOLDS.statusGapMinDiff) {
+        hints.push('Status-Diskrepanz');
+        var direction = statusGap > 0 ? 'spielt weniger als vereinbart' : 'spielt mehr als vereinbart';
+        hintReasons['Status-Diskrepanz'] = 'Tatsächlich: ' + p.statusActual + ', Vereinbart: ' + p.statusExpected + ' (' + direction + ')';
+      }
     }
 
     p.hints = hints;
