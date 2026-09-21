@@ -4,8 +4,8 @@
 // Einstellmöglichkeit in der Oberfläche gibt.
 var HINT_THRESHOLDS = {
   contractWarningMonths: 12,
-  sellAgeMin: 30,
-  sellSalaryPercentile: 0.75,
+  // Gilt für Gehalt und Marktwert gleichermaßen (oberstes Viertel im Kader).
+  sellValuePercentile: 0.75,
   loanAgeMax: 21,
   // alles unterhalb "Stammspieler" gilt für den Verleih-Hinweis als "niedriger Einsatzstatus".
   loanMinRank: statusRank('Stammspieler') + 1,
@@ -48,21 +48,24 @@ function computeContractCluster(players, referenceDate) {
   return { seasonEndYear: year, players: matches };
 }
 
-function computeSalaryThreshold(players, percentile) {
-  var salaries = players
-    .map(function (p) { return p.salary; })
-    .filter(function (s) { return s != null; })
+// Perzentil-Schwelle (z.B. "oberstes Viertel") über einen beliebigen Zahlenwert
+// der Spieler - wiederverwendet für Gehalt und Marktwert.
+function computeValueThreshold(players, selector, percentile) {
+  var values = players
+    .map(selector)
+    .filter(function (v) { return v != null; })
     .sort(function (a, b) { return a - b; });
-  if (salaries.length === 0) return null;
-  var idx = Math.min(salaries.length - 1, Math.floor(salaries.length * percentile));
-  return salaries[idx];
+  if (values.length === 0) return null;
+  var idx = Math.min(values.length - 1, Math.floor(values.length * percentile));
+  return values[idx];
 }
 
 // Berechnet die Hinweise für jeden Spieler und hängt sie als p.hints (Array von
 // Strings) direkt an die übergebenen Spieler-Objekte an. referenceDate kann null
 // sein (z.B. wenn kein Spieldatum gesetzt ist) - dann bleibt der Vertrags-Hinweis aus.
 function applyHints(players, referenceDate) {
-  var salaryThreshold = computeSalaryThreshold(players, HINT_THRESHOLDS.sellSalaryPercentile);
+  var salaryThreshold = computeValueThreshold(players, function (p) { return p.salary; }, HINT_THRESHOLDS.sellValuePercentile);
+  var marketValueThreshold = computeValueThreshold(players, function (p) { return p.marketValue; }, HINT_THRESHOLDS.sellValuePercentile);
 
   var ratings = players.map(function (p) { return p.rating; }).filter(function (r) { return r != null; });
   var ratingMean = ratings.length > 0
@@ -83,16 +86,30 @@ function applyHints(players, referenceDate) {
     }
 
     var highSalary = salaryThreshold != null && p.salary != null && p.salary >= salaryThreshold;
-    var oldAndSidelined = p.age != null && p.age >= HINT_THRESHOLDS.sellAgeMin &&
-        SELL_LOW_STATUSES.indexOf(p.statusActual) !== -1;
+    var highMarketValue = marketValueThreshold != null && p.marketValue != null && p.marketValue >= marketValueThreshold;
+    var lowRoleStatus = SELL_LOW_STATUSES.indexOf(p.statusActual) !== -1;
     var underperforming = p.rating != null && ratingMean != null &&
         p.rating <= ratingMean - HINT_THRESHOLDS.ratingWeakMargin;
 
-    if (highSalary && (oldAndSidelined || underperforming)) {
+    // Zwei unabhängige Auslöser: (1) hohes Gehalt für eine kleine Rolle, egal
+    // welches Alter - kostet unnötig viel für wenig Einsatz. (2) hohes Gehalt
+    // ODER hoher Marktwert bei gleichzeitig schwacher Note - Wert/Gehalt nutzen,
+    // solange er da ist, statt weiter auf eine Erholung zu warten.
+    var expensiveForRole = highSalary && lowRoleStatus;
+    var valueVsPerformance = (highSalary || highMarketValue) && underperforming;
+
+    if (expensiveForRole || valueVsPerformance) {
       hints.push('Verkaufskandidat');
-      var sellReasons = ['Gehalt ' + p.salaryRaw + ' (oberstes Viertel im Kader)'];
-      if (oldAndSidelined) sellReasons.push('Alter ' + p.age + ' + Status ' + p.statusActual);
-      if (underperforming) sellReasons.push('Note ' + p.rating.toFixed(2) + ' unter Kader-Ø ' + ratingMean.toFixed(2));
+      var sellReasons = [];
+      if (expensiveForRole) {
+        sellReasons.push('Gehalt ' + p.salaryRaw + ' (oberstes Viertel) für kleine Rolle (' + p.statusActual + ')');
+      }
+      if (valueVsPerformance) {
+        var valueBits = [];
+        if (highSalary) valueBits.push('Gehalt ' + p.salaryRaw);
+        if (highMarketValue) valueBits.push('Marktwert ' + p.marketValueRaw);
+        sellReasons.push(valueBits.join(' + ') + ' (oberstes Viertel) + Note ' + p.rating.toFixed(2) + ' unter Kader-Ø ' + ratingMean.toFixed(2));
+      }
       hintReasons['Verkaufskandidat'] = sellReasons.join(' + ');
     }
 
