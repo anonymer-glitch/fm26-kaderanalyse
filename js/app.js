@@ -315,8 +315,10 @@ document.addEventListener('DOMContentLoaded', function () {
         marker.x = x;
         marker.y = y;
         // Zeile (y) bestimmt den Positions-Typ (z.B. ST -> M, wenn man ihn ins
-        // Mittelfeld zieht), Spalte (x) danach die Seite (siehe markerToSlot).
-        marker.code = tacticsCodeForPosition(y, marker.code);
+        // Mittelfeld zieht); in der DM-Zeile verfeinert die Spalte (x) das noch
+        // weiter zu FV außen. Danach bestimmt die Spalte zusätzlich die Seite
+        // (siehe markerToSlot).
+        marker.code = tacticsCodeForPosition(x, y);
         el.style.left = x + '%';
         el.style.top = y + '%';
         // Live-Update, damit sofort sichtbar ist, wie sich die Position beim

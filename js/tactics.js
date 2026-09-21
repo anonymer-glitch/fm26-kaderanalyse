@@ -39,7 +39,7 @@ var FORMATIONS = {
   '5-3-2': [
     { code: 'TW', x: 50, y: 95 },
     { code: 'V', x: 30, y: 80 }, { code: 'V', x: 50, y: 84 }, { code: 'V', x: 70, y: 80 },
-    { code: 'FV', x: 12, y: 72 }, { code: 'FV', x: 88, y: 72 },
+    { code: 'FV', x: 12, y: 60 }, { code: 'FV', x: 88, y: 60 },
     { code: 'M', x: 30, y: 50 }, { code: 'M', x: 50, y: 50 }, { code: 'M', x: 70, y: 50 },
     { code: 'ST', x: 38, y: 18 }, { code: 'ST', x: 62, y: 18 }
   ],
@@ -69,19 +69,20 @@ function tacticsSideForX(x) {
   return 'Z';
 }
 
-// Zeilen-Raster (y-Achse): welche Linie(n) auf dem Feld welchen Code ergeben, wenn
-// man einen Marker dorthin zieht. "codes" sind die Codes, die in dieser Zeile
-// bleiben wie sie sind (z.B. bleibt ein FV in der Abwehrzeile ein FV statt zu "V"
-// zu werden); jeder andere Code, der in diese Zeile gezogen wird, wird zu
-// "defaultCode". Nur für Drag & Drop relevant (siehe makeMarkerDraggable in
-// app.js) - Formations-Presets setzen ihren Code direkt und unabhängig davon.
+// Zeilen-Raster (y-Achse): welche Linie auf dem Feld welchen Code ergibt, wenn man
+// einen Marker dorthin zieht. "resolveCode(zone)" liefert den Code für die Spalte
+// (L/Z/R) innerhalb dieser Zeile - z.B. ergibt die DM-Zeile in der Mitte "DM", außen
+// aber "FV" (Flügelverteidiger sitzen auf Höhe des defensiven Mittelfelds, aber
+// außen; DM bleibt dadurch rein zentral). Nur für Drag & Drop relevant (siehe
+// makeMarkerDraggable in app.js) - Formations-Presets setzen ihren Code direkt und
+// unabhängig davon.
 var TACTICS_Y_ROWS = [
-  { min: 84, codes: ['TW'], defaultCode: 'TW', label: 'TW' },
-  { min: 64, codes: ['V', 'FV'], defaultCode: 'V', label: 'V / FV' },
-  { min: 50, codes: ['DM'], defaultCode: 'DM', label: 'DM' },
-  { min: 33, codes: ['M'], defaultCode: 'M', label: 'M' },
-  { min: 18, codes: ['OM'], defaultCode: 'OM', label: 'OM' },
-  { min: 0, codes: ['ST'], defaultCode: 'ST', label: 'ST' }
+  { min: 84, label: 'TW', resolveCode: function () { return 'TW'; } },
+  { min: 64, label: 'V', resolveCode: function () { return 'V'; } },
+  { min: 50, label: 'DM / FV', resolveCode: function (zone) { return zone === 'Z' ? 'DM' : 'FV'; } },
+  { min: 33, label: 'M', resolveCode: function () { return 'M'; } },
+  { min: 18, label: 'OM', resolveCode: function () { return 'OM'; } },
+  { min: 0, label: 'ST', resolveCode: function () { return 'ST'; } }
 ];
 
 function tacticsRowForY(y) {
@@ -91,13 +92,12 @@ function tacticsRowForY(y) {
   return TACTICS_Y_ROWS[TACTICS_Y_ROWS.length - 1];
 }
 
-// Code für einen Marker, der nach (x,y) gezogen wurde: bleibt unverändert, wenn er
-// schon zur Zeile an dieser y-Position passt (z.B. FV bleibt FV in der Abwehr-
-// zeile), sonst wird er zum Standard-Code dieser Zeile (z.B. ST -> M, wenn man
-// ihn ins Mittelfeld zieht).
-function tacticsCodeForPosition(y, currentCode) {
+// Code für einen Marker, der nach (x,y) gezogen wurde - Zeile (y) legt die
+// Positions-Art fest, Spalte (x) innerhalb der Zeile kann sie weiter verfeinern
+// (z.B. DM-Zeile: zentral -> "DM", außen -> "FV").
+function tacticsCodeForPosition(x, y) {
   var row = tacticsRowForY(y);
-  return row.codes.indexOf(currentCode) !== -1 ? currentCode : row.defaultCode;
+  return row.resolveCode(tacticsSideForX(x));
 }
 
 // Wandelt einen Marker in den Positions-Slot-String, den computePositionGaps &
