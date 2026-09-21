@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var tacticsPresetsEl = document.getElementById('tactics-presets');
   var tacticsBoardEl = document.getElementById('tactics-board');
   var positionGapsEl = document.getElementById('position-gaps');
+  var positionGapsDetailEl = document.getElementById('position-gaps-detail');
   var hintsSummaryEl = document.getElementById('hints-summary');
   var qualitySettingsBodyEl = document.getElementById('quality-settings-body');
   var qualityTableWrapperEl = document.getElementById('quality-table-wrapper');
@@ -119,7 +120,8 @@ document.addEventListener('DOMContentLoaded', function () {
     qualitySortDir: 'asc',
     performanceSortKey: 'code',
     performanceSortDir: 'asc',
-    activeTab: 'uebersicht'
+    activeTab: 'uebersicht',
+    selectedGapSlot: null
   };
 
   function openProfile(player) {
@@ -697,13 +699,79 @@ document.addEventListener('DOMContentLoaded', function () {
   function renderPositionGaps() {
     positionGapsEl.innerHTML = '';
     var gaps = computePositionGaps(state.players, state.neededPositionCounts);
+    var validSlots = {};
     gaps.forEach(function (gap) {
+      validSlots[gap.code] = true;
       var chip = document.createElement('span');
       chip.className = 'position-gap-chip' + (gap.severity !== 'ok' ? ' ' + gap.severity : '');
-      chip.title = gap.neededStarters + ' Starter benötigt, Zieltiefe ' + gap.target;
+      if (state.selectedGapSlot === gap.code) chip.classList.add('selected');
+      chip.title = gap.neededStarters + ' Starter benötigt, Zieltiefe ' + gap.target + ' - anklicken für die Spielerliste';
       chip.textContent = gap.code + ': ' + gap.count + '/' + gap.target;
+      chip.addEventListener('click', function () {
+        state.selectedGapSlot = state.selectedGapSlot === gap.code ? null : gap.code;
+        renderPositionGaps();
+      });
       positionGapsEl.appendChild(chip);
     });
+    // Falls die Taktik sich geändert hat und der ausgewählte Slot nicht mehr existiert.
+    if (state.selectedGapSlot && !validSlots[state.selectedGapSlot]) {
+      state.selectedGapSlot = null;
+    }
+    renderPositionGapsDetail();
+  }
+
+  // Spielerliste für die angeklickte Kadertiefe-Kachel (z.B. "TW: 2/2") - dieselbe
+  // Zuordnungslogik wie die Zählung selbst (playersMatchingSlot in hints.js),
+  // damit Anzeige und Zahl immer zusammenpassen.
+  function renderPositionGapsDetail() {
+    positionGapsDetailEl.innerHTML = '';
+    if (!state.selectedGapSlot) return;
+    var slot = state.selectedGapSlot;
+    var players = sortPlayers(playersMatchingSlot(state.players, slot), 'name', 'asc', COLUMNS);
+
+    var heading = document.createElement('div');
+    heading.className = 'position-gap-detail-heading';
+    heading.textContent = 'Spieler für ' + slot + ' (' + players.length + ')';
+    positionGapsDetailEl.appendChild(heading);
+
+    if (players.length === 0) {
+      var empty = document.createElement('p');
+      empty.className = 'standards-note';
+      empty.textContent = 'Kein Spieler im Kader für diese Position.';
+      positionGapsDetailEl.appendChild(empty);
+      return;
+    }
+
+    var table = document.createElement('table');
+    var thead = document.createElement('thead');
+    var headRow = document.createElement('tr');
+    COLUMNS.forEach(function (col) {
+      var th = document.createElement('th');
+      th.textContent = col.label;
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    var tbody = document.createElement('tbody');
+    players.forEach(function (p) {
+      var tr = document.createElement('tr');
+      tr.className = 'clickable-row';
+      tr.addEventListener('click', function () { openProfile(p); });
+      COLUMNS.forEach(function (col) {
+        var td = document.createElement('td');
+        var text = col.display ? col.display(p) : col.get(p);
+        td.textContent = text == null ? '' : text;
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+
+    var wrapper = document.createElement('div');
+    wrapper.id = 'position-gaps-detail-table-wrapper';
+    wrapper.appendChild(table);
+    positionGapsDetailEl.appendChild(wrapper);
   }
 
   function renderHintsSummary() {

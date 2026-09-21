@@ -244,6 +244,12 @@ header p {
   border-radius: 4px;
   padding: 0.25rem 0.6rem;
   font-size: 0.85rem;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.position-gap-chip.selected {
+  border-color: #1a1a1a;
 }
 
 .position-gap-chip.tight {
@@ -461,7 +467,8 @@ th.sortable:hover {
 }
 
 #table-wrapper,
-#previous-import-table-wrapper {
+#previous-import-table-wrapper,
+#position-gaps-detail-table-wrapper {
   overflow-x: auto;
   max-height: 70vh;
   border: 1px solid #ddd;
@@ -471,6 +478,12 @@ th.sortable:hover {
 
 #previous-import-table-wrapper {
   margin-top: 0.75rem;
+}
+
+.position-gap-detail-heading {
+  font-weight: 600;
+  margin: 0.75rem 0 0.4rem 0;
+  font-size: 0.9rem;
 }
 
 table {

@@ -162,19 +162,25 @@ function applyHints(players, referenceDate) {
 // 'missing' (0 Spieler) -> 'thin' (weniger als die Starter selbst, Taktik nicht
 // bespielbar) -> 'tight' (Starter gedeckt, aber keine Rotation) -> 'ok' (Ziel
 // erreicht).
+// Slots ohne Seitenangabe (z.B. "TW", "DM", "ST") zählen jeden Spieler mit
+// passendem Wurzel-Code, unabhängig von dessen eigener Seite - manche FM-
+// Exports geben z.B. vielseitigen Stürmern trotzdem eine Seite ("ST (RL)").
+// Slots MIT Seite (z.B. "V (L)") bleiben exakt, da die Seite hier zählt.
+// Wiederverwendet von computePositionGaps (Zählung) und der Kadertiefe-
+// Detailtabelle in app.js (welche Spieler genau zählen).
+function playersMatchingSlot(players, slot) {
+  var parsed = parsePositionSlot(slot);
+  return players.filter(function (p) {
+    return p.positionSlots.some(function (s) {
+      if (parsed.side) return s === slot;
+      return parsePositionSlot(s).code === parsed.code;
+    });
+  });
+}
+
 function computePositionGaps(players, needed) {
   return needed.map(function (n) {
-    // Slots ohne Seitenangabe (z.B. "TW", "DM", "ST") zählen jeden Spieler mit
-    // passendem Wurzel-Code, unabhängig von dessen eigener Seite - manche FM-
-    // Exports geben z.B. vielseitigen Stürmern trotzdem eine Seite ("ST (RL)").
-    // Slots MIT Seite (z.B. "V (L)") bleiben exakt, da die Seite hier zählt.
-    var neededParsed = parsePositionSlot(n.slot);
-    var count = players.filter(function (p) {
-      return p.positionSlots.some(function (slot) {
-        if (neededParsed.side) return slot === n.slot;
-        return parsePositionSlot(slot).code === neededParsed.code;
-      });
-    }).length;
+    var count = playersMatchingSlot(players, n.slot).length;
     var target = n.count * HINT_THRESHOLDS.positionDepthMultiplier;
     var severity;
     if (count === 0) severity = 'missing';
