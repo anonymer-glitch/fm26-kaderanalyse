@@ -42,7 +42,7 @@ Drei getrennte Bereiche, damit spätere Erweiterungen bestehende Bereiche nicht 
 - Vergleichsansicht mehrerer Spieler
 - Entscheidungs-Hinweise (regelbasiert, transparent, Schwellenwerte später einstellbar):
   - Vertrag prüfen (Vertragsende bald + Spieler wichtig für die Mannschaft)
-  - Verkaufskandidat (hohes Gehalt + [hohes Alter + niedriger Einsatzstatus ODER unterdurchschnittliche Leistungsnote])
+  - Verkaufskandidat: hohes Gehalt für eine kleine Rolle (Ergänzungsspieler/Nicht benötigt, unabhängig vom Alter) ODER [hohes Gehalt ODER hoher Marktwert] + unterdurchschnittliche Leistungsnote ("verkaufen solange der Wert hoch ist")
   - Verleihkandidat (junger Spieler + niedriger Einsatzstatus)
   - Positionslücke (Position im Kader dünn besetzt/fehlend, nur für manuell als "benötigt" markierte Positionen)
 - Positionslücken-Übersicht (3-stufig: fehlt / dünn / ok)
@@ -58,7 +58,6 @@ Jeder Entscheidungs-Hinweis zeigt direkt in der Liste, welche Werte ihn ausgelö
 
 ## Erweiterungspunkte (für später, nicht in V1 umgesetzt)
 
-- Entscheidungs-Hinweis "Verkaufen solange der Wert hoch ist": hoher Marktwert und/oder hohes Gehalt bei gleichzeitig unterdurchschnittlicher Note → Verkaufsempfehlung, Begründung "spart Gehalt UND nutzt den (noch) hohen Marktwert, bevor er bei weiter schwacher Leistung sinkt - das Geld lässt sich in einen tatsächlich leistungsstarken Spieler investieren". Baut auf dem bestehenden Verkaufskandidat-Hinweis auf (der nutzt bisher nur das Gehalt-Perzentil, nicht den Marktwert direkt)
 - Transfer-Scouting (Spieler außerhalb des eigenen Kaders)
 - Formations-Presets (z. B. "3er-Kette", "4-3-3"), die die benötigten Positionen automatisch vorauswählen, statt sie manuell anzuhaken
 - Einstellbare Schwellenwerte für Entscheidungs-Hinweise über die Oberfläche
