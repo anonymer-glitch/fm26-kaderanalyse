@@ -23,7 +23,7 @@ Weitere Ansichten (z. B. später eine Verlaufs-Ansicht) lassen sich als zusätzl
 - **CSV-Parsing:** eigener kleiner Parser (keine externe Bibliothek), da das FM26-Exportformat (Semikolon-getrennt, sauber) bereits bekannt ist.
 - **Datenimport:** generisches Einlesen aller vorhandenen CSV-Spalten (Rohdaten bleiben erhalten), unabhängig davon, welche Spalten der Nutzer im Export ausgewählt hat. Die Oberfläche nutzt in V1 nur eine kuratierte Teilmenge ("Kernspalten"); zusätzliche Spalten stehen für spätere Auswertungen bereit, ohne dass ein Re-Import nötig ist.
 - **Schlüssel:** jeder Spieler wird über die Spalte `Unique ID` aus dem Export identifiziert.
-- **Persistenz:** V1 wertet nur den aktuell importierten Kaderstand aus (kein Speichern über mehrere Importe hinweg). Das Datenmodell wird aber so gestaltet, dass ein späterer Verlaufs-Import (mehrere Zeitpunkte, Formkurven) ergänzt werden kann, ohne die bestehende Struktur umzubauen.
+- **Persistenz:** der zuletzt importierte Kader, das Taktik-Board und das Spieldatum werden automatisch im Browser (`localStorage`) gespeichert und beim nächsten Öffnen direkt geladen - kein erneuter Upload nötig, auch nach Wochen/Monaten Pause (kein Ablaufdatum, aber gebunden an denselben Browser/dasselbe Gerät). Zusätzlich als Sicherheitsnetz: Export/Import einer Sicherungsdatei (JSON), die der Nutzer selbst z. B. in einem Cloud-Ordner ablegen kann - für Rechnerwechsel oder falls der Browser-Speicher verloren geht. V1 wertet weiterhin nur einen Kaderstand aus (kein Verlauf über mehrere Zeitpunkte); das Datenmodell ist aber so gestaltet, dass ein späterer Verlaufs-Import ergänzt werden kann, ohne die bestehende Struktur umzubauen.
 
 ## Architekturprinzip
 
@@ -66,16 +66,16 @@ Jeder Entscheidungs-Hinweis zeigt direkt in der Liste, welche Werte ihn ausgelö
 - Druck-/Exportansicht: Dashboard oder Kaderübersicht sauber als PDF/Bild ausgeben, z. B. zum Teilen oder Ausdrucken
 - Spieler-Vergleich: 2-3 Spieler explizit nebeneinander gegenüberstellen (bisher nur implizit über die Kaderübersicht-Tabelle möglich)
 
-### Braucht zuerst eine persistente Speicherung (Entscheidung bereits getroffen)
+### Persistenz (umgesetzt)
+
+Kaderstand (die importierte CSV), Taktik-Board und Spieldatum werden automatisch in `localStorage` gespeichert und beim Öffnen direkt geladen (`js/storage.js`) - kein manuelles Hochladen, kein Klicken. Zusätzlich als Sicherheitsnetz: Export/Import einer Sicherungsdatei (JSON) über die Buttons "Sicherung speichern"/"Sicherung laden" - für Rechnerwechsel, Backup, oder falls der Browser-Speicher mal geleert wird/verloren geht. Diese Datei kann der Nutzer selbst z. B. in einen Cloud-Ordner legen, ganz ohne dass die App eine eigene Cloud-Anbindung braucht. Ein "Gespeicherten Kader löschen"-Button setzt alles zurück.
+
+Bewusst nicht umgesetzt: eine echte Cloud-Anmeldung direkt in der App (Login, Token, Internetzugriff nötig) - deutlich mehr Aufwand/Fragilität für denselben Alltagsnutzen, den die automatische lokale Speicherung bereits liefert.
+
+Bleibt an diesen einen Browser/dieses Profil auf diesem Rechner gebunden - bei Browserwechsel oder gelöschten Browserdaten ist der automatisch gespeicherte Stand weg (dafür ist die Sicherungsdatei da). Kein Ablaufdatum - eine Pause von Wochen/Monaten macht keinen Unterschied.
+
+### Baut auf der Persistenz auf (nächste Schritte)
 
 - Verlaufs-Import: mehrere Zeitpunkte pro Spieler speichern und vergleichen. Wichtiger Anwendungsfall: die Durchschnittsnote wird zum Saisonwechsel zurückgesetzt - direkt im neuen Transferfenster ist sie deshalb kaum aussagekräftig (zu wenige Spiele). Mit gespeicherten alten Importen könnte man dort übergangsweise die Note der Vorsaison als Referenz heranziehen, statt ganz ohne Leistungsdaten dazustehen
 - Notizen/eigene Tags je Spieler (z. B. "beobachten", "auf keinen Fall verkaufen"), über Re-Importe hinweg erhalten, verknüpft über `Unique ID`
 - "Neu seit letztem Import"-Erkennung / einfacher Versionsvergleich zwischen zwei Importen (Vorstufe zum vollen Verlaufs-Import)
-- Letzten Import automatisch merken: App zeigt beim Öffnen direkt den Stand vom letzten Mal, ohne dass die CSV erneut ausgewählt werden muss
-
-**Warum diese vier zusammengehören und wie sie gelöst werden:** Die App merkt sich aktuell nichts über das Schließen/Neuladen hinweg (komplett zustandslos, jeder Import startet bei null). Geplante Lösung:
-
-- **Automatisch, ohne Zutun:** Browser-eigener lokaler Speicher (localStorage/IndexedDB) hält Kaderstand, Notizen und Verlauf. Beim Öffnen ist alles direkt wieder da - kein manuelles Hochladen, kein Klicken.
-- **Zusätzlich als Sicherheitsnetz:** ein Exportieren/Importieren-Button für eine Sicherungsdatei - nicht für den Alltag gedacht, sondern für Rechnerwechsel, Backup, oder falls der Browser-Speicher mal geleert wird/verloren geht. Diese Datei kann der Nutzer selbst z. B. in einen OneDrive-Ordner legen, ganz ohne dass die App eine eigene Cloud-Anbindung braucht.
-- **Bewusst nicht:** eine echte OneDrive-/Cloud-Anmeldung direkt in der App (Microsoft-Login, Azure-App-Registrierung, Internetzugriff nötig). Deutlich mehr Aufwand/Fragilität (Token-Ablauf, Login-Fehler, keine Offline-Nutzung mehr) für denselben Alltagsnutzen, den die automatische lokale Speicherung bereits liefert. Bleibt als Option offen, falls der Bedarf sich mal ändert.
-- Bleibt an diesen einen Browser/dieses Profil auf diesem Rechner gebunden - bei Browserwechsel oder gelöschten Browserdaten ist der automatisch gespeicherte Stand weg (dafür ist die Export-Datei da).

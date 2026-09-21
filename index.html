@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>FM26 Kaderanalyse</title>
-  <link rel="stylesheet" href="css/styles.css?v=6">
+  <link rel="stylesheet" href="css/styles.css?v=7">
 </head>
 <body>
   <header>
@@ -20,6 +20,13 @@
       <div class="filter-field reference-date-field">
         <label for="reference-date">Aktuelles Spieldatum (optional, für Vertrags-Hinweise)</label>
         <input type="text" id="reference-date" placeholder="TT.MM.JJJJ">
+      </div>
+      <p class="standards-note">Dein Kader wird automatisch im Browser gespeichert und ist beim nächsten Öffnen direkt wieder da.</p>
+      <div class="storage-actions">
+        <button type="button" id="backup-export-btn">Sicherung speichern</button>
+        <button type="button" id="backup-import-btn">Sicherung laden</button>
+        <input type="file" id="backup-import-input" accept=".json" hidden>
+        <button type="button" id="reset-kader-btn">Gespeicherten Kader löschen</button>
       </div>
     </section>
 
@@ -73,13 +80,14 @@
     </section>
   </main>
 
-  <script src="js/csvParser.js?v=6"></script>
-  <script src="js/players.js?v=6"></script>
-  <script src="js/tactics.js?v=6"></script>
-  <script src="js/hints.js?v=6"></script>
-  <script src="js/quality.js?v=6"></script>
-  <script src="js/performance.js?v=6"></script>
-  <script src="js/standards.js?v=6"></script>
-  <script src="js/app.js?v=6"></script>
+  <script src="js/csvParser.js?v=7"></script>
+  <script src="js/players.js?v=7"></script>
+  <script src="js/tactics.js?v=7"></script>
+  <script src="js/hints.js?v=7"></script>
+  <script src="js/quality.js?v=7"></script>
+  <script src="js/performance.js?v=7"></script>
+  <script src="js/standards.js?v=7"></script>
+  <script src="js/storage.js?v=7"></script>
+  <script src="js/app.js?v=7"></script>
 </body>
 </html>

@@ -2,6 +2,10 @@ document.addEventListener('DOMContentLoaded', function () {
   var fileInput = document.getElementById('csv-file');
   var statusEl = document.getElementById('import-status');
   var referenceDateInput = document.getElementById('reference-date');
+  var backupExportBtn = document.getElementById('backup-export-btn');
+  var backupImportBtn = document.getElementById('backup-import-btn');
+  var backupImportInput = document.getElementById('backup-import-input');
+  var resetKaderBtn = document.getElementById('reset-kader-btn');
 
   var navEl = document.getElementById('view-nav');
   var dashboardViewEl = document.getElementById('dashboard-view');
@@ -130,6 +134,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   referenceDateInput.addEventListener('change', function () {
     state.referenceDate = parseGermanDate(referenceDateInput.value);
+    saveReferenceDateToStorage(referenceDateInput.value);
     if (state.players.length > 0) {
       applyHints(state.players, state.referenceDate);
       renderHintsSummary();
@@ -150,12 +155,82 @@ document.addEventListener('DOMContentLoaded', function () {
     reader.onload = function (e) {
       var result = parseCSV(e.target.result);
       handleImport(result, file.name);
+      saveCsvToStorage(file.name, e.target.result);
     };
     reader.onerror = function () {
       statusEl.textContent = 'Fehler beim Lesen der Datei.';
     };
     reader.readAsText(file, 'UTF-8');
   });
+
+  backupExportBtn.addEventListener('click', function () {
+    if (state.players.length === 0) {
+      alert('Erst einen Kader importieren, dann gibt es etwas zu sichern.');
+      return;
+    }
+    var blob = new Blob([buildBackupPayload()], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'fm26-kaderanalyse-sicherung.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  backupImportBtn.addEventListener('click', function () {
+    backupImportInput.click();
+  });
+
+  backupImportInput.addEventListener('change', function (event) {
+    var file = event.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var data;
+      try {
+        data = parseBackupPayload(e.target.result);
+      } catch (err) {
+        alert('Sicherungsdatei konnte nicht gelesen werden: ' + err.message);
+        return;
+      }
+      if (data.csvText) {
+        var fileName = data.csvFileName || 'kader.csv';
+        saveCsvToStorage(fileName, data.csvText);
+        handleImport(parseCSV(data.csvText), fileName);
+      }
+      applyLoadedTacticAndDate(data.tacticMarkers, data.referenceDate);
+    };
+    reader.readAsText(file, 'UTF-8');
+    event.target.value = '';
+  });
+
+  resetKaderBtn.addEventListener('click', function () {
+    if (!confirm('Gespeicherten Kader wirklich löschen? Das kann nicht rückgängig gemacht werden.')) return;
+    clearStoredKader();
+    location.reload();
+  });
+
+  // Wendet einen geladenen Taktik-Stand + Spieldatum an (aus dem Browser-Speicher
+  // beim Start, oder aus einer importierten Sicherungsdatei) - überschreibt die
+  // Standard-4-4-2-Formation, die handleImport sonst setzt.
+  function applyLoadedTacticAndDate(tacticMarkers, referenceDateValue) {
+    if (tacticMarkers && tacticMarkers.length) {
+      advanceTacticsMarkerIdCounterPast(tacticMarkers);
+      state.tacticMarkers = tacticMarkers;
+      state.activeFormation = null;
+      renderTacticsPresets();
+      updateTactics();
+    }
+    if (referenceDateValue) {
+      referenceDateInput.value = referenceDateValue;
+      state.referenceDate = parseGermanDate(referenceDateValue);
+      applyHints(state.players, state.referenceDate);
+      renderHintsSummary();
+      renderTable();
+    }
+  }
 
   function handleImport(result, fileName) {
     if (result.records.length === 0) {
@@ -245,6 +320,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // lücken und der "Handlungsbedarf"-Hinweis hängen direkt an state.neededPositionCounts.
   function updateTactics() {
     state.neededPositionCounts = neededPositionCountsFromMarkers(state.tacticMarkers);
+    saveTacticMarkersToStorage(state.tacticMarkers);
     renderTacticsBoard();
     renderPositionGaps();
     renderHintsSummary();
@@ -960,4 +1036,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     tableWrapper.appendChild(table);
   }
+
+  // Beim Öffnen automatisch den zuletzt gespeicherten Kader laden, falls
+  // vorhanden (siehe storage.js) - kein erneuter CSV-Upload nötig.
+  (function loadSavedKaderOnStartup() {
+    var saved = loadCsvFromStorage();
+    if (!saved) return;
+    handleImport(parseCSV(saved.csvText), saved.fileName);
+    applyLoadedTacticAndDate(loadTacticMarkersFromStorage(), loadReferenceDateFromStorage());
+  })();
 });

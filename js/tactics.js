@@ -113,6 +113,19 @@ function nextTacticsMarkerId() {
   return 'marker-' + tacticsMarkerIdCounter;
 }
 
+// Nach dem Laden gespeicherter/importierter Marker (siehe storage.js) aufrufen,
+// damit der Zähler nicht wieder bei 1 anfängt und neue Marker keine ID
+// wiederverwenden, die ein geladener Marker schon trägt.
+function advanceTacticsMarkerIdCounterPast(markers) {
+  markers.forEach(function (m) {
+    var match = /^marker-(\d+)$/.exec(m.id);
+    if (match) {
+      var n = parseInt(match[1], 10);
+      if (n > tacticsMarkerIdCounter) tacticsMarkerIdCounter = n;
+    }
+  });
+}
+
 // Erzeugt frische Marker-Objekte (mit eigener ID) für ein Formations-Preset.
 function formationMarkers(name) {
   var preset = FORMATIONS[name] || [];

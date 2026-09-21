@@ -28,6 +28,27 @@ header p {
   margin-top: 0.75rem;
 }
 
+.storage-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.storage-actions button {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+}
+
+#reset-kader-btn {
+  color: #991b1b;
+  border-color: #fca5a5;
+}
+
 .tactics-presets {
   display: flex;
   flex-wrap: wrap;
