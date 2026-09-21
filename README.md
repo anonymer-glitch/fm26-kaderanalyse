@@ -42,8 +42,8 @@ Drei getrennte Bereiche, damit spätere Erweiterungen bestehende Bereiche nicht 
 - Vergleichsansicht mehrerer Spieler
 - Entscheidungs-Hinweise (regelbasiert, transparent, Schwellenwerte später einstellbar):
   - Vertrag prüfen (Vertragsende bald + Spieler wichtig für die Mannschaft)
-  - Verkaufskandidat: hohes Gehalt für eine kleine Rolle (Ergänzungsspieler/Nicht benötigt, unabhängig vom Alter) ODER [hohes Gehalt ODER hoher Marktwert] + unterdurchschnittliche Leistungsnote ("verkaufen solange der Wert hoch ist")
-  - Verleihkandidat (junger Spieler + niedriger Einsatzstatus)
+  - Verkaufskandidat: Status "Nicht benötigt" (immer) ODER hohes Gehalt für eine kleine Rolle ("Ergänzungsspieler", unabhängig vom Alter) ODER [hohes Gehalt ODER hoher Marktwert] + unterdurchschnittliche Leistungsnote ("verkaufen solange der Wert hoch ist")
+  - Verleihkandidat: Alter ≤ 21 + Status niedriger als "Rotationsspieler" (der bleibt im Kader), aber nicht "Nicht benötigt" (der ist immer Verkaufskandidat, nie gleichzeitig Verleihkandidat)
   - Positionslücke (Position im Kader dünn besetzt/fehlend, nur für manuell als "benötigt" markierte Positionen)
 - Positionslücken-Übersicht (3-stufig: fehlt / dünn / ok)
 - Qualität je Position: Ø-Wert frei wählbarer Attribute je Position (Vorschlag aus FM-Community-Guides als editierbarer Startpunkt, keine feste Bewertungsformel)
