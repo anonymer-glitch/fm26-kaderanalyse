@@ -4,7 +4,7 @@ Lokale Web-App zur Analyse des eigenen Football-Manager-26-Kaders auf Basis von 
 
 ## Status
 
-V1-Funktionsumfang umgesetzt: CSV-Import, Dashboard (Positionslücken, Entscheidungs-Hinweise, Qualität je Position, Leistung je Position, Standardsituationen & Führung), Kaderübersicht mit Filtern/Sortierung/Marktwert, Spielerprofil.
+V1-Funktionsumfang umgesetzt: CSV-Import, Dashboard (Kadertiefe, Entscheidungs-Hinweise, Qualität je Position, Leistung je Position, Standardsituationen & Führung), Kaderübersicht mit Filtern/Sortierung/Marktwert, Spielerprofil.
 
 Der Export ist mittlerweile deutlich reichhaltiger als beim V1-Start (113 statt 46 Spalten): u. a. echte Saison-Leistungsdaten (`Durchschnittsnote – Verein`, xG, ...) und Marktwert (`Transferwert`) sind jetzt dabei. `Lsp Eins`/`Lsp Tore`/`U-Lsp`/`U-Tore` bleiben Länderspiele über die Gesamtkarriere (weiterhin ungeeignet für Saison-Leistung).
 
@@ -12,7 +12,7 @@ Der Export ist mittlerweile deutlich reichhaltiger als beim V1-Start (113 statt 
 
 Nach dem Import zeigt die App zwei umschaltbare Ansichten (Buttons oben, kein Seitenwechsel, da beide dieselben Daten im Speicher brauchen):
 
-- **Dashboard** – Startansicht: Positionslücken, Entscheidungs-Hinweise, Qualität je Position
+- **Dashboard** – Startansicht: Kadertiefe, Entscheidungs-Hinweise, Qualität je Position
 - **Kaderübersicht** – die filterbare/sortierbare Tabelle
 
 Weitere Ansichten (z. B. später eine Verlaufs-Ansicht) lassen sich als zusätzlicher Button ergänzen, ohne Bestehendes umzubauen.
@@ -47,7 +47,7 @@ Drei getrennte Bereiche, damit spätere Erweiterungen bestehende Bereiche nicht 
   - Status-Diskrepanz: `Tatsächliche Einsatzzeiten` und `Einsatzzeiten` (vereinbarter/erwarteter Status) liegen mindestens 3 Stufen auseinander - unabhängig von der Richtung, da die Daten keine eindeutig "problematische" Richtung zeigen
   - Positionslücke (Kadertiefe reicht nicht für die auf dem Taktik-Board eingestellte Formation, siehe unten)
 - Taktik-Board: Fußballfeld zum Zusammenstellen der benötigten Positionen samt Starter-Anzahl, als sichtbares Raster aus Zeilen (TW/V/DM·FV/M/OM/ST) und Spalten (links/zentral/rechts). Formations-Presets (4-4-2, 4-3-3, 4-2-3-1, 3-5-2/Dreierkette, 5-3-2, 4-1-4-1) setzen automatisch passende Marker; danach frei per Drag & Drop verschiebbar. Zieht man einen Marker in eine andere Zeile, wandelt er sich in den dortigen Positions-Typ um (z.B. Stürmer nach hinten ins Mittelfeld gezogen wird zu "M"); die Spalte bestimmt die Seite. Sonderfall DM-Zeile: zentral bleibt es "DM", außen wird automatisch daraus ein Flügelverteidiger ("FV") - DM ist dadurch immer rein zentral. Marker-Beschriftung aktualisiert sich live. Mehrere Marker im selben Feld (z.B. 2x "V" zentral) zählen als 2 Innenverteidiger-Starter. Die Lücken-Prüfung zählt bei seitenlosen Positionen (TW/DM/ST) jeden Spieler mit passendem Wurzel-Code, auch wenn der Export ihm zusätzlich eine Seite gibt (z.B. "ST (RL)")
-- Positionslücken-Übersicht: Ziel-Kadertiefe je Position = Starter-Anzahl aus der Taktik × 2 (Rotation/Ausfallsicherheit), 4-stufige Ampel (fehlt / dünn = Formation nicht mal bespielbar / knapp = Starter gedeckt, keine Rotation / ok = Zieltiefe erreicht)
+- Kadertiefe-Übersicht: Ziel-Kadertiefe je Position = Starter-Anzahl aus der Taktik × 2 (Rotation/Ausfallsicherheit), 4-stufige Ampel (fehlt / dünn = Formation nicht mal bespielbar / knapp = Starter gedeckt, keine Rotation / ok = Zieltiefe erreicht)
 - Qualität je Position: Ø-Wert frei wählbarer Attribute je Position (Vorschlag aus FM-Community-Guides als editierbarer Startpunkt, keine feste Bewertungsformel)
 - Leistung je Position: Durchschnittsnote fest je Position (reicht als Überblick, da FM sie schon positionsbewusst berechnet); bei Bedarf zusätzliche Leistungskennzahlen manuell zuwählbar, je Position thematisch sortiert (Verteidiger: Zweikampf zuerst, Stürmer: Offensive zuerst, ...) - eine Spalte pro Kennzahl statt einem Blend-Wert (unterschiedliche Skalen wie Note/Prozent/Pro-90-Rate lassen sich nicht sinnvoll mitteln). Absolute Zähler (z. B. Gewonnene Zweikämpfe) werden automatisch auf "pro 90 Minuten" umgerechnet
 - Standardsituationen & Führung: Top-5-Vorschläge für Eckbälle, Freistöße, Elfmeter und Führung (Kapitän/Stellvertreter), je Kategorie frei wählbare Attribute. Freistöße/Elfmeter/Führung nutzen mangels eigener FM-Attribute im Export eine Näherung aus ähnlichen Attributen (klar gekennzeichnet)
