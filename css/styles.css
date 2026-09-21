@@ -283,15 +283,13 @@ header p {
   border-color: #1a1a1a;
 }
 
-#dashboard-view h3 {
+.app-tab h3 {
   margin-top: 1.75rem;
   margin-bottom: 0.5rem;
 }
 
-#dashboard-tab-nav {
-  margin-top: 2rem;
-  border-top: 1px solid #ddd;
-  padding-top: 1.5rem;
+.app-tab h3:first-of-type {
+  margin-top: 0.5rem;
 }
 
 .hints-summary {

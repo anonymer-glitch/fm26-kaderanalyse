@@ -8,9 +8,6 @@ document.addEventListener('DOMContentLoaded', function () {
   var resetKaderBtn = document.getElementById('reset-kader-btn');
 
   var navEl = document.getElementById('view-nav');
-  var dashboardViewEl = document.getElementById('dashboard-view');
-  var kaderViewEl = document.getElementById('kader-view');
-  var dashboardTabNavEl = document.getElementById('dashboard-tab-nav');
 
   var importComparisonEl = document.getElementById('import-comparison');
   var tacticsPresetsEl = document.getElementById('tactics-presets');
@@ -122,8 +119,7 @@ document.addEventListener('DOMContentLoaded', function () {
     qualitySortDir: 'asc',
     performanceSortKey: 'code',
     performanceSortDir: 'asc',
-    activeView: 'dashboard',
-    activeDashboardTab: 'taktik'
+    activeTab: 'uebersicht'
   };
 
   function openProfile(player) {
@@ -131,38 +127,24 @@ document.addEventListener('DOMContentLoaded', function () {
     window.open('profile.html#' + encodeURIComponent(payload), '_blank');
   }
 
-  function switchView(view) {
-    state.activeView = view;
-    dashboardViewEl.hidden = view !== 'dashboard';
-    kaderViewEl.hidden = view !== 'kader';
+  // Eine einzige flache Reiter-Ebene (Übersicht / Taktik & Kadertiefe /
+  // Qualität / Leistung / Standardsituationen / Kaderübersicht) statt
+  // verschachtelter Dashboard-Unterreiter - reine Sichtbarkeits-Umschaltung,
+  // die Render-Funktionen jeder Sektion laufen unabhängig vom aktiven Reiter weiter.
+  function switchTab(tab) {
+    state.activeTab = tab;
+    Array.from(document.querySelectorAll('.app-tab')).forEach(function (section) {
+      section.hidden = section.id !== 'tab-' + tab;
+    });
     Array.from(navEl.querySelectorAll('.view-nav-btn')).forEach(function (btn) {
-      btn.classList.toggle('active', btn.dataset.view === view);
-    });
-  }
-
-  // Dashboard-Unterreiter: Taktik & Kadertiefe / Qualität / Leistung /
-  // Standardsituationen. Trennt "was muss ich gerade wissen" (Vergleich +
-  // Hinweise, immer sichtbar) von "damit will ich mich gezielt beschäftigen"
-  // (die vier Reiter). Reine Sichtbarkeits-Umschaltung - die Render-Funktionen
-  // jeder Sektion bleiben unverändert und laufen unabhängig davon weiter.
-  function switchDashboardTab(tab) {
-    state.activeDashboardTab = tab;
-    Array.from(document.querySelectorAll('.dashboard-tab')).forEach(function (section) {
-      section.hidden = section.id !== 'dashboard-tab-' + tab;
-    });
-    Array.from(dashboardTabNavEl.querySelectorAll('.dashboard-tab-btn')).forEach(function (btn) {
       btn.classList.toggle('active', btn.dataset.tab === tab);
     });
   }
 
-  Array.from(dashboardTabNavEl.querySelectorAll('.dashboard-tab-btn')).forEach(function (btn) {
-    btn.addEventListener('click', function () { switchDashboardTab(btn.dataset.tab); });
-  });
-  switchDashboardTab('taktik');
-
   Array.from(navEl.querySelectorAll('.view-nav-btn')).forEach(function (btn) {
-    btn.addEventListener('click', function () { switchView(btn.dataset.view); });
+    btn.addEventListener('click', function () { switchTab(btn.dataset.tab); });
   });
+  switchTab('uebersicht');
 
   // Notizen werden im separaten Spielerprofil-Tab bearbeitet (siehe profile.js) -
   // dieses "storage"-Event feuert nur in ANDEREN Tabs, wenn sich localStorage
@@ -190,8 +172,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     statusEl.textContent = 'Lese Datei...';
     navEl.hidden = true;
-    dashboardViewEl.hidden = true;
-    kaderViewEl.hidden = true;
+    Array.from(document.querySelectorAll('.app-tab')).forEach(function (section) { section.hidden = true; });
 
     var reader = new FileReader();
     reader.onload = function (e) {
@@ -534,7 +515,7 @@ document.addEventListener('DOMContentLoaded', function () {
     renderTable();
 
     navEl.hidden = false;
-    switchView('dashboard');
+    switchTab('uebersicht');
   }
 
   // Nach jeder Änderung am Taktik-Board (Preset, hinzugefügter/entfernter Marker,

@@ -10,12 +10,16 @@ Der Export ist mittlerweile deutlich reichhaltiger als beim V1-Start (113 statt 
 
 ## Navigation
 
-Nach dem Import zeigt die App zwei umschaltbare Ansichten (Buttons oben, kein Seitenwechsel, da beide dieselben Daten im Speicher brauchen):
+Nach dem Import zeigt die App eine einzige, flache Reiter-Leiste (kein Seitenwechsel, alle Reiter teilen sich dieselben Daten im Speicher):
 
-- **Dashboard** – Startansicht: oben immer sichtbar der schnelle Überblick (Vergleich zum letzten Import, Entscheidungs-Hinweise), darunter als Unterreiter die Bereiche zum gezielten Vertiefen (Taktik & Kadertiefe, Qualität je Position, Leistung je Position, Standardsituationen & Führung). Reine Sichtbarkeits-Umschaltung - jede Sektion rendert unabhängig davon weiter, ob ihr Reiter gerade sichtbar ist
+- **Übersicht** – schneller Blick auf "was muss ich gerade wissen": Vergleich zum letzten Import, Entscheidungs-Hinweise
+- **Taktik & Kadertiefe** – das Taktik-Board mit direkt daneben der resultierenden Kadertiefe-Analyse
+- **Qualität je Position**
+- **Leistung je Position**
+- **Standardsituationen & Führung**
 - **Kaderübersicht** – die filterbare/sortierbare Tabelle
 
-Weitere Ansichten (z. B. später eine Verlaufs-Ansicht) lassen sich als zusätzlicher Button ergänzen, ohne Bestehendes umzubauen.
+Bewusst eine einzige Reiter-Ebene statt verschachtelter Unterreiter (so vorher kurz ausprobiert) - das wirkte schnell verwirrend, wenn zwei Reiter-Leisten übereinander standen. Reine Sichtbarkeits-Umschaltung (`switchTab` in `app.js`) - jede Sektion rendert unabhängig davon weiter, ob ihr Reiter gerade sichtbar ist. Weitere Reiter (z. B. später eine Verlaufs-Ansicht) lassen sich als zusätzlicher Button ergänzen, ohne Bestehendes umzubauen.
 
 ## Grundsatzentscheidungen
 
