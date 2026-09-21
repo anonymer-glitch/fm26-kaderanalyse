@@ -314,10 +314,13 @@ document.addEventListener('DOMContentLoaded', function () {
         var y = Math.max(0, Math.min(100, ((moveEvent.clientY - rect.top) / rect.height) * 100));
         marker.x = x;
         marker.y = y;
+        // Zeile (y) bestimmt den Positions-Typ (z.B. ST -> M, wenn man ihn ins
+        // Mittelfeld zieht), Spalte (x) danach die Seite (siehe markerToSlot).
+        marker.code = tacticsCodeForPosition(y, marker.code);
         el.style.left = x + '%';
         el.style.top = y + '%';
         // Live-Update, damit sofort sichtbar ist, wie sich die Position beim
-        // Zonenwechsel verändert (z.B. "V (L)" -> "V (Z)").
+        // Zonenwechsel verändert (z.B. "V (L)" -> "V (Z)", "ST" -> "M (Z)").
         el.querySelector('.tactic-marker-label').textContent = markerToSlot(marker);
         el.title = markerToSlot(marker);
       }
@@ -364,6 +367,23 @@ document.addEventListener('DOMContentLoaded', function () {
       zoneLabel.style.left = zoneMidpoints[i] + '%';
       zoneLabel.textContent = label;
       tacticsBoardEl.appendChild(zoneLabel);
+    });
+
+    // Zeilen-Raster (y-Achse) - macht sichtbar, in welche Zeile ein Marker beim
+    // Verschieben umgewandelt wird (siehe tacticsCodeForPosition).
+    TACTICS_Y_ROWS.slice(0, -1).forEach(function (row) {
+      var hLine = document.createElement('div');
+      hLine.className = 'tactics-row-line';
+      hLine.style.top = row.min + '%';
+      tacticsBoardEl.appendChild(hLine);
+    });
+    TACTICS_Y_ROWS.forEach(function (row, i) {
+      var upper = i > 0 ? TACTICS_Y_ROWS[i - 1].min : 100;
+      var rowLabel = document.createElement('div');
+      rowLabel.className = 'tactics-row-label';
+      rowLabel.style.top = ((row.min + upper) / 2) + '%';
+      rowLabel.textContent = row.label;
+      tacticsBoardEl.appendChild(rowLabel);
     });
 
     state.tacticMarkers.forEach(function (marker) {

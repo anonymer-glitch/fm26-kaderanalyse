@@ -164,8 +164,16 @@ function applyHints(players, referenceDate) {
 // erreicht).
 function computePositionGaps(players, needed) {
   return needed.map(function (n) {
+    // Slots ohne Seitenangabe (z.B. "TW", "DM", "ST") zählen jeden Spieler mit
+    // passendem Wurzel-Code, unabhängig von dessen eigener Seite - manche FM-
+    // Exports geben z.B. vielseitigen Stürmern trotzdem eine Seite ("ST (RL)").
+    // Slots MIT Seite (z.B. "V (L)") bleiben exakt, da die Seite hier zählt.
+    var neededParsed = parsePositionSlot(n.slot);
     var count = players.filter(function (p) {
-      return p.positionSlots.indexOf(n.slot) !== -1;
+      return p.positionSlots.some(function (slot) {
+        if (neededParsed.side) return slot === n.slot;
+        return parsePositionSlot(slot).code === neededParsed.code;
+      });
     }).length;
     var target = n.count * HINT_THRESHOLDS.positionDepthMultiplier;
     var severity;

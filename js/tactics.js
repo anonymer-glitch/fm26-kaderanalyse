@@ -69,6 +69,37 @@ function tacticsSideForX(x) {
   return 'Z';
 }
 
+// Zeilen-Raster (y-Achse): welche Linie(n) auf dem Feld welchen Code ergeben, wenn
+// man einen Marker dorthin zieht. "codes" sind die Codes, die in dieser Zeile
+// bleiben wie sie sind (z.B. bleibt ein FV in der Abwehrzeile ein FV statt zu "V"
+// zu werden); jeder andere Code, der in diese Zeile gezogen wird, wird zu
+// "defaultCode". Nur für Drag & Drop relevant (siehe makeMarkerDraggable in
+// app.js) - Formations-Presets setzen ihren Code direkt und unabhängig davon.
+var TACTICS_Y_ROWS = [
+  { min: 84, codes: ['TW'], defaultCode: 'TW', label: 'TW' },
+  { min: 64, codes: ['V', 'FV'], defaultCode: 'V', label: 'V / FV' },
+  { min: 50, codes: ['DM'], defaultCode: 'DM', label: 'DM' },
+  { min: 33, codes: ['M'], defaultCode: 'M', label: 'M' },
+  { min: 18, codes: ['OM'], defaultCode: 'OM', label: 'OM' },
+  { min: 0, codes: ['ST'], defaultCode: 'ST', label: 'ST' }
+];
+
+function tacticsRowForY(y) {
+  for (var i = 0; i < TACTICS_Y_ROWS.length; i++) {
+    if (y >= TACTICS_Y_ROWS[i].min) return TACTICS_Y_ROWS[i];
+  }
+  return TACTICS_Y_ROWS[TACTICS_Y_ROWS.length - 1];
+}
+
+// Code für einen Marker, der nach (x,y) gezogen wurde: bleibt unverändert, wenn er
+// schon zur Zeile an dieser y-Position passt (z.B. FV bleibt FV in der Abwehr-
+// zeile), sonst wird er zum Standard-Code dieser Zeile (z.B. ST -> M, wenn man
+// ihn ins Mittelfeld zieht).
+function tacticsCodeForPosition(y, currentCode) {
+  var row = tacticsRowForY(y);
+  return row.codes.indexOf(currentCode) !== -1 ? currentCode : row.defaultCode;
+}
+
 // Wandelt einen Marker in den Positions-Slot-String, den computePositionGaps &
 // Co. erwarten (z.B. "V (L)", "DM").
 function markerToSlot(marker) {
