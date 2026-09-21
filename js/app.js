@@ -468,8 +468,14 @@ document.addEventListener('DOMContentLoaded', function () {
     state.players = buildPlayers(result.records);
     state.numericColumns = detectNumericColumns(result.headers, result.records);
     state.positionSlots = sortBySlotOrder(collectPositionSlots(state.players));
-    state.activeFormation = '4-4-2';
-    state.tacticMarkers = formationMarkers(state.activeFormation);
+    // Taktik-Board ist Sache des Nutzers, nicht der CSV - bei einem erneuten
+    // Import (z.B. neue Saison) bleibt die bestehende Formation deshalb
+    // erhalten. Nur beim allerersten Import einer Session (noch keine Marker
+    // gesetzt) wird der Standard 4-4-2 vorbelegt.
+    if (state.tacticMarkers.length === 0) {
+      state.activeFormation = '4-4-2';
+      state.tacticMarkers = formationMarkers(state.activeFormation);
+    }
     state.neededPositionCounts = neededPositionCountsFromMarkers(state.tacticMarkers);
     state.statusOptions = sortByPlayingTime(uniqueValues(result.records, 'Tatsächliche Einsatzzeiten'));
     state.filters = defaultFilters();
