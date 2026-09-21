@@ -98,6 +98,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var state = {
     players: [],
     notes: loadNotesMap(),
+    resolvedHints: loadResolvedHintsSet(),
     previousPlayers: [],
     previousImportedAt: null,
     previousImportSortKey: 'name',
@@ -254,6 +255,12 @@ document.addEventListener('DOMContentLoaded', function () {
         state.notes = data.notes;
         if (state.players.length > 0) renderTable();
       }
+      // Immer setzen (auch leer), damit ein altes Backup ohne dieses Feld nicht
+      // versehentlich Häkchen aus dem vorherigen Kaderstand übernimmt.
+      var restoredResolvedHints = data.resolvedHints || {};
+      saveResolvedHintsSet(restoredResolvedHints);
+      state.resolvedHints = restoredResolvedHints;
+      if (state.players.length > 0) renderHintsSummary();
       applyLoadedTacticAndDate(data.tacticMarkers, data.referenceDate);
     };
     reader.readAsText(file, 'UTF-8');
@@ -438,6 +445,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // ANDEREN Tabs, nie im eigenen, ein Import hier muss trotzdem den aktuellen
     // Stand sehen (z.B. nach einer Notiz im selben Tab kurz zuvor).
     state.notes = loadNotesMap();
+    // Ebenso frisch laden - rotateAndSaveCsvToStorage leert diese bei einem neuen
+    // Import bereits (siehe storage.js), hier wird das dann korrekt sichtbar.
+    state.resolvedHints = loadResolvedHintsSet();
 
     var hasIdColumn = result.headers.indexOf('Unique ID') !== -1;
     var statusLines = [];
@@ -774,6 +784,29 @@ document.addEventListener('DOMContentLoaded', function () {
     positionGapsDetailEl.appendChild(wrapper);
   }
 
+  // "Erledigt"-Häkchen je Hinweis-Zeile (Schlüssel z.B. "Vertrag prüfen:123" oder
+  // "handlungsbedarf:TW") - nur für den aktuellen Import gültig, siehe
+  // loadResolvedHintsSet in storage.js. Häkchen setzen streicht die Zeile durch,
+  // entfernt sie aber nicht (bleibt als Erinnerung sichtbar, was schon behandelt wurde).
+  function toggleResolvedHint(key) {
+    if (state.resolvedHints[key]) {
+      delete state.resolvedHints[key];
+    } else {
+      state.resolvedHints[key] = true;
+    }
+    saveResolvedHintsSet(state.resolvedHints);
+    renderHintsSummary();
+  }
+
+  function makeResolvedCheckbox(key) {
+    var checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'hint-resolved-checkbox';
+    checkbox.checked = !!state.resolvedHints[key];
+    checkbox.addEventListener('change', function () { toggleResolvedHint(key); });
+    return checkbox;
+  }
+
   function renderHintsSummary() {
     hintsSummaryEl.innerHTML = '';
     HINT_CATEGORIES.forEach(function (cat) {
@@ -792,7 +825,10 @@ document.addEventListener('DOMContentLoaded', function () {
       if (matches.length > 0) {
         var list = document.createElement('ul');
         matches.forEach(function (p) {
+          var key = cat.key + ':' + p.id;
           var li = document.createElement('li');
+          li.className = state.resolvedHints[key] ? 'resolved' : '';
+          li.appendChild(makeResolvedCheckbox(key));
           var link = document.createElement('a');
           link.href = '#';
           link.textContent = p.name;
@@ -820,17 +856,20 @@ document.addEventListener('DOMContentLoaded', function () {
     var clusterTitle = document.createElement('div');
     clusterTitle.className = 'hint-summary-title';
     if (cluster) {
-      clusterTitle.textContent = 'Vertragsballung Saison ' + (cluster.seasonEndYear - 1) + '/' + cluster.seasonEndYear +
+      clusterTitle.textContent = 'Auslaufende Verträge Saison ' + (cluster.seasonEndYear - 1) + '/' + cluster.seasonEndYear +
         ' (' + cluster.players.length + ')';
     } else {
-      clusterTitle.textContent = 'Vertragsballung (kein Spieldatum gesetzt)';
+      clusterTitle.textContent = 'Auslaufende Verträge (kein Spieldatum gesetzt)';
     }
     clusterBox.appendChild(clusterTitle);
 
     if (cluster && cluster.players.length > 0) {
       var clusterList = document.createElement('ul');
       cluster.players.forEach(function (p) {
+        var key = 'contractCluster:' + p.id;
         var li = document.createElement('li');
+        li.className = state.resolvedHints[key] ? 'resolved' : '';
+        li.appendChild(makeResolvedCheckbox(key));
         var link = document.createElement('a');
         link.href = '#';
         link.textContent = p.name;
@@ -861,7 +900,10 @@ document.addEventListener('DOMContentLoaded', function () {
     if (actionItems.length > 0) {
       var posList = document.createElement('ul');
       actionItems.forEach(function (item) {
+        var key = 'handlungsbedarf:' + item.slot;
         var li = document.createElement('li');
+        li.className = state.resolvedHints[key] ? 'resolved' : '';
+        li.appendChild(makeResolvedCheckbox(key));
         if (item.playerCount > 0) {
           var link = document.createElement('a');
           link.href = '#';

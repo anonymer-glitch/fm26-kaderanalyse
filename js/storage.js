@@ -68,6 +68,10 @@ function rotateAndSaveCsvToStorage(fileName, csvText) {
   storageSet('csvFileName', fileName);
   storageSet('csvText', csvText);
   storageSet('csvImportedAt', new Date().toISOString());
+  // Abgehakte Entscheidungs-Hinweise gehören zum aktuellen Import - bei einem
+  // neuen Import ändert sich die Datenbasis ohnehin, alte Häkchen wären nicht
+  // mehr aussagekräftig (siehe loadResolvedHintsSet weiter unten).
+  storageRemove('resolvedHints');
   return old;
 }
 
@@ -139,6 +143,24 @@ function saveNoteForPlayer(id, text) {
   storageSet('notes', JSON.stringify(notes));
 }
 
+// Abgehakte Entscheidungs-Hinweise ("erledigt für diesen Import") - anders als
+// Notizen NICHT über Re-Importe hinweg gültig, da sich die Datenbasis dann
+// ändert (siehe rotateAndSaveCsvToStorage, das dies bei jedem neuen Import
+// leert). Schlüssel sind z.B. "Vertrag prüfen:123" oder "handlungsbedarf:TW".
+function loadResolvedHintsSet() {
+  var raw = storageGet('resolvedHints');
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw) || {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveResolvedHintsSet(set) {
+  storageSet('resolvedHints', JSON.stringify(set));
+}
+
 function clearStoredKader() {
   storageRemove('csvFileName');
   storageRemove('csvText');
@@ -149,6 +171,7 @@ function clearStoredKader() {
   storageRemove('tacticMarkers');
   storageRemove('referenceDate');
   storageRemove('notes');
+  storageRemove('resolvedHints');
 }
 
 // Backup-Datei: fasst den gesamten gespeicherten Stand in einem JSON-Objekt
@@ -169,7 +192,8 @@ function buildBackupPayload() {
     previousCsvImportedAt: previous ? previous.importedAt : null,
     tacticMarkers: loadTacticMarkersFromStorage(),
     referenceDate: loadReferenceDateFromStorage(),
-    notes: loadNotesMap()
+    notes: loadNotesMap(),
+    resolvedHints: loadResolvedHintsSet()
   }, null, 2);
 }
 

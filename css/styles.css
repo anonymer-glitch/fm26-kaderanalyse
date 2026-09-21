@@ -323,6 +323,20 @@ header p {
   padding-left: 1.1rem;
 }
 
+.hint-summary-box li {
+  list-style: none;
+  margin-left: -1.1rem;
+}
+
+.hint-resolved-checkbox {
+  margin-right: 0.35rem;
+}
+
+.hint-summary-box li.resolved {
+  color: #999;
+  text-decoration: line-through;
+}
+
 .quality-settings {
   background: #fff;
   border: 1px solid #ddd;

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>FM26 Kaderanalyse</title>
-  <link rel="stylesheet" href="css/styles.css?v=16">
+  <link rel="stylesheet" href="css/styles.css?v=17">
 </head>
 <body>
   <header>
@@ -49,6 +49,7 @@
 
     <section id="tab-hinweise" class="app-tab" hidden>
       <h2>Entscheidungs-Hinweise</h2>
+      <p class="standards-note">Regelbasiert und transparent, keine Blackbox: <strong>Vertrag prüfen</strong> (Vertragsende bald + Spieler wichtig für die Mannschaft), <strong>Verkaufskandidat</strong> (Status "Nicht benötigt" ODER hohes Gehalt für eine kleine Rolle ODER [hohes Gehalt/Marktwert + unterdurchschnittliche Leistung]), <strong>Verleihkandidat</strong> (jung + wenig Einsatzzeit, aber nicht "Nicht benötigt"), <strong>Status-Diskrepanz</strong> (tatsächliche vs. vereinbarte Einsatzzeit weichen stark ab). Häkchen markieren erledigte Punkte nur für diesen Import - beim nächsten Import wieder leer, da sich die Datenbasis dann ohnehin ändert.</p>
       <div id="hints-summary" class="hints-summary"></div>
     </section>
 
@@ -60,6 +61,7 @@
         <div id="tactics-board" class="tactics-board"></div>
         <div class="tactics-sidebar">
           <h4>Kadertiefe</h4>
+          <p class="standards-note">Ziel-Kadertiefe je Position = Starter-Anzahl aus der Taktik × 2 (Rotation/Ausfallsicherheit). Ampel: fehlt (0 Spieler) / dünn (weniger als die Starter selbst) / knapp (Starter gedeckt, keine Rotation) / ok. Kachel anklicken zeigt die passenden Spieler darunter.</p>
           <div id="position-gaps" class="position-gaps"></div>
           <div id="position-gaps-detail"></div>
         </div>
@@ -68,6 +70,7 @@
 
     <section id="tab-qualitaet" class="app-tab" hidden>
       <h2>Qualität je Position</h2>
+      <p class="standards-note">Ø-Wert frei wählbarer Attribute je Position - ein Vorschlag aus FM-Community-Guides als editierbarer Startpunkt, keine feste Bewertungsformel.</p>
       <details id="quality-settings" class="quality-settings">
         <summary>Attribute je Position anpassen (Startpunkt, editierbar)</summary>
         <div id="quality-settings-body"></div>
@@ -97,19 +100,20 @@
 
     <section id="tab-kader" class="app-tab" hidden>
       <h2>Kader (<span id="row-count">0</span> Spieler)</h2>
+      <p class="standards-note">Alle importierten Spieler mit allen verfügbaren Spalten aus dem Export - filterbar und sortierbar (Klick auf Tabellenkopf), zusätzliche Attribut-Spalten über die Filter dazuwählbar.</p>
       <div id="filters" class="filters"></div>
       <div id="table-wrapper"></div>
     </section>
   </main>
 
-  <script src="js/csvParser.js?v=16"></script>
-  <script src="js/players.js?v=16"></script>
-  <script src="js/tactics.js?v=16"></script>
-  <script src="js/hints.js?v=16"></script>
-  <script src="js/quality.js?v=16"></script>
-  <script src="js/performance.js?v=16"></script>
-  <script src="js/standards.js?v=16"></script>
-  <script src="js/storage.js?v=16"></script>
-  <script src="js/app.js?v=16"></script>
+  <script src="js/csvParser.js?v=17"></script>
+  <script src="js/players.js?v=17"></script>
+  <script src="js/tactics.js?v=17"></script>
+  <script src="js/hints.js?v=17"></script>
+  <script src="js/quality.js?v=17"></script>
+  <script src="js/performance.js?v=17"></script>
+  <script src="js/standards.js?v=17"></script>
+  <script src="js/storage.js?v=17"></script>
+  <script src="js/app.js?v=17"></script>
 </body>
 </html>
