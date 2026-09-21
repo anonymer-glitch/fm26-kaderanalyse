@@ -45,7 +45,8 @@ Drei getrennte Bereiche, damit spätere Erweiterungen bestehende Bereiche nicht 
   - Verkaufskandidat: Status "Nicht benötigt" (immer) ODER hohes Gehalt für eine kleine Rolle ("Ergänzungsspieler", unabhängig vom Alter) ODER [hohes Gehalt ODER hoher Marktwert] + unterdurchschnittliche Leistungsnote ("verkaufen solange der Wert hoch ist")
   - Verleihkandidat: Alter ≤ 21 + Status niedriger als "Rotationsspieler" (der bleibt im Kader), aber nicht "Nicht benötigt" (der ist immer Verkaufskandidat, nie gleichzeitig Verleihkandidat)
   - Status-Diskrepanz: `Tatsächliche Einsatzzeiten` und `Einsatzzeiten` (vereinbarter/erwarteter Status) liegen mindestens 3 Stufen auseinander - unabhängig von der Richtung, da die Daten keine eindeutig "problematische" Richtung zeigen
-  - Positionslücke (Position im Kader dünn besetzt/fehlend, nur für manuell als "benötigt" markierte Positionen)
+  - Positionslücke (Position im Kader dünn besetzt/fehlend, nur für auf dem Taktik-Board als "benötigt" platzierte Positionen)
+- Taktik-Board: Fußballfeld zum Zusammenstellen der benötigten Positionen für die Positionslücken-Analyse. Formations-Presets (4-4-2, 4-3-3, 4-2-3-1, 3-5-2/Dreierkette, 5-3-2, 4-1-4-1) setzen automatisch passende Marker; danach frei per Drag & Drop verschiebbar, zusätzliche Positionen hinzufügbar/entfernbar. Die horizontale Lage eines Markers bestimmt automatisch die Seite (links/zentral/rechts)
 - Positionslücken-Übersicht (3-stufig: fehlt / dünn / ok)
 - Qualität je Position: Ø-Wert frei wählbarer Attribute je Position (Vorschlag aus FM-Community-Guides als editierbarer Startpunkt, keine feste Bewertungsformel)
 - Leistung je Position: Durchschnittsnote fest je Position (reicht als Überblick, da FM sie schon positionsbewusst berechnet); bei Bedarf zusätzliche Leistungskennzahlen manuell zuwählbar, je Position thematisch sortiert (Verteidiger: Zweikampf zuerst, Stürmer: Offensive zuerst, ...) - eine Spalte pro Kennzahl statt einem Blend-Wert (unterschiedliche Skalen wie Note/Prozent/Pro-90-Rate lassen sich nicht sinnvoll mitteln). Absolute Zähler (z. B. Gewonnene Zweikämpfe) werden automatisch auf "pro 90 Minuten" umgerechnet
@@ -60,7 +61,6 @@ Jeder Entscheidungs-Hinweis zeigt direkt in der Liste, welche Werte ihn ausgelö
 ## Erweiterungspunkte (für später, nicht in V1 umgesetzt)
 
 - Transfer-Scouting (Spieler außerhalb des eigenen Kaders)
-- Formations-Presets (z. B. "3er-Kette", "4-3-3"), die die benötigten Positionen automatisch vorauswählen, statt sie manuell anzuhaken
 - Einstellbare Schwellenwerte für Entscheidungs-Hinweise über die Oberfläche
 - Design/Optik-Überarbeitung: Typografie, Farbschema, evtl. Dark Mode, responsiveres Layout; Diagramme statt nur Tabellen (z. B. Altersverteilung, Gehaltsstruktur, Vertragslaufzeiten)
 - Druck-/Exportansicht: Dashboard oder Kaderübersicht sauber als PDF/Bild ausgeben, z. B. zum Teilen oder Ausdrucken

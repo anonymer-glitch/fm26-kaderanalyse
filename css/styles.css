@@ -28,6 +28,137 @@ header p {
   margin-top: 0.75rem;
 }
 
+.tactics-presets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.tactics-preset-btn {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.tactics-preset-btn.active {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+
+.tactics-add {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.tactics-add select,
+.tactics-add button {
+  padding: 0.3rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+.tactics-add button {
+  cursor: pointer;
+}
+
+.tactics-board {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  aspect-ratio: 2 / 3;
+  background: #2f9e44;
+  border: 2px solid #fff;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.tactics-halfway-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.tactics-center-circle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 70px;
+  height: 70px;
+  margin-left: -35px;
+  margin-top: -35px;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+}
+
+.tactics-box {
+  position: absolute;
+  left: 25%;
+  width: 50%;
+  height: 12%;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+}
+
+.tactics-box-top {
+  top: 0;
+  border-top: none;
+}
+
+.tactics-box-bottom {
+  bottom: 0;
+  border-bottom: none;
+}
+
+.tactic-marker {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  margin-left: -17px;
+  margin-top: -17px;
+  border-radius: 50%;
+  background: #1a1a1a;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.tactic-marker:active {
+  cursor: grabbing;
+}
+
+.tactic-marker-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 16px;
+  height: 16px;
+  background: #dc2626;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 0.65rem;
+  line-height: 16px;
+  text-align: center;
+  cursor: pointer;
+}
+
 .position-gaps {
   display: flex;
   flex-wrap: wrap;

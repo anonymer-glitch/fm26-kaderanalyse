@@ -1,0 +1,100 @@
+// Logik-Schicht: Taktik-Board für die Positionslücken-Analyse. Der Nutzer stellt
+// seine Formation auf einem Fußballfeld zusammen (Preset oder frei per Drag & Drop) -
+// daraus leiten wir die "benötigten Positionen" ab, die computePositionGaps
+// (siehe hints.js) für die Lücken-Analyse nutzt.
+
+// Reihenfolge, in der die Preset-Buttons angezeigt werden.
+var FORMATION_ORDER = ['4-4-2', '4-3-3', '4-2-3-1', '3-5-2 (Dreierkette)', '5-3-2', '4-1-4-1'];
+
+// Koordinaten in Prozent (x: 0=links, 100=rechts; y: 0=Angriff/oben, 100=eigenes Tor/unten) -
+// passend zu einem hochkant dargestellten Feld wie im FM-Taktikbildschirm. Nur ein
+// Startpunkt pro Formation, danach frei per Drag & Drop anpassbar.
+var FORMATIONS = {
+  '4-4-2': [
+    { code: 'TW', x: 50, y: 95 },
+    { code: 'V', x: 15, y: 78 }, { code: 'V', x: 38, y: 78 }, { code: 'V', x: 62, y: 78 }, { code: 'V', x: 85, y: 78 },
+    { code: 'M', x: 15, y: 48 }, { code: 'M', x: 38, y: 48 }, { code: 'M', x: 62, y: 48 }, { code: 'M', x: 85, y: 48 },
+    { code: 'ST', x: 38, y: 18 }, { code: 'ST', x: 62, y: 18 }
+  ],
+  '4-3-3': [
+    { code: 'TW', x: 50, y: 95 },
+    { code: 'V', x: 15, y: 78 }, { code: 'V', x: 38, y: 78 }, { code: 'V', x: 62, y: 78 }, { code: 'V', x: 85, y: 78 },
+    { code: 'DM', x: 50, y: 58 }, { code: 'M', x: 32, y: 50 }, { code: 'M', x: 68, y: 50 },
+    { code: 'OM', x: 15, y: 22 }, { code: 'ST', x: 50, y: 15 }, { code: 'OM', x: 85, y: 22 }
+  ],
+  '4-2-3-1': [
+    { code: 'TW', x: 50, y: 95 },
+    { code: 'V', x: 15, y: 78 }, { code: 'V', x: 38, y: 78 }, { code: 'V', x: 62, y: 78 }, { code: 'V', x: 85, y: 78 },
+    { code: 'DM', x: 35, y: 58 }, { code: 'DM', x: 65, y: 58 },
+    { code: 'OM', x: 15, y: 32 }, { code: 'OM', x: 50, y: 28 }, { code: 'OM', x: 85, y: 32 },
+    { code: 'ST', x: 50, y: 15 }
+  ],
+  '3-5-2 (Dreierkette)': [
+    { code: 'TW', x: 50, y: 95 },
+    { code: 'V', x: 30, y: 80 }, { code: 'V', x: 50, y: 84 }, { code: 'V', x: 70, y: 80 },
+    { code: 'FV', x: 10, y: 60 }, { code: 'FV', x: 90, y: 60 },
+    { code: 'M', x: 30, y: 48 }, { code: 'M', x: 50, y: 52 }, { code: 'M', x: 70, y: 48 },
+    { code: 'ST', x: 38, y: 18 }, { code: 'ST', x: 62, y: 18 }
+  ],
+  '5-3-2': [
+    { code: 'TW', x: 50, y: 95 },
+    { code: 'V', x: 30, y: 80 }, { code: 'V', x: 50, y: 84 }, { code: 'V', x: 70, y: 80 },
+    { code: 'FV', x: 12, y: 72 }, { code: 'FV', x: 88, y: 72 },
+    { code: 'M', x: 30, y: 50 }, { code: 'M', x: 50, y: 50 }, { code: 'M', x: 70, y: 50 },
+    { code: 'ST', x: 38, y: 18 }, { code: 'ST', x: 62, y: 18 }
+  ],
+  '4-1-4-1': [
+    { code: 'TW', x: 50, y: 95 },
+    { code: 'V', x: 15, y: 78 }, { code: 'V', x: 38, y: 78 }, { code: 'V', x: 62, y: 78 }, { code: 'V', x: 85, y: 78 },
+    { code: 'DM', x: 50, y: 60 },
+    { code: 'M', x: 15, y: 42 }, { code: 'M', x: 38, y: 45 }, { code: 'M', x: 62, y: 45 }, { code: 'M', x: 85, y: 42 },
+    { code: 'ST', x: 50, y: 18 }
+  ]
+};
+
+// Positionscodes, bei denen die Seite (links/zentral/rechts) für die Lücken-Analyse
+// eine Rolle spielt - TW/DM/ST kommen in den FM26-Daten üblicherweise ohne
+// Seitenangabe vor (siehe extractPositionSlots in players.js).
+var TACTICS_SIDED_CODES = ['V', 'FV', 'M', 'OM'];
+
+function tacticsSideForX(x) {
+  if (x < 38) return 'L';
+  if (x > 62) return 'R';
+  return 'Z';
+}
+
+// Wandelt einen Marker in den Positions-Slot-String, den computePositionGaps &
+// Co. erwarten (z.B. "V (L)", "DM").
+function markerToSlot(marker) {
+  if (TACTICS_SIDED_CODES.indexOf(marker.code) === -1) return marker.code;
+  return marker.code + ' (' + tacticsSideForX(marker.x) + ')';
+}
+
+var tacticsMarkerIdCounter = 0;
+function nextTacticsMarkerId() {
+  tacticsMarkerIdCounter += 1;
+  return 'marker-' + tacticsMarkerIdCounter;
+}
+
+// Erzeugt frische Marker-Objekte (mit eigener ID) für ein Formations-Preset.
+function formationMarkers(name) {
+  var preset = FORMATIONS[name] || [];
+  return preset.map(function (m) {
+    return { id: nextTacticsMarkerId(), code: m.code, x: m.x, y: m.y };
+  });
+}
+
+// Eindeutige, nach Position auf dem Feld sortierte Liste benötigter Slots aus den
+// aktuell auf dem Board platzierten Markern.
+function neededPositionsFromMarkers(markers) {
+  var seen = {};
+  var result = [];
+  markers.forEach(function (m) {
+    var slot = markerToSlot(m);
+    if (!seen[slot]) {
+      seen[slot] = true;
+      result.push(slot);
+    }
+  });
+  return sortBySlotOrder(result);
+}

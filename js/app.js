@@ -7,7 +7,8 @@ document.addEventListener('DOMContentLoaded', function () {
   var dashboardViewEl = document.getElementById('dashboard-view');
   var kaderViewEl = document.getElementById('kader-view');
 
-  var neededPositionsEl = document.getElementById('needed-positions');
+  var tacticsPresetsEl = document.getElementById('tactics-presets');
+  var tacticsBoardEl = document.getElementById('tactics-board');
   var positionGapsEl = document.getElementById('position-gaps');
   var hintsSummaryEl = document.getElementById('hints-summary');
   var qualitySettingsBodyEl = document.getElementById('quality-settings-body');
@@ -92,6 +93,8 @@ document.addEventListener('DOMContentLoaded', function () {
     numericColumns: [],
     positionSlots: [],
     neededPositions: [],
+    tacticMarkers: [],
+    activeFormation: null,
     statusOptions: [],
     qualityAttributes: {},
     standardsAttributes: {},
@@ -196,7 +199,9 @@ document.addEventListener('DOMContentLoaded', function () {
     state.players = buildPlayers(result.records);
     state.numericColumns = detectNumericColumns(result.headers, result.records);
     state.positionSlots = sortBySlotOrder(collectPositionSlots(state.players));
-    state.neededPositions = state.positionSlots.slice();
+    state.activeFormation = '4-4-2';
+    state.tacticMarkers = formationMarkers(state.activeFormation);
+    state.neededPositions = neededPositionsFromMarkers(state.tacticMarkers);
     state.statusOptions = sortByPlayingTime(uniqueValues(result.records, 'Tatsächliche Einsatzzeiten'));
     state.filters = defaultFilters();
     state.sortKey = 'name';
@@ -218,7 +223,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     applyHints(state.players, state.referenceDate);
 
-    renderNeededPositions();
+    renderTacticsPresets();
+    renderTacticsBoard();
     renderPositionGaps();
     renderHintsSummary();
     renderQualitySettings();
@@ -234,18 +240,132 @@ document.addEventListener('DOMContentLoaded', function () {
     switchView('dashboard');
   }
 
-  function renderNeededPositions() {
-    neededPositionsEl.innerHTML = '';
-    neededPositionsEl.appendChild(makeCheckboxGroupField(
-      'Benötigte Positionen (für Lücken-Analyse, z.B. bei 3er-Kette keine Außenverteidiger nötig)',
-      state.positionSlots,
-      state.neededPositions,
-      function (selected) {
-        state.neededPositions = selected;
-        renderPositionGaps();
-        renderHintsSummary();
+  // Nach jeder Änderung am Taktik-Board (Preset, hinzugefügter/entfernter Marker,
+  // Drag & Drop) neu berechnen und alles betroffene neu rendern - die Positions-
+  // lücken und der "Handlungsbedarf"-Hinweis hängen direkt an state.neededPositions.
+  function updateTactics() {
+    state.neededPositions = neededPositionsFromMarkers(state.tacticMarkers);
+    renderTacticsBoard();
+    renderPositionGaps();
+    renderHintsSummary();
+  }
+
+  function applyFormation(name) {
+    state.activeFormation = name;
+    state.tacticMarkers = formationMarkers(name);
+    updateTactics();
+  }
+
+  function addTacticsMarker(code) {
+    state.activeFormation = null;
+    state.tacticMarkers.push({ id: nextTacticsMarkerId(), code: code, x: 50, y: 50 });
+    renderTacticsPresets();
+    updateTactics();
+  }
+
+  function removeTacticsMarker(id) {
+    state.activeFormation = null;
+    state.tacticMarkers = state.tacticMarkers.filter(function (m) { return m.id !== id; });
+    renderTacticsPresets();
+    updateTactics();
+  }
+
+  function renderTacticsPresets() {
+    tacticsPresetsEl.innerHTML = '';
+    FORMATION_ORDER.forEach(function (name) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'tactics-preset-btn' + (state.activeFormation === name ? ' active' : '');
+      btn.textContent = name;
+      btn.addEventListener('click', function () { applyFormation(name); });
+      tacticsPresetsEl.appendChild(btn);
+    });
+
+    var addWrap = document.createElement('span');
+    addWrap.className = 'tactics-add';
+    var select = document.createElement('select');
+    collectRootPositionCodes(state.players).forEach(function (code) {
+      var opt = document.createElement('option');
+      opt.value = code;
+      opt.textContent = code;
+      select.appendChild(opt);
+    });
+    var addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.textContent = '+ Position hinzufügen';
+    addBtn.addEventListener('click', function () { addTacticsMarker(select.value); });
+    addWrap.appendChild(select);
+    addWrap.appendChild(addBtn);
+    tacticsPresetsEl.appendChild(addWrap);
+  }
+
+  // Verschiebt einen Marker per Pointer-Capture: einfacher als Document-weite
+  // Listener, da das Event auch dann am Marker ankommt, wenn der Zeiger kurz
+  // das Feld verlässt (z.B. schnelle Bewegung an den Rand).
+  function makeMarkerDraggable(el, marker) {
+    el.addEventListener('pointerdown', function (event) {
+      if (event.target !== el) return; // nicht beim Klick auf den Entfernen-Button
+      event.preventDefault();
+      el.setPointerCapture(event.pointerId);
+      var rect = tacticsBoardEl.getBoundingClientRect();
+
+      function onMove(moveEvent) {
+        var x = Math.max(0, Math.min(100, ((moveEvent.clientX - rect.left) / rect.width) * 100));
+        var y = Math.max(0, Math.min(100, ((moveEvent.clientY - rect.top) / rect.height) * 100));
+        marker.x = x;
+        marker.y = y;
+        el.style.left = x + '%';
+        el.style.top = y + '%';
       }
-    ));
+      function onUp() {
+        el.removeEventListener('pointermove', onMove);
+        el.removeEventListener('pointerup', onUp);
+        state.activeFormation = null;
+        renderTacticsPresets();
+        updateTactics();
+      }
+      el.addEventListener('pointermove', onMove);
+      el.addEventListener('pointerup', onUp);
+    });
+  }
+
+  function renderTacticsBoard() {
+    tacticsBoardEl.innerHTML = '';
+
+    var halfway = document.createElement('div');
+    halfway.className = 'tactics-halfway-line';
+    var circle = document.createElement('div');
+    circle.className = 'tactics-center-circle';
+    var boxTop = document.createElement('div');
+    boxTop.className = 'tactics-box tactics-box-top';
+    var boxBottom = document.createElement('div');
+    boxBottom.className = 'tactics-box tactics-box-bottom';
+    tacticsBoardEl.appendChild(halfway);
+    tacticsBoardEl.appendChild(circle);
+    tacticsBoardEl.appendChild(boxTop);
+    tacticsBoardEl.appendChild(boxBottom);
+
+    state.tacticMarkers.forEach(function (marker) {
+      var el = document.createElement('div');
+      el.className = 'tactic-marker';
+      el.style.left = marker.x + '%';
+      el.style.top = marker.y + '%';
+      el.textContent = marker.code;
+      el.title = markerToSlot(marker);
+
+      var removeBtn = document.createElement('span');
+      removeBtn.className = 'tactic-marker-remove';
+      removeBtn.textContent = '×';
+      removeBtn.addEventListener('pointerdown', function (event) { event.stopPropagation(); });
+      removeBtn.addEventListener('click', function (event) {
+        event.stopPropagation();
+        removeTacticsMarker(marker.id);
+      });
+      el.appendChild(removeBtn);
+
+      makeMarkerDraggable(el, marker);
+      tacticsBoardEl.appendChild(el);
+    });
   }
 
   function renderPositionGaps() {
