@@ -76,12 +76,12 @@ Jeder Handlungsbedarf-Eintrag zeigt direkt in der Liste, welche Werte ihn ausgel
 - Druck-/Exportansicht: Dashboard oder Kaderübersicht sauber als PDF/Bild ausgeben, z. B. zum Teilen oder Ausdrucken
 - Spieler-Vergleich: 2-3 Spieler explizit nebeneinander gegenüberstellen (bisher nur implizit über die Kaderübersicht-Tabelle möglich)
 
-### Backlog – noch unspezifiziert, offene Ideen
+### Backlog – vage Ideen, wahrscheinlich nicht umgesetzt
 
-Diese zwei sind bewusst noch nicht ausgearbeitet, da unklar ist, was der FM26-Export dafür überhaupt hergibt (Spalten, gefüllte Daten). Erst mal nur als Idee festgehalten, keine Entscheidung, ob/wie umgesetzt:
+Diese zwei sind bewusst nur als "mal drüber nachgedacht" festgehalten, nicht als geplante Erweiterung - eher zum Verwerfen als zum Umsetzen tendiert, aber der Vollständigkeit halber notiert:
 
-- **U18-/U21-/Reserve-Team:** Falls FM26 beim Export mehrerer Kader gleichzeitig eine Spalte mitliefert, die den Spieler einem Team zuordnet, würde vermutlich ein zusätzlicher Filter in der Kaderübersicht reichen (kein neuer Tab nötig) - das generische Spalten-Modell trägt das schon mit. Zu klären: Kadertiefe, Qualität/Leistung je Position und die meisten Handlungsbedarf-Regeln gehen aktuell implizit von einem reinen Erste-Mannschaft-Import aus - bei gemischtem Import müsste vorher nach Team gefiltert werden, sonst verwässern Jugendspieler diese Auswertungen.
-- **Leihspieler:** Bisher nicht importiert. Idee: falls der Export für verliehene Spieler tatsächlich Noten/Stats liefert, eine neue Handlungsbedarf-Kategorie ("Leihrückholung prüfen" o. ä.) statt eines eigenen Tabs - passt zum bestehenden kurzfristigen Charakter des Reports (Vertrag prüfen, Verkaufskandidat, ...) und zum bestehenden Muster, statt eine Extra-Ansicht zu bauen.
+- **U18-/U21-/Reserve-Team:** Technisch machbar (siehe unten), aber der Nutzen ist fraglich gegenüber dem Aufwand. Kadertiefe, Qualität/Leistung je Position und die meisten Handlungsbedarf-Regeln gehen aktuell implizit von einem reinen Erste-Mannschaft-Import aus - bei einem gemischten Import müsste vorher nach Team gefiltert werden, sonst verwässern Jugendspieler diese Auswertungen. Das wäre mehr Umbau als der Nutzen (gelegentlich einen Jugendspieler hochziehen) hergibt.
+- **Leihspieler:** Ginge technisch einfach (falls der Export dafür überhaupt Noten/Stats liefert), aber der praktische Nutzen ist gering - so wenige Leihspieler lassen sich auch einfach im Spiel selbst kurz überblicken, ohne eigenen Report dafür.
 
 ### Persistenz (umgesetzt)
 
