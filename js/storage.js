@@ -30,16 +30,49 @@ function storageRemove(key) {
   }
 }
 
-function saveCsvToStorage(fileName, csvText) {
-  storageSet('csvFileName', fileName);
-  storageSet('csvText', csvText);
-}
-
 // Gibt null zurück, wenn kein gespeicherter Kader vorliegt.
 function loadCsvFromStorage() {
   var csvText = storageGet('csvText');
   if (!csvText) return null;
   return { fileName: storageGet('csvFileName') || 'gespeicherter-kader.csv', csvText: csvText };
+}
+
+function loadPreviousCsvFromStorage() {
+  var csvText = storageGet('previousCsvText');
+  if (!csvText) return null;
+  return { fileName: storageGet('previousCsvFileName') || 'vorheriger-import.csv', csvText: csvText };
+}
+
+// Bei einem NEUEN Import (nicht beim bloßen Wiederladen aus dem Speicher): der
+// bisherige "aktuelle" Stand rückt eine Stufe zurück zum "vorherigen" Stand (nur
+// diese eine Stufe, kein voller Verlauf), der neue Import wird "aktuell". Gibt
+// den alten Stand zurück, damit der Aufrufer ihn direkt als Vergleichs-/
+// Fallback-Basis für den neuen Import nutzen kann, ohne den Speicher doppelt zu lesen.
+function rotateAndSaveCsvToStorage(fileName, csvText) {
+  var old = loadCsvFromStorage();
+  if (old) {
+    storageSet('previousCsvFileName', old.fileName);
+    storageSet('previousCsvText', old.csvText);
+  }
+  storageSet('csvFileName', fileName);
+  storageSet('csvText', csvText);
+  return old;
+}
+
+// Für die Sicherungsdatei: setzt beide Stände exakt so, wie sie in der Datei
+// stehen (keine Rotation) - ein Restore soll den exportierten Stand 1:1 wiederherstellen.
+function restoreCsvSlotsFromBackup(current, previous) {
+  if (current && current.csvText) {
+    storageSet('csvFileName', current.fileName || '');
+    storageSet('csvText', current.csvText);
+  }
+  if (previous && previous.csvText) {
+    storageSet('previousCsvFileName', previous.fileName || '');
+    storageSet('previousCsvText', previous.csvText);
+  } else {
+    storageRemove('previousCsvFileName');
+    storageRemove('previousCsvText');
+  }
 }
 
 function saveTacticMarkersToStorage(markers) {
@@ -67,6 +100,8 @@ function loadReferenceDateFromStorage() {
 function clearStoredKader() {
   storageRemove('csvFileName');
   storageRemove('csvText');
+  storageRemove('previousCsvFileName');
+  storageRemove('previousCsvText');
   storageRemove('tacticMarkers');
   storageRemove('referenceDate');
 }
@@ -77,11 +112,14 @@ function clearStoredKader() {
 // Browser-Speicher mal verloren geht.
 function buildBackupPayload() {
   var csv = loadCsvFromStorage();
+  var previous = loadPreviousCsvFromStorage();
   return JSON.stringify({
     format: 'fm26-kaderanalyse-backup',
-    version: 1,
+    version: 2,
     csvFileName: csv ? csv.fileName : null,
     csvText: csv ? csv.csvText : null,
+    previousCsvFileName: previous ? previous.fileName : null,
+    previousCsvText: previous ? previous.csvText : null,
     tacticMarkers: loadTacticMarkersFromStorage(),
     referenceDate: loadReferenceDateFromStorage()
   }, null, 2);

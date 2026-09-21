@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>FM26 Kaderanalyse</title>
-  <link rel="stylesheet" href="css/styles.css?v=7">
+  <link rel="stylesheet" href="css/styles.css?v=8">
 </head>
 <body>
   <header>
@@ -38,6 +38,9 @@
     <section id="dashboard-view" hidden>
       <h2>Dashboard</h2>
 
+      <h3>Vergleich zum letzten Import</h3>
+      <div id="import-comparison"></div>
+
       <h3>Taktik</h3>
       <p class="standards-note">Stelle deine Taktik auf dem Feld zusammen (Formations-Preset oder frei per Drag &amp; Drop) - daraus ergeben sich die benötigten Positionen für die Lücken-Analyse.</p>
       <div id="tactics-presets" class="tactics-presets"></div>
@@ -57,7 +60,7 @@
       <div id="quality-table-wrapper"></div>
 
       <h3>Leistung je Position</h3>
-      <p class="standards-note">Auf Basis echter Saisondaten (z. B. Durchschnittsnote) statt Attributen/Potenzial.</p>
+      <p class="standards-note">Auf Basis echter Saisondaten (z. B. Durchschnittsnote) statt Attributen/Potenzial. Hat ein Spieler diese Saison noch keine Spiele gemacht, wird übergangsweise seine Vorsaison-Note verwendet, erkennbar am "*" (z. B. im Spielerprofil) - verschwindet automatisch, sobald echte neue Daten da sind.</p>
       <details id="performance-settings" class="quality-settings">
         <summary>Leistungskennzahlen anpassen (Startpunkt, editierbar)</summary>
         <div id="performance-settings-body"></div>
@@ -80,14 +83,14 @@
     </section>
   </main>
 
-  <script src="js/csvParser.js?v=7"></script>
-  <script src="js/players.js?v=7"></script>
-  <script src="js/tactics.js?v=7"></script>
-  <script src="js/hints.js?v=7"></script>
-  <script src="js/quality.js?v=7"></script>
-  <script src="js/performance.js?v=7"></script>
-  <script src="js/standards.js?v=7"></script>
-  <script src="js/storage.js?v=7"></script>
-  <script src="js/app.js?v=7"></script>
+  <script src="js/csvParser.js?v=8"></script>
+  <script src="js/players.js?v=8"></script>
+  <script src="js/tactics.js?v=8"></script>
+  <script src="js/hints.js?v=8"></script>
+  <script src="js/quality.js?v=8"></script>
+  <script src="js/performance.js?v=8"></script>
+  <script src="js/standards.js?v=8"></script>
+  <script src="js/storage.js?v=8"></script>
+  <script src="js/app.js?v=8"></script>
 </body>
 </html>

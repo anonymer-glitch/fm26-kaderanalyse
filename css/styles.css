@@ -439,12 +439,17 @@ th.sortable:hover {
   background: #f0f0f0;
 }
 
-#table-wrapper {
+#table-wrapper,
+#previous-import-table-wrapper {
   overflow-x: auto;
   max-height: 70vh;
   border: 1px solid #ddd;
   border-radius: 4px;
   background: #fff;
+}
+
+#previous-import-table-wrapper {
+  margin-top: 0.75rem;
 }
 
 table {

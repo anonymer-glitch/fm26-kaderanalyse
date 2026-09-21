@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var dashboardViewEl = document.getElementById('dashboard-view');
   var kaderViewEl = document.getElementById('kader-view');
 
+  var importComparisonEl = document.getElementById('import-comparison');
   var tacticsPresetsEl = document.getElementById('tactics-presets');
   var tacticsBoardEl = document.getElementById('tactics-board');
   var positionGapsEl = document.getElementById('position-gaps');
@@ -93,6 +94,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   var state = {
     players: [],
+    previousPlayers: [],
+    previousImportSortKey: 'name',
+    previousImportSortDir: 'asc',
     headers: [],
     numericColumns: [],
     positionSlots: [],
@@ -153,15 +157,35 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var reader = new FileReader();
     reader.onload = function (e) {
-      var result = parseCSV(e.target.result);
-      handleImport(result, file.name);
-      saveCsvToStorage(file.name, e.target.result);
+      var oldCurrent = rotateAndSaveCsvToStorage(file.name, e.target.result);
+      loadCurrentIntoApp(file.name, e.target.result, oldCurrent);
     };
     reader.onerror = function () {
       statusEl.textContent = 'Fehler beim Lesen der Datei.';
     };
     reader.readAsText(file, 'UTF-8');
   });
+
+  // Baut ggf. den vorherigen Import auf (für Vergleich + Durchschnittsnote-
+  // Fallback) und importiert dann den aktuellen. previousInfo ist { fileName,
+  // csvText } oder null - kommt entweder vom Rotieren beim Upload, aus dem
+  // Speicher beim Öffnen, oder aus einer Sicherungsdatei.
+  function loadCurrentIntoApp(fileName, csvText, previousInfo) {
+    var previousPlayers = [];
+    var previousRatingById = null;
+    if (previousInfo && previousInfo.csvText) {
+      var previousResult = parseCSV(previousInfo.csvText);
+      fixMinutesPerGameColumn(previousResult.records);
+      previousPlayers = buildPlayers(previousResult.records);
+      previousRatingById = {};
+      previousPlayers.forEach(function (p) {
+        if (p.id != null && p.rating != null) previousRatingById[p.id] = p.rating;
+      });
+    }
+    handleImport(parseCSV(csvText), fileName, previousRatingById);
+    state.previousPlayers = previousPlayers;
+    renderImportComparison();
+  }
 
   backupExportBtn.addEventListener('click', function () {
     if (state.players.length === 0) {
@@ -197,8 +221,9 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       if (data.csvText) {
         var fileName = data.csvFileName || 'kader.csv';
-        saveCsvToStorage(fileName, data.csvText);
-        handleImport(parseCSV(data.csvText), fileName);
+        var previousInfo = data.previousCsvText ? { fileName: data.previousCsvFileName, csvText: data.previousCsvText } : null;
+        restoreCsvSlotsFromBackup({ fileName: fileName, csvText: data.csvText }, previousInfo);
+        loadCurrentIntoApp(fileName, data.csvText, previousInfo);
       }
       applyLoadedTacticAndDate(data.tacticMarkers, data.referenceDate);
     };
@@ -232,13 +257,131 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  function handleImport(result, fileName) {
+  // Für die "Letzten Import ansehen"-Tabelle: dieselben Spalten wie die
+  // Kaderübersicht, nur ohne "Hinweise" (die werden für den alten Import nicht
+  // berechnet - kein Spieldatum-Kontext von damals gespeichert).
+  var PREVIOUS_IMPORT_COLUMNS = COLUMNS.filter(function (c) { return c.key !== 'hints'; });
+
+  function renderImportComparison() {
+    importComparisonEl.innerHTML = '';
+    if (state.previousPlayers.length === 0) {
+      var note = document.createElement('p');
+      note.className = 'standards-note';
+      note.textContent = 'Noch kein vorheriger Import zum Vergleichen vorhanden - erscheint automatisch ab dem nächsten Import.';
+      importComparisonEl.appendChild(note);
+      return;
+    }
+
+    var comparison = computeImportComparison(state.players, state.previousPlayers);
+
+    function makeBox(title, items, renderItem) {
+      var box = document.createElement('div');
+      box.className = 'hint-summary-box';
+      var boxTitle = document.createElement('div');
+      boxTitle.className = 'hint-summary-title';
+      boxTitle.textContent = title + ' (' + items.length + ')';
+      box.appendChild(boxTitle);
+      if (items.length > 0) {
+        var list = document.createElement('ul');
+        items.forEach(function (item) {
+          var li = document.createElement('li');
+          renderItem(li, item);
+          list.appendChild(li);
+        });
+        box.appendChild(list);
+      }
+      return box;
+    }
+
+    function playerLink(li, player) {
+      var link = document.createElement('a');
+      link.href = '#';
+      link.textContent = player.name;
+      link.addEventListener('click', function (event) {
+        event.preventDefault();
+        openProfile(player);
+      });
+      li.appendChild(link);
+    }
+
+    var summaryRow = document.createElement('div');
+    summaryRow.className = 'hints-summary';
+    summaryRow.appendChild(makeBox('Neuzugänge', comparison.newArrivals, function (li, p) { playerLink(li, p); }));
+    summaryRow.appendChild(makeBox('Abgänge', comparison.departures, function (li, p) { playerLink(li, p); }));
+    summaryRow.appendChild(makeBox('Status-Änderungen', comparison.statusChanges, function (li, c) {
+      playerLink(li, c.player);
+      li.appendChild(document.createTextNode(': ' + c.from + ' → ' + c.to));
+    }));
+    summaryRow.appendChild(makeBox('Vertragsänderungen', comparison.contractChanges, function (li, c) {
+      playerLink(li, c.player);
+      li.appendChild(document.createTextNode(': ' + c.from + ' → ' + c.to));
+    }));
+    importComparisonEl.appendChild(summaryRow);
+
+    var details = document.createElement('details');
+    details.className = 'quality-settings';
+    var summary = document.createElement('summary');
+    summary.textContent = 'Letzten Import ansehen (' + state.previousPlayers.length + ' Spieler)';
+    details.appendChild(summary);
+    var tableHolder = document.createElement('div');
+    tableHolder.id = 'previous-import-table-wrapper';
+    details.appendChild(tableHolder);
+    importComparisonEl.appendChild(details);
+
+    renderPreviousImportTable(tableHolder);
+  }
+
+  function renderPreviousImportTable(wrapper) {
+    var sorted = sortPlayers(state.previousPlayers, state.previousImportSortKey, state.previousImportSortDir, PREVIOUS_IMPORT_COLUMNS);
+
+    wrapper.innerHTML = '';
+    var table = document.createElement('table');
+    var thead = document.createElement('thead');
+    var headRow = document.createElement('tr');
+    PREVIOUS_IMPORT_COLUMNS.forEach(function (col) {
+      var th = document.createElement('th');
+      th.className = 'sortable';
+      var arrow = state.previousImportSortKey === col.key ? (state.previousImportSortDir === 'asc' ? ' ▲' : ' ▼') : '';
+      th.textContent = col.label + arrow;
+      th.addEventListener('click', function () {
+        if (state.previousImportSortKey === col.key) {
+          state.previousImportSortDir = state.previousImportSortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          state.previousImportSortKey = col.key;
+          state.previousImportSortDir = 'asc';
+        }
+        renderPreviousImportTable(wrapper);
+      });
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    var tbody = document.createElement('tbody');
+    sorted.forEach(function (p) {
+      var tr = document.createElement('tr');
+      tr.className = 'clickable-row';
+      tr.addEventListener('click', function () { openProfile(p); });
+      PREVIOUS_IMPORT_COLUMNS.forEach(function (col) {
+        var td = document.createElement('td');
+        var text = col.display ? col.display(p) : col.get(p);
+        td.textContent = text == null ? '' : text;
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    wrapper.appendChild(table);
+  }
+
+  function handleImport(result, fileName, previousRatingById) {
     if (result.records.length === 0) {
       statusEl.textContent = 'Keine Datensätze in "' + fileName + '" gefunden.';
       return;
     }
 
     fixMinutesPerGameColumn(result.records);
+    applyPreviousSeasonRatingFallback(result.records, previousRatingById);
 
     var hasIdColumn = result.headers.indexOf('Unique ID') !== -1;
     var statusLines = [];
@@ -1042,7 +1185,7 @@ document.addEventListener('DOMContentLoaded', function () {
   (function loadSavedKaderOnStartup() {
     var saved = loadCsvFromStorage();
     if (!saved) return;
-    handleImport(parseCSV(saved.csvText), saved.fileName);
+    loadCurrentIntoApp(saved.fileName, saved.csvText, loadPreviousCsvFromStorage());
     applyLoadedTacticAndDate(loadTacticMarkersFromStorage(), loadReferenceDateFromStorage());
   })();
 });

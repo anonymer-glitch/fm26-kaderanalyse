@@ -17,6 +17,28 @@ function fixMinutesPerGameColumn(records) {
   });
 }
 
+// Saisonwechsel: die Durchschnittsnote wird jede Saison zurückgesetzt und ist im
+// neuen Import oft leer, solange noch keine Pflichtspiele absolviert wurden - dann
+// übergangsweise die Vorsaison-Note übernehmen (bis echte neue Werte da sind).
+// Ausgelöst NUR über "Einsätze" (0 oder leer), nicht über die Note selbst - die
+// kann im Export zufällig leer/0 sein, ohne dass das etwas bedeutet. Die
+// übernommene Note bekommt ein "*" angehängt, das beim Parsen (parseGermanDecimal
+// liest nur bis zur ersten Nicht-Zahl) einfach ignoriert wird, aber überall dort
+// sichtbar bleibt, wo der Rohwert direkt angezeigt wird (z.B. Spielerprofil).
+function applyPreviousSeasonRatingFallback(records, previousRatingById) {
+  if (!previousRatingById) return;
+  records.forEach(function (r) {
+    var appearances = parseAppearances(r['Einsätze']);
+    var hasPlayed = appearances != null && appearances.total > 0;
+    var currentRating = parseGermanDecimal(r['Durchschnittsnote – Verein']);
+    if (hasPlayed || currentRating != null) return;
+    var previousRating = previousRatingById[r['Unique ID']];
+    if (previousRating != null) {
+      r['Durchschnittsnote – Verein'] = previousRating.toFixed(2).replace('.', ',') + '*';
+    }
+  });
+}
+
 // "Einsätze" kommt im Format "28 (5)" (28 Startelf-Einsätze, 5 Einwechslungen)
 // oder nur "40" (keine Einwechslungen). Für die Gesamtminuten-Schätzung zählt
 // die Summe aus beidem.
@@ -295,4 +317,34 @@ function sortPlayers(players, sortKey, sortDir, columns) {
   });
   if (sortDir === 'desc') sorted.reverse();
   return sorted;
+}
+
+// Vergleicht den aktuellen Import mit dem direkt vorherigen (verknüpft über
+// "Unique ID"): Neuzugänge, Abgänge, sowie Status-/Vertragsänderungen bei
+// Spielern, die in beiden Imports vorkommen. Kein voller Verlauf über mehrere
+// Zeitpunkte - nur der eine Schritt zurück, den storage.js aufhebt.
+function computeImportComparison(currentPlayers, previousPlayers) {
+  var previousById = {};
+  previousPlayers.forEach(function (p) { if (p.id) previousById[p.id] = p; });
+  var currentById = {};
+  currentPlayers.forEach(function (p) { if (p.id) currentById[p.id] = p; });
+
+  var newArrivals = currentPlayers.filter(function (p) { return p.id && !previousById[p.id]; });
+  var departures = previousPlayers.filter(function (p) { return p.id && !currentById[p.id]; });
+
+  var statusChanges = [];
+  var contractChanges = [];
+  currentPlayers.forEach(function (p) {
+    if (!p.id) return;
+    var prev = previousById[p.id];
+    if (!prev) return;
+    if (prev.statusActual !== p.statusActual) {
+      statusChanges.push({ player: p, from: prev.statusActual, to: p.statusActual });
+    }
+    if (prev.contractEndRaw !== p.contractEndRaw) {
+      contractChanges.push({ player: p, from: prev.contractEndRaw, to: p.contractEndRaw });
+    }
+  });
+
+  return { newArrivals: newArrivals, departures: departures, statusChanges: statusChanges, contractChanges: contractChanges };
 }
