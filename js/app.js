@@ -95,6 +95,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var state = {
     players: [],
     previousPlayers: [],
+    previousImportedAt: null,
     previousImportSortKey: 'name',
     previousImportSortDir: 'asc',
     headers: [],
@@ -184,6 +185,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     handleImport(parseCSV(csvText), fileName, previousRatingById);
     state.previousPlayers = previousPlayers;
+    state.previousImportedAt = previousInfo ? previousInfo.importedAt : null;
     renderImportComparison();
   }
 
@@ -221,8 +223,10 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       if (data.csvText) {
         var fileName = data.csvFileName || 'kader.csv';
-        var previousInfo = data.previousCsvText ? { fileName: data.previousCsvFileName, csvText: data.previousCsvText } : null;
-        restoreCsvSlotsFromBackup({ fileName: fileName, csvText: data.csvText }, previousInfo);
+        var previousInfo = data.previousCsvText
+          ? { fileName: data.previousCsvFileName, csvText: data.previousCsvText, importedAt: data.previousCsvImportedAt }
+          : null;
+        restoreCsvSlotsFromBackup({ fileName: fileName, csvText: data.csvText, importedAt: data.csvImportedAt }, previousInfo);
         loadCurrentIntoApp(fileName, data.csvText, previousInfo);
       }
       applyLoadedTacticAndDate(data.tacticMarkers, data.referenceDate);
@@ -262,6 +266,18 @@ document.addEventListener('DOMContentLoaded', function () {
   // berechnet - kein Spieldatum-Kontext von damals gespeichert).
   var PREVIOUS_IMPORT_COLUMNS = COLUMNS.filter(function (c) { return c.key !== 'hints'; });
 
+  // Formatiert den ISO-Zeitstempel eines gespeicherten Imports für die Anzeige
+  // (z.B. "03.01.2026, 14:32 Uhr") - null bei fehlendem/ungültigem Zeitstempel
+  // (z.B. Speicherstände von vor dieser Funktion).
+  function formatImportTimestamp(isoString) {
+    if (!isoString) return null;
+    var d = new Date(isoString);
+    if (isNaN(d.getTime())) return null;
+    function pad(n) { return n < 10 ? '0' + n : String(n); }
+    return pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear() +
+      ', ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ' Uhr';
+  }
+
   function renderImportComparison() {
     importComparisonEl.innerHTML = '';
     if (state.previousPlayers.length === 0) {
@@ -271,6 +287,14 @@ document.addEventListener('DOMContentLoaded', function () {
       importComparisonEl.appendChild(note);
       return;
     }
+
+    var previousDate = formatImportTimestamp(state.previousImportedAt);
+    var dateNote = document.createElement('p');
+    dateNote.className = 'standards-note';
+    dateNote.textContent = previousDate
+      ? 'Vergleich mit dem Import vom ' + previousDate + '.'
+      : 'Vergleich mit dem vorherigen Import (Zeitpunkt unbekannt).';
+    importComparisonEl.appendChild(dateNote);
 
     var comparison = computeImportComparison(state.players, state.previousPlayers);
 
@@ -321,7 +345,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var details = document.createElement('details');
     details.className = 'quality-settings';
     var summary = document.createElement('summary');
-    summary.textContent = 'Letzten Import ansehen (' + state.previousPlayers.length + ' Spieler)';
+    summary.textContent = 'Letzten Import ansehen (' + state.previousPlayers.length + ' Spieler' +
+      (previousDate ? ', vom ' + previousDate : '') + ')';
     details.appendChild(summary);
     var tableHolder = document.createElement('div');
     tableHolder.id = 'previous-import-table-wrapper';

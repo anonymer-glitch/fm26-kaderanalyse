@@ -30,17 +30,27 @@ function storageRemove(key) {
   }
 }
 
-// Gibt null zurück, wenn kein gespeicherter Kader vorliegt.
+// Gibt null zurück, wenn kein gespeicherter Kader vorliegt. importedAt ist ein
+// ISO-Zeitstempel (wann diese Datei hochgeladen wurde) oder null bei ganz alten
+// Speicherständen von vor dieser Funktion.
 function loadCsvFromStorage() {
   var csvText = storageGet('csvText');
   if (!csvText) return null;
-  return { fileName: storageGet('csvFileName') || 'gespeicherter-kader.csv', csvText: csvText };
+  return {
+    fileName: storageGet('csvFileName') || 'gespeicherter-kader.csv',
+    csvText: csvText,
+    importedAt: storageGet('csvImportedAt') || null
+  };
 }
 
 function loadPreviousCsvFromStorage() {
   var csvText = storageGet('previousCsvText');
   if (!csvText) return null;
-  return { fileName: storageGet('previousCsvFileName') || 'vorheriger-import.csv', csvText: csvText };
+  return {
+    fileName: storageGet('previousCsvFileName') || 'vorheriger-import.csv',
+    csvText: csvText,
+    importedAt: storageGet('previousCsvImportedAt') || null
+  };
 }
 
 // Bei einem NEUEN Import (nicht beim bloßen Wiederladen aus dem Speicher): der
@@ -53,9 +63,11 @@ function rotateAndSaveCsvToStorage(fileName, csvText) {
   if (old) {
     storageSet('previousCsvFileName', old.fileName);
     storageSet('previousCsvText', old.csvText);
+    storageSet('previousCsvImportedAt', old.importedAt || '');
   }
   storageSet('csvFileName', fileName);
   storageSet('csvText', csvText);
+  storageSet('csvImportedAt', new Date().toISOString());
   return old;
 }
 
@@ -65,13 +77,16 @@ function restoreCsvSlotsFromBackup(current, previous) {
   if (current && current.csvText) {
     storageSet('csvFileName', current.fileName || '');
     storageSet('csvText', current.csvText);
+    storageSet('csvImportedAt', current.importedAt || '');
   }
   if (previous && previous.csvText) {
     storageSet('previousCsvFileName', previous.fileName || '');
     storageSet('previousCsvText', previous.csvText);
+    storageSet('previousCsvImportedAt', previous.importedAt || '');
   } else {
     storageRemove('previousCsvFileName');
     storageRemove('previousCsvText');
+    storageRemove('previousCsvImportedAt');
   }
 }
 
@@ -100,8 +115,10 @@ function loadReferenceDateFromStorage() {
 function clearStoredKader() {
   storageRemove('csvFileName');
   storageRemove('csvText');
+  storageRemove('csvImportedAt');
   storageRemove('previousCsvFileName');
   storageRemove('previousCsvText');
+  storageRemove('previousCsvImportedAt');
   storageRemove('tacticMarkers');
   storageRemove('referenceDate');
 }
@@ -118,8 +135,10 @@ function buildBackupPayload() {
     version: 2,
     csvFileName: csv ? csv.fileName : null,
     csvText: csv ? csv.csvText : null,
+    csvImportedAt: csv ? csv.importedAt : null,
     previousCsvFileName: previous ? previous.fileName : null,
     previousCsvText: previous ? previous.csvText : null,
+    previousCsvImportedAt: previous ? previous.importedAt : null,
     tacticMarkers: loadTacticMarkersFromStorage(),
     referenceDate: loadReferenceDateFromStorage()
   }, null, 2);
