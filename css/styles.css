@@ -558,6 +558,7 @@ a {
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
   padding: 0.6rem 1rem;
+  margin-top: 0.6rem;
   margin-bottom: 0.6rem;
 }
 
