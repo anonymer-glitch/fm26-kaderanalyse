@@ -1,3 +1,14 @@
+// "Nicht benötigt" ist ein eigener, immer greifender Auslöser (siehe applyHints) -
+// hier nur noch für den gehaltsabhängigen "kleine Rolle"-Pfad.
+var SELL_LOW_STATUSES = ['Ergänzungsspieler'];
+
+// Status, die immer (unabhängig von Gehalt/Marktwert/Note) Verkaufskandidat auslösen.
+var ALWAYS_SELL_STATUSES = ['Nicht benötigt'];
+
+// "Vertrag prüfen" gilt für alle Status außer "Nicht benötigt" - die können ohnehin
+// gehen, der Rest soll (erstmal) gehalten werden.
+var CONTRACT_WARNING_EXCLUDED_STATUSES = ['Nicht benötigt'];
+
 // Logik-Schicht: regelbasierter Handlungsbedarf. Jede Regel ist bewusst
 // einfach und nachvollziehbar (keine Blackbox-Bewertung). Alle Schwellenwerte
 // sind Startwerte, über die Oberfläche im Handlungsbedarf-Reiter einstellbar
@@ -7,12 +18,13 @@ var DEFAULT_HINT_THRESHOLDS = {
   // Gilt für Gehalt und Marktwert gleichermaßen (oberstes Viertel im Kader).
   sellValuePercentile: 0.75,
   loanAgeMax: 21,
-  // Alles unterhalb "Rotationsspieler" gilt für den Verleih-Hinweis als "niedriger
-  // Einsatzstatus" - Rotationsspieler selbst soll im Kader bleiben (bekommt schon
-  // regelmäßig Einsätze), "Nicht benötigt" wird separat immer zum Verkaufskandidat.
-  // Bewusst nicht über die Oberfläche einstellbar (kein einfacher Zahlenwert,
-  // sondern an einen konkreten Status-Namen gebunden).
-  loanMinRank: statusRank('Rotationsspieler') + 1,
+  // Welche Einsatzstatus für den Verleih-Hinweis als "niedriger Einsatzstatus"
+  // gelten - über die Oberfläche als Checkbox-Liste wählbar (siehe
+  // HINT_LOAN_STATUS_OPTIONS unten). Standard: alles unterhalb "Rotationsspieler"
+  // (der soll im Kader bleiben, bekommt schon regelmäßig Einsätze). "Nicht
+  // benötigt" ist absichtlich nie wählbar - der wird separat immer zum
+  // Verkaufskandidat (siehe ALWAYS_SELL_STATUSES weiter unten).
+  loanEligibleStatuses: PLAYING_TIME_ORDER.slice(statusRank('Rotationsspieler') + 1, -1),
   // Ziel-Kadertiefe je Positions-Slot = benötigte Starter (aus dem Taktik-Board,
   // z.B. 2 Marker auf "V (Z)" = 2 Starter) mal diesem Faktor - z.B. 2 Starter auf
   // Innenverteidiger -> Zieltiefe 4 im Kader für Rotation/Ausfallsicherheit.
@@ -34,7 +46,8 @@ var DEFAULT_HINT_THRESHOLDS = {
 // Editierbare Schwellenwerte für die Einstell-Oberfläche im Handlungsbedarf-
 // Reiter. "scale" rechnet zwischen internem Wert (z.B. 0.75) und Anzeigewert
 // (z.B. 75 %) um - reine Darstellungssache, gespeichert/gerechnet wird immer
-// mit dem internen Wert. loanMinRank taucht hier bewusst nicht auf (s.o.).
+// mit dem internen Wert. loanEligibleStatuses ist kein Zahlenwert und taucht
+// deshalb hier nicht auf - eigene Checkbox-Liste, siehe HINT_LOAN_STATUS_OPTIONS.
 var HINT_THRESHOLD_SETTINGS = [
   { key: 'contractWarningMonths', label: 'Vertrag prüfen: Restlaufzeit in Monaten', step: 1, min: 0, scale: 1, suffix: 'Monate' },
   { key: 'sellValuePercentile', label: 'Verkaufskandidat: Gehalt/Marktwert-Schwelle (oberste X % im Kader)', step: 1, min: 1, max: 100, scale: 100, suffix: '%' },
@@ -44,6 +57,13 @@ var HINT_THRESHOLD_SETTINGS = [
   { key: 'ratingWeakMargin', label: 'Position/Verkaufskandidat: schwache Leistung ab Abstand zur Kader-Ø-Note', step: 0.05, min: 0, scale: 1, suffix: 'Notenpunkte' },
   { key: 'statusGapMinDiff', label: 'Status-Diskrepanz ab wie vielen Stufen Unterschied', step: 1, min: 1, scale: 1, suffix: 'Stufen' }
 ];
+
+// Welche Einsatzstatus überhaupt zur Wahl stehen für loanEligibleStatuses -
+// alle außer "Nicht benötigt" (der ist strukturell immer Verkaufskandidat,
+// siehe ALWAYS_SELL_STATUSES, ein Häkchen dort hätte also nie eine Wirkung).
+var HINT_LOAN_STATUS_OPTIONS = PLAYING_TIME_ORDER.filter(function (s) {
+  return ALWAYS_SELL_STATUSES.indexOf(s) === -1;
+});
 
 // Baut die tatsächlich verwendeten Schwellenwerte aus den Standardwerten plus
 // optionalen Overrides (z.B. aus localStorage) - fehlende/ungültige Werte
@@ -57,20 +77,14 @@ function mergeHintThresholds(overrides) {
       var val = overrides[field.key];
       if (typeof val === 'number' && isFinite(val)) merged[field.key] = val;
     });
+    if (Array.isArray(overrides.loanEligibleStatuses)) {
+      merged.loanEligibleStatuses = overrides.loanEligibleStatuses.filter(function (s) {
+        return HINT_LOAN_STATUS_OPTIONS.indexOf(s) !== -1;
+      });
+    }
   }
   return merged;
 }
-
-// "Nicht benötigt" ist ein eigener, immer greifender Auslöser (siehe applyHints) -
-// hier nur noch für den gehaltsabhängigen "kleine Rolle"-Pfad.
-var SELL_LOW_STATUSES = ['Ergänzungsspieler'];
-
-// Status, die immer (unabhängig von Gehalt/Marktwert/Note) Verkaufskandidat auslösen.
-var ALWAYS_SELL_STATUSES = ['Nicht benötigt'];
-
-// "Vertrag prüfen" gilt für alle Status außer "Nicht benötigt" - die können ohnehin
-// gehen, der Rest soll (erstmal) gehalten werden.
-var CONTRACT_WARNING_EXCLUDED_STATUSES = ['Nicht benötigt'];
 
 function monthsBetween(from, to) {
   if (!from || !to) return null;
@@ -164,12 +178,11 @@ function applyHints(players, referenceDate, thresholds) {
       hintReasons['Verkaufskandidat'] = sellReasons.join(' + ');
     }
 
-    // "Nicht benötigt" ist oben schon immer Verkaufskandidat - hier bewusst
-    // ausgeschlossen, damit ein Spieler nicht gleichzeitig als Verleih- UND
-    // Verkaufskandidat auftaucht.
+    // "Nicht benötigt" ist oben schon immer Verkaufskandidat und steht deshalb
+    // in thresholds.loanEligibleStatuses nie zur Auswahl (siehe HINT_LOAN_STATUS_OPTIONS) -
+    // ein Spieler taucht so nie gleichzeitig als Verleih- UND Verkaufskandidat auf.
     if (p.age != null && p.age <= thresholds.loanAgeMax &&
-        statusRank(p.statusActual) >= thresholds.loanMinRank &&
-        ALWAYS_SELL_STATUSES.indexOf(p.statusActual) === -1) {
+        thresholds.loanEligibleStatuses.indexOf(p.statusActual) !== -1) {
       hints.push('Verleihkandidat');
       hintReasons['Verleihkandidat'] = 'Alter ' + p.age + ' + Status ' + p.statusActual;
     }

@@ -364,6 +364,21 @@ header p {
   width: 5rem;
 }
 
+/* Reset-Button immer in eigener Zeile unter den Feldern, statt neben dem
+   deutlich höheren Checkbox-Feld zu schweben (beide sind Flex-Items in
+   #hint-thresholds-settings-body). */
+#hint-thresholds-settings-body > button {
+  flex: 1 0 100%;
+}
+
+/* Die 8 Einsatzstatus-Namen sind länger als typische Attribut-Kürzel (z.B.
+   "Talent vor Durchbruch") - breiter/höher als die Standard-Checkbox-Gruppe,
+   damit alle ohne Scrollen sichtbar sind. */
+#hint-thresholds-settings-body .checkbox-group {
+  width: 300px;
+  max-height: 260px;
+}
+
 #quality-table-wrapper,
 #performance-table-wrapper {
   overflow-x: auto;

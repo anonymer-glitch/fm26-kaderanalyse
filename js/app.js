@@ -865,6 +865,17 @@ document.addEventListener('DOMContentLoaded', function () {
       hintThresholdsSettingsBodyEl.appendChild(wrap);
     });
 
+    hintThresholdsSettingsBodyEl.appendChild(makeCheckboxGroupField(
+      'Verleihkandidat: welche Einsatzstatus gelten als "niedrig"',
+      HINT_LOAN_STATUS_OPTIONS,
+      state.hintThresholds.loanEligibleStatuses,
+      function (selected) {
+        state.hintThresholds.loanEligibleStatuses = selected;
+        saveHintThresholdsToStorage(state.hintThresholds);
+        recomputeHints();
+      }
+    ));
+
     var resetBtn = document.createElement('button');
     resetBtn.type = 'button';
     resetBtn.textContent = 'Auf Standardwerte zurücksetzen';
