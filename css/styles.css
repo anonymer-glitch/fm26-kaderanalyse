@@ -864,33 +864,35 @@ tbody tr.clickable-row:hover {
   width: 100%;
 }
 
-.profile-fields {
+/* Zwei Spalten nebeneinander, wenn die Breite es hergibt (Profilseite ist
+   auf 980px gewachsen) - fällt auf schmalen Bildschirmen automatisch auf
+   eine Spalte zurück. Dasselbe Rasterprinzip wie .profile-bar-grid. */
+.profile-field-grid {
   display: grid;
-  grid-template-columns: minmax(140px, 40%) 1fr;
-  gap: 0.45rem 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 0.4rem 2rem;
   font-size: 0.9rem;
 }
 
-.profile-fields dt {
+.profile-field-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.profile-field-label {
   color: var(--color-text-secondary);
 }
 
-.profile-fields dd {
-  margin: 0;
-}
-
-/* Zwei Spalten nebeneinander, wenn die Breite es hergibt (Profilseite ist
-   auf 980px gewachsen) - fällt auf schmalen Bildschirmen automatisch auf
-   eine Spalte zurück. Lange Feldnamen ("Anteil erfolgreicher Zweikämpfe")
-   werden abgeschnitten, tragen aber ein title-Attribut als Tooltip
-   (siehe makeBarGrid in profile.js). */
+/* Lange Feldnamen ("Anteil erfolgreicher Zweikämpfe") werden abgeschnitten,
+   tragen aber ein title-Attribut als Tooltip (siehe makeBarGrid in profile.js). */
 .profile-bar-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
   gap: 0.4rem 2rem;
 }
 
-.profile-fields + .profile-bar-grid {
+.profile-field-grid + .profile-bar-grid {
   margin-top: 0.75rem;
 }
 
@@ -909,7 +911,7 @@ tbody tr.clickable-row:hover {
   color: var(--color-text-secondary);
 }
 
-.profile-weitere .profile-fields {
+.profile-weitere .profile-field-grid {
   margin-top: 0.75rem;
 }
 

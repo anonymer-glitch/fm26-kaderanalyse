@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var tr = document.createElement('tr');
     tr.className = 'clickable-row';
     tr.addEventListener('click', function () {
-      var payload = JSON.stringify({ headers: Object.keys(record), record: record });
+      var payload = JSON.stringify({ headers: Object.keys(record), record: record, referenceDate: data.referenceDate || null });
       window.open('profile.html#' + encodeURIComponent(payload), '_blank');
     });
 

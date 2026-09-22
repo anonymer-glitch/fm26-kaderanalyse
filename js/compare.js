@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', function () {
       th.appendChild(swatch);
       th.appendChild(document.createTextNode(r['Spieler'] || 'Unbekannt'));
       th.addEventListener('click', function () {
-        var payload = JSON.stringify({ headers: headers, record: r });
+        var payload = JSON.stringify({ headers: headers, record: r, referenceDate: data.referenceDate || null });
         window.open('profile.html#' + encodeURIComponent(payload), '_blank');
       });
       headRow.appendChild(th);

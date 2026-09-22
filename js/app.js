@@ -136,7 +136,14 @@ document.addEventListener('DOMContentLoaded', function () {
   var COMPARE_MAX_SELECTION = 4;
 
   function openProfile(player) {
-    var payload = JSON.stringify({ headers: state.headers, record: player.raw });
+    // referenceDate wird nur als Fallback gebraucht, um ein fehlendes "Alter"
+    // aus einem Geburtsdatum zu berechnen (siehe profile.js) - normalerweise
+    // liefert der Export "Alter" direkt mit.
+    var payload = JSON.stringify({
+      headers: state.headers,
+      record: player.raw,
+      referenceDate: state.referenceDate ? state.referenceDate.toISOString() : null
+    });
     window.open('profile.html#' + encodeURIComponent(payload), '_blank');
   }
 
@@ -1229,7 +1236,8 @@ document.addEventListener('DOMContentLoaded', function () {
       attributes: attrs,
       blend: blend,
       perNinetyAttributes: attrs.filter(function (a) { return PERFORMANCE_PER90_STATS.indexOf(a) !== -1; }),
-      records: relevantPlayers.map(function (p) { return { raw: p.raw, totalMinutes: p.totalMinutes }; })
+      records: relevantPlayers.map(function (p) { return { raw: p.raw, totalMinutes: p.totalMinutes }; }),
+      referenceDate: state.referenceDate ? state.referenceDate.toISOString() : null
     });
     window.open('position.html#' + encodeURIComponent(payload), '_blank');
   }
@@ -1562,7 +1570,8 @@ document.addEventListener('DOMContentLoaded', function () {
   function openComparison(players) {
     var payload = JSON.stringify({
       headers: state.headers,
-      records: players.map(function (p) { return p.raw; })
+      records: players.map(function (p) { return p.raw; }),
+      referenceDate: state.referenceDate ? state.referenceDate.toISOString() : null
     });
     window.open('compare.html#' + encodeURIComponent(payload), '_blank');
   }

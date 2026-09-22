@@ -9,11 +9,19 @@
 // Felder. Läuft eigenständig (wie position.js/compare.js), deshalb eigene
 // kleine Erkennung statt eines Imports aus players.js/performance.js.
 
-// Kuratierte Kernfelder - dieselbe Auswahl wie im Spielervergleich (compare.js).
+// Kuratierte Kernfelder - dieselbe Auswahl wie im Spielervergleich (compare.js),
+// plus Geburtsdatum/Größe (beide Schreibweisen des Geburtsdatums als Fallback,
+// je nachdem wie der Export die Spalte nennt - fehlende Spalten werden weiter
+// unten beim Filtern auf tatsächlich vorhandene Header ohnehin aussortiert).
 var PROFILE_BASIS_FIELDS = [
-  'Position', 'Idealpos', 'Nation', 'Alter', 'Endet', 'Gehalt', 'Transferwert',
-  'Tatsächliche Einsatzzeiten', 'Einsatzzeiten'
+  'Position', 'Idealpos', 'Nation', 'Geburtsdatum', 'Geburtstag', 'Alter', 'Größe',
+  'Endet', 'Gehalt', 'Transferwert', 'Tatsächliche Einsatzzeiten', 'Einsatzzeiten'
 ];
+
+// Mögliche Spaltennamen fürs Geburtsdatum - nur als Fallback, um "Alter" zu
+// berechnen, falls der Export ausnahmsweise kein eigenes Alter-Feld liefert
+// (normalerweise ist "Alter" immer da und wird direkt angezeigt).
+var PROFILE_BIRTHDATE_FIELDS = ['Geburtsdatum', 'Geburtstag'];
 
 // Durchschnittsnote/Einsatzzeit-Kennzahlen immer zuerst in "Leistung", auch
 // wenn sie nicht Teil der Kategorien-Listen unten sind.
@@ -56,6 +64,31 @@ function looksLikePercentColumn(name) {
   return /anteil|prozent|quote|\(%\)|%$/i.test(name);
 }
 
+// Deutsches Datumsformat "TT.MM.JJJJ" - läuft eigenständig (wie der Rest
+// dieser Seite), deshalb ein eigener kleiner Parser statt eines Imports aus
+// players.js (parseGermanDate dort).
+function parseGermanDateLocal(str) {
+  if (!str) return null;
+  var parts = String(str).trim().split('.');
+  if (parts.length !== 3) return null;
+  var day = parseInt(parts[0], 10);
+  var month = parseInt(parts[1], 10);
+  var year = parseInt(parts[2], 10);
+  if (!day || !month || !year) return null;
+  var date = new Date(year, month - 1, day);
+  return isNaN(date.getTime()) ? null : date;
+}
+
+// Alter in vollen Jahren zu einem Stichtag (das gesetzte Spieldatum, falls
+// vorhanden - sonst das heutige Datum als bester verfügbarer Ersatz).
+function computeAgeLocal(birthDate, referenceDate) {
+  var ref = referenceDate || new Date();
+  var age = ref.getFullYear() - birthDate.getFullYear();
+  var beforeBirthday = ref.getMonth() < birthDate.getMonth() ||
+    (ref.getMonth() === birthDate.getMonth() && ref.getDate() < birthDate.getDate());
+  return beforeBirthday ? age - 1 : age;
+}
+
 // Ordnet jede Kopfzeile genau einem Abschnitt zu - "Attribute" sind alle
 // übrig gebliebenen glatten Ganzzahlen 1-20 (die klassische FM-Attributskala),
 // alles andere Unbekannte landet in "Weitere Felder" statt zu verschwinden.
@@ -90,18 +123,26 @@ function classifyFields(headers, record) {
   return { basis: basis, leistung: leistung, attribute: attribute, weitere: weitere };
 }
 
-function makeFieldGrid(fields, record) {
-  var dl = document.createElement('dl');
-  dl.className = 'profile-fields';
-  fields.forEach(function (h) {
-    var dt = document.createElement('dt');
-    dt.textContent = h;
-    var dd = document.createElement('dd');
-    dd.textContent = record[h] || '';
-    dl.appendChild(dt);
-    dl.appendChild(dd);
+// items: [{ label, value }] - zwei Spalten nebeneinander, wenn die Breite
+// reicht (siehe .profile-field-grid in styles.css), fällt auf schmalen
+// Bildschirmen automatisch auf eine Spalte zurück.
+function makeFieldGrid(items) {
+  var grid = document.createElement('div');
+  grid.className = 'profile-field-grid';
+  items.forEach(function (it) {
+    var row = document.createElement('div');
+    row.className = 'profile-field-item';
+    var label = document.createElement('span');
+    label.className = 'profile-field-label';
+    label.textContent = it.label;
+    var value = document.createElement('span');
+    value.className = 'profile-field-value';
+    value.textContent = it.value;
+    row.appendChild(label);
+    row.appendChild(value);
+    grid.appendChild(row);
   });
-  return dl;
+  return grid;
 }
 
 // items: [{ label, value, max, displayText }] - derselbe Balken-Baustein wie
@@ -141,9 +182,12 @@ function makeBarGrid(items) {
 
 // Ein Abschnitt = eine Karte. Felder, deren Name auf einen Prozentwert
 // hindeutet, bekommen einen Balken (sichere 0-100-Skala); der Rest bleibt
-// eine schlichte Werteliste.
-function renderSection(container, title, fields, record) {
-  if (fields.length === 0) return;
+// eine schlichte Werteliste. extraPlainItems (optional) sind bereits fertige
+// {label, value}-Paare, die vorne mit reinkommen - z.B. ein berechnetes Alter,
+// das keiner echten Kopfzeile entspricht (siehe computeAgeLocal weiter unten).
+function renderSection(container, title, fields, record, extraPlainItems) {
+  extraPlainItems = extraPlainItems || [];
+  if (fields.length === 0 && extraPlainItems.length === 0) return;
   var box = document.createElement('div');
   box.className = 'hint-summary-box profile-section';
 
@@ -152,7 +196,7 @@ function renderSection(container, title, fields, record) {
   heading.textContent = title;
   box.appendChild(heading);
 
-  var plainFields = [];
+  var plainItems = extraPlainItems.slice();
   var barItems = [];
   fields.forEach(function (h) {
     var raw = record[h];
@@ -160,11 +204,11 @@ function renderSection(container, title, fields, record) {
     if (pct != null) {
       barItems.push({ label: h, value: pct, max: 100, displayText: raw || (pct + '%') });
     } else {
-      plainFields.push(h);
+      plainItems.push({ label: h, value: raw || '' });
     }
   });
 
-  if (plainFields.length > 0) box.appendChild(makeFieldGrid(plainFields, record));
+  if (plainItems.length > 0) box.appendChild(makeFieldGrid(plainItems));
   if (barItems.length > 0) box.appendChild(makeBarGrid(barItems));
   container.appendChild(box);
 }
@@ -198,7 +242,8 @@ function renderWeitereFelder(container, fields, record) {
   var summary = document.createElement('summary');
   summary.textContent = 'Weitere Felder (' + fields.length + ')';
   details.appendChild(summary);
-  details.appendChild(makeFieldGrid(fields, record));
+  var items = fields.map(function (h) { return { label: h, value: record[h] || '' }; });
+  details.appendChild(makeFieldGrid(items));
   container.appendChild(details);
 }
 
@@ -253,11 +298,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
   var sections = classifyFields(headers, record);
 
+  // "Alter" fehlt praktisch nie im Export (der Rest der App setzt es sogar
+  // voraus) - dieser Zweig greift nur im Ausnahmefall, dann aus dem
+  // Geburtsdatum berechnet, zum gesetzten Spieldatum (referenceDate) oder
+  // ersatzweise zum heutigen Datum.
+  var basisExtra = [];
+  if (headers.indexOf('Alter') === -1) {
+    var birthField = PROFILE_BIRTHDATE_FIELDS.filter(function (f) { return headers.indexOf(f) !== -1; })[0];
+    var birthDate = birthField ? parseGermanDateLocal(record[birthField]) : null;
+    if (birthDate) {
+      var referenceDate = data.referenceDate ? new Date(data.referenceDate) : null;
+      basisExtra.push({ label: 'Alter (berechnet)', value: String(computeAgeLocal(birthDate, referenceDate)) });
+    }
+  }
+
   var sectionsWrap = document.createElement('div');
   sectionsWrap.className = 'profile-sections';
-  renderSection(sectionsWrap, 'Basis', sections.basis, record);
-  renderSection(sectionsWrap, 'Leistung', sections.leistung, record);
+  renderSection(sectionsWrap, 'Basis', sections.basis, record, basisExtra);
   renderAttributeSection(sectionsWrap, sections.attribute, record);
+  renderSection(sectionsWrap, 'Leistung', sections.leistung, record);
   renderWeitereFelder(sectionsWrap, sections.weitere, record);
   container.appendChild(sectionsWrap);
 });
