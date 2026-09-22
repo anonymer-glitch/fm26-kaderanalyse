@@ -1009,3 +1009,48 @@ tbody tr.clickable-row:hover {
   color: var(--color-good-text);
   font-weight: 700;
 }
+
+/* ---------------------------------------------------------------------
+   Schmale Bildschirme (Handy) - der Rest der App ist dank flex-wrap/
+   auto-fit-Rastern schon von selbst responsiv (getestet bei 375px:
+   Filter, Taktik-Board, Karten, Balken-Raster stapeln sauber ohne
+   horizontales Seiten-Scrollen). Zwei gezielte Korrekturen bleiben:
+   die Haupt-Navigation wirkt mit ungleich breiten, zeilenweise
+   umbrechenden Buttons unruhig, und breite Tabellen scrollen zwar
+   schon innerhalb ihres Wrappers (siehe #table-wrapper), aber ohne
+   sichtbaren Scrollbalken ist auf einem Touch-Gerät nicht erkennbar,
+   dass dort seitlich gewischt werden kann.
+   --------------------------------------------------------------------- */
+@media (max-width: 600px) {
+  body {
+    padding: 1rem;
+  }
+
+  .view-nav {
+    flex-direction: column;
+  }
+
+  .view-nav-btn {
+    width: 100%;
+    text-align: left;
+  }
+
+  #table-wrapper,
+  #previous-import-table-wrapper,
+  #position-gaps-detail-table-wrapper {
+    scrollbar-width: thin;
+  }
+
+  #table-wrapper::-webkit-scrollbar,
+  #previous-import-table-wrapper::-webkit-scrollbar,
+  #position-gaps-detail-table-wrapper::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  #table-wrapper::-webkit-scrollbar-thumb,
+  #previous-import-table-wrapper::-webkit-scrollbar-thumb,
+  #position-gaps-detail-table-wrapper::-webkit-scrollbar-thumb {
+    background: var(--color-border-strong);
+    border-radius: 3px;
+  }
+}
