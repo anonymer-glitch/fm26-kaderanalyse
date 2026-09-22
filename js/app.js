@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var positionGapsEl = document.getElementById('position-gaps');
   var positionGapsDetailEl = document.getElementById('position-gaps-detail');
   var hintsSummaryEl = document.getElementById('hints-summary');
+  var hintThresholdsSettingsBodyEl = document.getElementById('hint-thresholds-settings-body');
   var qualitySettingsBodyEl = document.getElementById('quality-settings-body');
   var qualityTableWrapperEl = document.getElementById('quality-table-wrapper');
   var qualityNoTacticNoteEl = document.getElementById('quality-no-tactic-note');
@@ -101,6 +102,7 @@ document.addEventListener('DOMContentLoaded', function () {
     players: [],
     notes: loadNotesMap(),
     resolvedHints: loadResolvedHintsSet(),
+    hintThresholds: mergeHintThresholds(loadHintThresholdsFromStorage()),
     previousPlayers: [],
     previousImportedAt: null,
     previousImportSortKey: 'name',
@@ -165,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function () {
     state.referenceDate = parseGermanDate(referenceDateInput.value);
     saveReferenceDateToStorage(referenceDateInput.value);
     if (state.players.length > 0) {
-      applyHints(state.players, state.referenceDate);
+      applyHints(state.players, state.referenceDate, state.hintThresholds);
       renderHintsSummary();
       renderTable();
     }
@@ -263,7 +265,13 @@ document.addEventListener('DOMContentLoaded', function () {
       saveResolvedHintsSet(restoredResolvedHints);
       state.resolvedHints = restoredResolvedHints;
       if (state.players.length > 0) renderHintsSummary();
+      // Fehlt in älteren Sicherungsdateien (vor dieser Funktion) - fällt dann
+      // einfach auf die Standardwerte zurück, kein Fehlerfall.
+      state.hintThresholds = mergeHintThresholds(data.hintThresholds);
+      saveHintThresholdsToStorage(state.hintThresholds);
+      renderHintThresholdSettings();
       applyLoadedTacticAndDate(data.tacticMarkers, data.referenceDate);
+      recomputeHints();
     };
     reader.readAsText(file, 'UTF-8');
     event.target.value = '';
@@ -289,7 +297,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (referenceDateValue) {
       referenceDateInput.value = referenceDateValue;
       state.referenceDate = parseGermanDate(referenceDateValue);
-      applyHints(state.players, state.referenceDate);
+      applyHints(state.players, state.referenceDate, state.hintThresholds);
       renderHintsSummary();
       renderTable();
     }
@@ -513,7 +521,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Standard, alles Weitere wählt man bei Bedarf selbst dazu.
     state.performanceAttributes = {};
 
-    applyHints(state.players, state.referenceDate);
+    applyHints(state.players, state.referenceDate, state.hintThresholds);
 
     renderTacticsPresets();
     renderTacticsBoard();
@@ -713,7 +721,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function renderPositionGaps() {
     positionGapsEl.innerHTML = '';
-    var gaps = computePositionGaps(state.players, state.neededPositionCounts);
+    var gaps = computePositionGaps(state.players, state.neededPositionCounts, state.hintThresholds);
     var validSlots = {};
     gaps.forEach(function (gap) {
       validSlots[gap.code] = true;
@@ -812,6 +820,63 @@ document.addEventListener('DOMContentLoaded', function () {
     return checkbox;
   }
 
+  function roundTo(num, decimals) {
+    var factor = Math.pow(10, decimals);
+    return Math.round(num * factor) / factor;
+  }
+
+  // Alles, was von den Handlungsbedarf-Schwellenwerten abhängt, neu berechnen -
+  // Positionslücken (positionDepthMultiplier) und alle applyHints-Regeln.
+  function recomputeHints() {
+    if (state.players.length === 0) return;
+    applyHints(state.players, state.referenceDate, state.hintThresholds);
+    renderPositionGaps();
+    renderHintsSummary();
+    renderTable();
+  }
+
+  // Editierbare Schwellenwerte (HINT_THRESHOLD_SETTINGS in hints.js), z.B.
+  // "Verkaufskandidat: oberste 75% Gehalt/Marktwert" oder "Vertrag prüfen: 12
+  // Monate Restlaufzeit". Persistiert dauerhaft (nicht an einen Import gebunden,
+  // siehe saveHintThresholdsToStorage). Startwerte sind nur eine erste
+  // Einschätzung - hier an die eigene Spielweise anpassbar.
+  function renderHintThresholdSettings() {
+    hintThresholdsSettingsBodyEl.innerHTML = '';
+    HINT_THRESHOLD_SETTINGS.forEach(function (field) {
+      var wrap = document.createElement('div');
+      wrap.className = 'filter-field';
+      var lbl = document.createElement('label');
+      lbl.textContent = field.label + (field.suffix ? ' (' + field.suffix + ')' : '');
+      var input = document.createElement('input');
+      input.type = 'number';
+      input.step = field.step;
+      if (field.min != null) input.min = field.min;
+      if (field.max != null) input.max = field.max;
+      input.value = roundTo(state.hintThresholds[field.key] * field.scale, 4);
+      input.addEventListener('change', function () {
+        var raw = Number(input.value);
+        if (!isFinite(raw)) return;
+        state.hintThresholds[field.key] = roundTo(raw / field.scale, 6);
+        saveHintThresholdsToStorage(state.hintThresholds);
+        recomputeHints();
+      });
+      wrap.appendChild(lbl);
+      wrap.appendChild(input);
+      hintThresholdsSettingsBodyEl.appendChild(wrap);
+    });
+
+    var resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.textContent = 'Auf Standardwerte zurücksetzen';
+    resetBtn.addEventListener('click', function () {
+      state.hintThresholds = mergeHintThresholds(null);
+      saveHintThresholdsToStorage(state.hintThresholds);
+      renderHintThresholdSettings();
+      recomputeHints();
+    });
+    hintThresholdsSettingsBodyEl.appendChild(resetBtn);
+  }
+
   function renderHintsSummary() {
     hintsSummaryEl.innerHTML = '';
     HINT_CATEGORIES.forEach(function (cat) {
@@ -889,10 +954,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     hintsSummaryEl.appendChild(clusterBox);
 
-    var gapResults = computePositionGaps(state.players, state.neededPositionCounts);
+    var gapResults = computePositionGaps(state.players, state.neededPositionCounts, state.hintThresholds);
     var qualityResults = computePositionQuality(state.players, state.qualityAttributes, state.neededPositionCounts);
     var ratingResults = computePositionRatings(state.players, state.neededPositionCounts);
-    var actionItems = computePositionActionItems(gapResults, qualityResults, ratingResults);
+    var actionItems = computePositionActionItems(gapResults, qualityResults, ratingResults, state.hintThresholds);
 
     var posBox = document.createElement('div');
     posBox.className = 'hint-summary-box';
@@ -1405,6 +1470,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     tableWrapper.appendChild(table);
   }
+
+  renderHintThresholdSettings();
 
   // Beim Öffnen automatisch den zuletzt gespeicherten Kader laden, falls
   // vorhanden (siehe storage.js) - kein erneuter CSV-Upload nötig.

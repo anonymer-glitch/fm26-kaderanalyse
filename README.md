@@ -45,7 +45,7 @@ Drei getrennte Bereiche, damit spätere Erweiterungen bestehende Bereiche nicht 
 - Spielerprofil: Detailansicht mit allen verfügbaren Feldern
 - Filter & Sortierung (Position, Alter, Vertrag, Gehalt, Einsatzstatus, Attribute)
 - Vergleichsansicht mehrerer Spieler
-- Handlungsbedarf (regelbasiert, transparent, Schwellenwerte später einstellbar):
+- Handlungsbedarf (regelbasiert, transparent, alle Schwellenwerte direkt in der Oberfläche einstellbar - siehe unten):
   - Vertrag prüfen (Vertragsende bald + Spieler wichtig für die Mannschaft)
   - Verkaufskandidat: Status "Nicht benötigt" (immer) ODER hohes Gehalt für eine kleine Rolle ("Ergänzungsspieler", unabhängig vom Alter) ODER [hohes Gehalt ODER hoher Marktwert] + unterdurchschnittliche Leistungsnote ("verkaufen solange der Wert hoch ist")
   - Verleihkandidat: Alter ≤ 21 + Status niedriger als "Rotationsspieler" (der bleibt im Kader), aber nicht "Nicht benötigt" (der ist immer Verkaufskandidat, nie gleichzeitig Verleihkandidat)
@@ -55,6 +55,7 @@ Drei getrennte Bereiche, damit spätere Erweiterungen bestehende Bereiche nicht 
   - Spieler ohne Position in der Taktik: listet Spieler, die auf keiner aktuell benötigten Position spielen können (z. B. ein reiner zentraler Mittelfeldspieler bei einer Taktik ohne M-Position) - diese Spieler tauchen sonst nirgends mehr auf, seit Qualität/Leistung/Position: Handlungsbedarf auf die Taktik beschränkt sind
   - Jede Zeile hat ein Häkchen zum Markieren als "erledigt" (durchgestrichen, bleibt aber sichtbar) - gilt nur für den aktuellen Import, wird beim nächsten Import automatisch geleert, da sich die Datenbasis dann ohnehin ändert
   - Positionslücke (Kadertiefe reicht nicht für die auf dem Taktik-Board eingestellte Formation, siehe unten)
+  - Schwellenwerte (z. B. "Vertrag prüfen ab wie vielen Monaten Restlaufzeit", "oberste X % Gehalt/Marktwert für Verkaufskandidat", "Ziel-Kadertiefe = Starter × wie viel") über ein aufklappbares Einstellungs-Panel direkt im Reiter anpassbar - Startwerte sind nur eine erste Einschätzung. Wirkt sofort auf alle betroffenen Regeln und Tabellen, bleibt dauerhaft gespeichert (unabhängig vom Kaderstand, wandert mit in die Sicherungsdatei) und ist per Klick auf Standardwerte zurücksetzbar
 - Taktik-Board: Fußballfeld zum Zusammenstellen der benötigten Positionen samt Starter-Anzahl, als sichtbares Raster aus Zeilen (TW/V/DM·FV/M/OM/ST) und Spalten (links/zentral/rechts). Formations-Presets (4-4-2, 4-3-3, 4-2-3-1, 3-5-2/Dreierkette, 5-3-2, 4-1-4-1) setzen automatisch passende Marker; danach frei per Drag & Drop verschiebbar. Zieht man einen Marker in eine andere Zeile, wandelt er sich in den dortigen Positions-Typ um (z.B. Stürmer nach hinten ins Mittelfeld gezogen wird zu "M"); die Spalte bestimmt die Seite. Sonderfall DM-Zeile: zentral bleibt es "DM", außen wird automatisch daraus ein Flügelverteidiger ("FV") - DM ist dadurch immer rein zentral. Marker-Beschriftung aktualisiert sich live. Mehrere Marker im selben Feld (z.B. 2x "V" zentral) zählen als 2 Innenverteidiger-Starter. Die Lücken-Prüfung zählt bei seitenlosen Positionen (TW/DM/ST) jeden Spieler mit passendem Wurzel-Code, auch wenn der Export ihm zusätzlich eine Seite gibt (z.B. "ST (RL)")
 - Vergleich zum letzten Import: zeigt zuerst, mit welchem Zeitpunkt verglichen wird (Datum/Uhrzeit des vorherigen Uploads), dann Neuzugänge, Abgänge, Status- und Vertragsänderungen gegenüber dem direkt vorherigen Import (verknüpft über `Unique ID`), plus eine sortierbare (Klick auf Tabellenkopf) Ansicht des kompletten letzten Imports zum Nachschlagen. Zusätzlich: ist "Einsätze" bei einem Spieler 0 oder leer (Saison hat noch keine Pflichtspiele), wird übergangsweise seine Durchschnittsnote der Vorsaison übernommen, erkennbar am angehängten "*" (z. B. im Spielerprofil) - verschwindet automatisch, sobald echte neue Daten da sind
 - Kadertiefe-Übersicht (direkt neben dem Taktik-Board): Ziel-Kadertiefe je Position = Starter-Anzahl aus der Taktik × 2 (Rotation/Ausfallsicherheit), 4-stufige Ampel (fehlt / dünn = Formation nicht mal bespielbar / knapp = Starter gedeckt, keine Rotation / ok = Zieltiefe erreicht). Jede Kachel ist anklickbar und zeigt darunter die passenden Spieler als normale Tabelle (dieselbe Zuordnung wie die Zählung selbst) - nochmal anklicken blendet sie wieder aus
@@ -71,7 +72,6 @@ Jeder Handlungsbedarf-Eintrag zeigt direkt in der Liste, welche Werte ihn ausgel
 ## Erweiterungspunkte (für später, nicht in V1 umgesetzt)
 
 - Transfer-Scouting (Spieler außerhalb des eigenen Kaders)
-- Einstellbare Schwellenwerte für Handlungsbedarf über die Oberfläche
 - Design/Optik-Überarbeitung: Typografie, Farbschema, evtl. Dark Mode, responsiveres Layout; Diagramme statt nur Tabellen (z. B. Altersverteilung, Gehaltsstruktur, Vertragslaufzeiten)
 - Druck-/Exportansicht: Dashboard oder Kaderübersicht sauber als PDF/Bild ausgeben, z. B. zum Teilen oder Ausdrucken
 - Spieler-Vergleich: 2-3 Spieler explizit nebeneinander gegenüberstellen (bisher nur implizit über die Kaderübersicht-Tabelle möglich)
@@ -85,7 +85,7 @@ Diese zwei sind bewusst nur als "mal drüber nachgedacht" festgehalten, nicht al
 
 ### Persistenz (umgesetzt)
 
-Kaderstand (die importierte CSV), Taktik-Board und Spieldatum werden automatisch in `localStorage` gespeichert und beim Öffnen direkt geladen (`js/storage.js`) - kein manuelles Hochladen, kein Klicken. Zusätzlich als Sicherheitsnetz: Export/Import einer Sicherungsdatei (JSON) über die Buttons "Sicherung speichern"/"Sicherung laden" - für Rechnerwechsel, Backup, oder falls der Browser-Speicher mal geleert wird/verloren geht. Diese Datei kann der Nutzer selbst z. B. in einen Cloud-Ordner legen, ganz ohne dass die App eine eigene Cloud-Anbindung braucht. Ein "Gespeicherten Kader löschen"-Button setzt alles zurück.
+Kaderstand (die importierte CSV), Taktik-Board, Spieldatum und die Handlungsbedarf-Schwellenwerte werden automatisch in `localStorage` gespeichert und beim Öffnen direkt geladen (`js/storage.js`) - kein manuelles Hochladen, kein Klicken. Zusätzlich als Sicherheitsnetz: Export/Import einer Sicherungsdatei (JSON) über die Buttons "Sicherung speichern"/"Sicherung laden" - für Rechnerwechsel, Backup, oder falls der Browser-Speicher mal geleert wird/verloren geht. Diese Datei kann der Nutzer selbst z. B. in einen Cloud-Ordner legen, ganz ohne dass die App eine eigene Cloud-Anbindung braucht. Ein "Gespeicherten Kader löschen"-Button setzt alles zurück.
 
 Bewusst nicht umgesetzt: eine echte Cloud-Anmeldung direkt in der App (Login, Token, Internetzugriff nötig) - deutlich mehr Aufwand/Fragilität für denselben Alltagsnutzen, den die automatische lokale Speicherung bereits liefert.
 

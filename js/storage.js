@@ -161,6 +161,23 @@ function saveResolvedHintsSet(set) {
   storageSet('resolvedHints', JSON.stringify(set));
 }
 
+// Vom Nutzer angepasste Handlungsbedarf-Schwellenwerte (siehe HINT_THRESHOLD_SETTINGS
+// in hints.js) - anders als resolvedHints NICHT an den aktuellen Import gebunden,
+// da es sich um eine dauerhafte Einstellung handelt, keinen Kaderstand-Bezug.
+function saveHintThresholdsToStorage(thresholds) {
+  storageSet('hintThresholds', JSON.stringify(thresholds));
+}
+
+function loadHintThresholdsFromStorage() {
+  var raw = storageGet('hintThresholds');
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch (e) {
+    return null;
+  }
+}
+
 function clearStoredKader() {
   storageRemove('csvFileName');
   storageRemove('csvText');
@@ -172,6 +189,7 @@ function clearStoredKader() {
   storageRemove('referenceDate');
   storageRemove('notes');
   storageRemove('resolvedHints');
+  storageRemove('hintThresholds');
 }
 
 // Backup-Datei: fasst den gesamten gespeicherten Stand in einem JSON-Objekt
@@ -193,7 +211,8 @@ function buildBackupPayload() {
     tacticMarkers: loadTacticMarkersFromStorage(),
     referenceDate: loadReferenceDateFromStorage(),
     notes: loadNotesMap(),
-    resolvedHints: loadResolvedHintsSet()
+    resolvedHints: loadResolvedHintsSet(),
+    hintThresholds: loadHintThresholdsFromStorage()
   }, null, 2);
 }
 

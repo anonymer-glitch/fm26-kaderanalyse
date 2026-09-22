@@ -351,11 +351,17 @@ header p {
   color: #555;
 }
 
-#quality-settings-body {
+#quality-settings-body,
+#hint-thresholds-settings-body {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
   margin-top: 0.75rem;
+  align-items: flex-end;
+}
+
+#hint-thresholds-settings-body input {
+  width: 5rem;
 }
 
 #quality-table-wrapper,

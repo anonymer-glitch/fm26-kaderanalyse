@@ -1,8 +1,8 @@
 // Logik-Schicht: regelbasierter Handlungsbedarf. Jede Regel ist bewusst
 // einfach und nachvollziehbar (keine Blackbox-Bewertung). Alle Schwellenwerte
-// sind eine erste Einschätzung/Annahme - hier zentral anpassbar, bis es eine
-// Einstellmöglichkeit in der Oberfläche gibt.
-var HINT_THRESHOLDS = {
+// sind Startwerte, über die Oberfläche im Handlungsbedarf-Reiter einstellbar
+// (siehe HINT_THRESHOLD_SETTINGS unten + mergeHintThresholds).
+var DEFAULT_HINT_THRESHOLDS = {
   contractWarningMonths: 12,
   // Gilt für Gehalt und Marktwert gleichermaßen (oberstes Viertel im Kader).
   sellValuePercentile: 0.75,
@@ -10,6 +10,8 @@ var HINT_THRESHOLDS = {
   // Alles unterhalb "Rotationsspieler" gilt für den Verleih-Hinweis als "niedriger
   // Einsatzstatus" - Rotationsspieler selbst soll im Kader bleiben (bekommt schon
   // regelmäßig Einsätze), "Nicht benötigt" wird separat immer zum Verkaufskandidat.
+  // Bewusst nicht über die Oberfläche einstellbar (kein einfacher Zahlenwert,
+  // sondern an einen konkreten Status-Namen gebunden).
   loanMinRank: statusRank('Rotationsspieler') + 1,
   // Ziel-Kadertiefe je Positions-Slot = benötigte Starter (aus dem Taktik-Board,
   // z.B. 2 Marker auf "V (Z)" = 2 Starter) mal diesem Faktor - z.B. 2 Starter auf
@@ -28,6 +30,36 @@ var HINT_THRESHOLDS = {
   // Diskrepanz als auffällig gilt.
   statusGapMinDiff: 3
 };
+
+// Editierbare Schwellenwerte für die Einstell-Oberfläche im Handlungsbedarf-
+// Reiter. "scale" rechnet zwischen internem Wert (z.B. 0.75) und Anzeigewert
+// (z.B. 75 %) um - reine Darstellungssache, gespeichert/gerechnet wird immer
+// mit dem internen Wert. loanMinRank taucht hier bewusst nicht auf (s.o.).
+var HINT_THRESHOLD_SETTINGS = [
+  { key: 'contractWarningMonths', label: 'Vertrag prüfen: Restlaufzeit in Monaten', step: 1, min: 0, scale: 1, suffix: 'Monate' },
+  { key: 'sellValuePercentile', label: 'Verkaufskandidat: Gehalt/Marktwert-Schwelle (oberste X % im Kader)', step: 1, min: 1, max: 100, scale: 100, suffix: '%' },
+  { key: 'loanAgeMax', label: 'Verleihkandidat: Alter bis', step: 1, min: 0, scale: 1, suffix: 'Jahre' },
+  { key: 'positionDepthMultiplier', label: 'Ziel-Kadertiefe je Position: Starter ×', step: 0.5, min: 1, scale: 1, suffix: '' },
+  { key: 'qualityWeakMargin', label: 'Position: Handlungsbedarf – schwache Qualität ab Abstand zum Kader-Ø', step: 0.1, min: 0, scale: 1, suffix: 'Attribut-Punkte' },
+  { key: 'ratingWeakMargin', label: 'Position/Verkaufskandidat: schwache Leistung ab Abstand zur Kader-Ø-Note', step: 0.05, min: 0, scale: 1, suffix: 'Notenpunkte' },
+  { key: 'statusGapMinDiff', label: 'Status-Diskrepanz ab wie vielen Stufen Unterschied', step: 1, min: 1, scale: 1, suffix: 'Stufen' }
+];
+
+// Baut die tatsächlich verwendeten Schwellenwerte aus den Standardwerten plus
+// optionalen Overrides (z.B. aus localStorage) - fehlende/ungültige Werte
+// fallen automatisch auf den Standard zurück, damit ein kaputter/alter
+// gespeicherter Stand die App nie zum Absturz bringt.
+function mergeHintThresholds(overrides) {
+  var merged = {};
+  Object.keys(DEFAULT_HINT_THRESHOLDS).forEach(function (key) { merged[key] = DEFAULT_HINT_THRESHOLDS[key]; });
+  if (overrides) {
+    HINT_THRESHOLD_SETTINGS.forEach(function (field) {
+      var val = overrides[field.key];
+      if (typeof val === 'number' && isFinite(val)) merged[field.key] = val;
+    });
+  }
+  return merged;
+}
 
 // "Nicht benötigt" ist ein eigener, immer greifender Auslöser (siehe applyHints) -
 // hier nur noch für den gehaltsabhängigen "kleine Rolle"-Pfad.
@@ -77,9 +109,10 @@ function computeValueThreshold(players, selector, percentile) {
 // Berechnet die Hinweise für jeden Spieler und hängt sie als p.hints (Array von
 // Strings) direkt an die übergebenen Spieler-Objekte an. referenceDate kann null
 // sein (z.B. wenn kein Spieldatum gesetzt ist) - dann bleibt der Vertrags-Hinweis aus.
-function applyHints(players, referenceDate) {
-  var salaryThreshold = computeValueThreshold(players, function (p) { return p.salary; }, HINT_THRESHOLDS.sellValuePercentile);
-  var marketValueThreshold = computeValueThreshold(players, function (p) { return p.marketValue; }, HINT_THRESHOLDS.sellValuePercentile);
+// thresholds kommt aus mergeHintThresholds (state.hintThresholds in app.js).
+function applyHints(players, referenceDate, thresholds) {
+  var salaryThreshold = computeValueThreshold(players, function (p) { return p.salary; }, thresholds.sellValuePercentile);
+  var marketValueThreshold = computeValueThreshold(players, function (p) { return p.marketValue; }, thresholds.sellValuePercentile);
 
   var ratings = players.map(function (p) { return p.rating; }).filter(function (r) { return r != null; });
   var ratingMean = ratings.length > 0
@@ -92,7 +125,7 @@ function applyHints(players, referenceDate) {
 
     if (referenceDate && p.contractEnd) {
       var months = monthsBetween(referenceDate, p.contractEnd);
-      if (months != null && months <= HINT_THRESHOLDS.contractWarningMonths &&
+      if (months != null && months <= thresholds.contractWarningMonths &&
           CONTRACT_WARNING_EXCLUDED_STATUSES.indexOf(p.statusActual) === -1) {
         hints.push('Vertrag prüfen');
         hintReasons['Vertrag prüfen'] = 'Vertrag endet ' + p.contractEndRaw + ' (' + months + ' Mon.), Status ' + p.statusActual;
@@ -103,7 +136,7 @@ function applyHints(players, referenceDate) {
     var highMarketValue = marketValueThreshold != null && p.marketValue != null && p.marketValue >= marketValueThreshold;
     var lowRoleStatus = SELL_LOW_STATUSES.indexOf(p.statusActual) !== -1;
     var underperforming = p.rating != null && ratingMean != null &&
-        p.rating <= ratingMean - HINT_THRESHOLDS.ratingWeakMargin;
+        p.rating <= ratingMean - thresholds.ratingWeakMargin;
 
     // Zwei unabhängige Auslöser: (1) hohes Gehalt für eine kleine Rolle, egal
     // welches Alter - kostet unnötig viel für wenig Einsatz. (2) hohes Gehalt
@@ -134,8 +167,8 @@ function applyHints(players, referenceDate) {
     // "Nicht benötigt" ist oben schon immer Verkaufskandidat - hier bewusst
     // ausgeschlossen, damit ein Spieler nicht gleichzeitig als Verleih- UND
     // Verkaufskandidat auftaucht.
-    if (p.age != null && p.age <= HINT_THRESHOLDS.loanAgeMax &&
-        statusRank(p.statusActual) >= HINT_THRESHOLDS.loanMinRank &&
+    if (p.age != null && p.age <= thresholds.loanAgeMax &&
+        statusRank(p.statusActual) >= thresholds.loanMinRank &&
         ALWAYS_SELL_STATUSES.indexOf(p.statusActual) === -1) {
       hints.push('Verleihkandidat');
       hintReasons['Verleihkandidat'] = 'Alter ' + p.age + ' + Status ' + p.statusActual;
@@ -143,7 +176,7 @@ function applyHints(players, referenceDate) {
 
     if (p.statusActual && p.statusExpected) {
       var statusGap = statusRank(p.statusActual) - statusRank(p.statusExpected);
-      if (Math.abs(statusGap) >= HINT_THRESHOLDS.statusGapMinDiff) {
+      if (Math.abs(statusGap) >= thresholds.statusGapMinDiff) {
         hints.push('Status-Diskrepanz');
         var direction = statusGap > 0 ? 'spielt weniger als vereinbart' : 'spielt mehr als vereinbart';
         hintReasons['Status-Diskrepanz'] = 'Tatsächlich: ' + p.statusActual + ', Vereinbart: ' + p.statusExpected + ' (' + direction + ')';
@@ -178,10 +211,10 @@ function playersMatchingSlot(players, slot) {
   });
 }
 
-function computePositionGaps(players, needed) {
+function computePositionGaps(players, needed, thresholds) {
   return needed.map(function (n) {
     var count = playersMatchingSlot(players, n.slot).length;
-    var target = n.count * HINT_THRESHOLDS.positionDepthMultiplier;
+    var target = n.count * thresholds.positionDepthMultiplier;
     var severity;
     if (count === 0) severity = 'missing';
     else if (count < n.count) severity = 'thin';
@@ -210,7 +243,7 @@ function computePositionRatings(players, neededSlots) {
 // zu einer Liste "Handlungsbedarf" zusammen: jeder Slot mit zu wenig Spielern
 // und/oder auffällig schwacher Qualität/Leistung (jeweils relativ zum Ø aller
 // Positionen dieses Kaders), sortiert nach Position auf dem Feld.
-function computePositionActionItems(gapResults, qualityResults, ratingResults) {
+function computePositionActionItems(gapResults, qualityResults, ratingResults, thresholds) {
   function byCode(results) {
     var map = {};
     results.forEach(function (r) { map[r.code] = r; });
@@ -250,13 +283,13 @@ function computePositionActionItems(gapResults, qualityResults, ratingResults) {
 
     var quality = qualityByCode[slot];
     if (quality && quality.average != null && qualityMean != null &&
-        quality.average <= qualityMean - HINT_THRESHOLDS.qualityWeakMargin) {
+        quality.average <= qualityMean - thresholds.qualityWeakMargin) {
       reasons.push('schwache Qualität (Ø ' + quality.average.toFixed(1) + ')');
     }
 
     var rating = ratingByCode[slot];
     if (rating && rating.average != null && ratingMean != null &&
-        rating.average <= ratingMean - HINT_THRESHOLDS.ratingWeakMargin) {
+        rating.average <= ratingMean - thresholds.ratingWeakMargin) {
       reasons.push('schwache Leistung (Ø Note ' + rating.average.toFixed(2) + ')');
     }
 
