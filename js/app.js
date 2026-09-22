@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   var rowCountEl = document.getElementById('row-count');
   var filtersEl = document.getElementById('filters');
+  var compareBarEl = document.getElementById('compare-bar');
   var tableWrapper = document.getElementById('table-wrapper');
 
   var COLUMNS = [
@@ -126,8 +127,13 @@ document.addEventListener('DOMContentLoaded', function () {
     performanceSortKey: 'code',
     performanceSortDir: 'asc',
     activeTab: 'uebersicht',
-    selectedGapSlot: null
+    selectedGapSlot: null,
+    compareSelection: []
   };
+
+  // Mehr als 4 Spieler nebeneinander wird schnell unübersichtlich (siehe
+  // compare.js) - bewusste Grenze, keine technische Notwendigkeit.
+  var COMPARE_MAX_SELECTION = 4;
 
   function openProfile(player) {
     var payload = JSON.stringify({ headers: state.headers, record: player.raw });
@@ -506,6 +512,9 @@ document.addEventListener('DOMContentLoaded', function () {
     state.filters = defaultFilters();
     state.sortKey = 'name';
     state.sortDir = 'asc';
+    // Ausgewählte Vergleichs-Spieler gehören zum aktuellen Kaderstand - bei
+    // einem neuen Import können sich Unique IDs/Datenbasis geändert haben.
+    state.compareSelection = [];
 
     state.qualityAttributes = {};
     collectRootPositionCodes(state.players).forEach(function (code) {
@@ -1445,6 +1454,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var thead = document.createElement('thead');
     var headRow = document.createElement('tr');
+    var compareTh = document.createElement('th');
+    compareTh.textContent = 'Vgl.';
+    compareTh.title = 'Bis zu ' + COMPARE_MAX_SELECTION + ' Spieler für den direkten Vergleich auswählen';
+    headRow.appendChild(compareTh);
     columns.forEach(function (col) {
       var th = document.createElement('th');
       th.className = 'sortable';
@@ -1465,10 +1478,26 @@ document.addEventListener('DOMContentLoaded', function () {
     table.appendChild(thead);
 
     var tbody = document.createElement('tbody');
+    var atCap = state.compareSelection.length >= COMPARE_MAX_SELECTION;
     sorted.forEach(function (p) {
       var tr = document.createElement('tr');
       tr.className = 'clickable-row';
       tr.addEventListener('click', function () { openProfile(p); });
+
+      var compareTd = document.createElement('td');
+      var compareBox = document.createElement('input');
+      compareBox.type = 'checkbox';
+      compareBox.className = 'compare-checkbox';
+      var isSelected = p.id != null && state.compareSelection.indexOf(p.id) !== -1;
+      compareBox.checked = isSelected;
+      compareBox.disabled = p.id == null || (!isSelected && atCap);
+      compareBox.addEventListener('click', function (event) { event.stopPropagation(); });
+      compareBox.addEventListener('change', function () {
+        toggleCompareSelection(p.id, compareBox.checked);
+      });
+      compareTd.appendChild(compareBox);
+      tr.appendChild(compareTd);
+
       columns.forEach(function (col) {
         var td = document.createElement('td');
         var text = col.display ? col.display(p) : col.get(p);
@@ -1480,6 +1509,62 @@ document.addEventListener('DOMContentLoaded', function () {
     table.appendChild(tbody);
 
     tableWrapper.appendChild(table);
+    renderCompareBar();
+  }
+
+  // Bis zu COMPARE_MAX_SELECTION Spieler aus der Kaderübersicht für den
+  // direkten Vergleich merken (siehe compare-checkbox in renderTable) - rein
+  // im Speicher, nicht persistiert (eine Auswahl "für jetzt gerade").
+  function toggleCompareSelection(id, checked) {
+    if (id == null) return;
+    if (checked) {
+      if (state.compareSelection.indexOf(id) === -1 && state.compareSelection.length < COMPARE_MAX_SELECTION) {
+        state.compareSelection.push(id);
+      }
+    } else {
+      state.compareSelection = state.compareSelection.filter(function (x) { return x !== id; });
+    }
+    renderTable();
+  }
+
+  function renderCompareBar() {
+    compareBarEl.innerHTML = '';
+    var selectedPlayers = state.players.filter(function (p) { return state.compareSelection.indexOf(p.id) !== -1; });
+    if (selectedPlayers.length === 0) {
+      compareBarEl.hidden = true;
+      return;
+    }
+    compareBarEl.hidden = false;
+
+    var label = document.createElement('span');
+    label.textContent = selectedPlayers.length + ' ausgewählt: ' + selectedPlayers.map(function (p) { return p.name; }).join(', ');
+    compareBarEl.appendChild(label);
+
+    var compareBtn = document.createElement('button');
+    compareBtn.type = 'button';
+    compareBtn.textContent = 'Vergleichen';
+    compareBtn.disabled = selectedPlayers.length < 2;
+    compareBtn.addEventListener('click', function () { openComparison(selectedPlayers); });
+    compareBarEl.appendChild(compareBtn);
+
+    var clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.textContent = 'Auswahl leeren';
+    clearBtn.addEventListener('click', function () {
+      state.compareSelection = [];
+      renderTable();
+    });
+    compareBarEl.appendChild(clearBtn);
+  }
+
+  // Öffnet den Spielervergleich als eigene Seite (wie das Spielerprofil) -
+  // Rohdaten aller ausgewählten Spieler per URL-Hash übergeben, kein Server nötig.
+  function openComparison(players) {
+    var payload = JSON.stringify({
+      headers: state.headers,
+      records: players.map(function (p) { return p.raw; })
+    });
+    window.open('compare.html#' + encodeURIComponent(payload), '_blank');
   }
 
   renderHintThresholdSettings();

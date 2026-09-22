@@ -44,7 +44,7 @@ Drei getrennte Bereiche, damit spätere Erweiterungen bestehende Bereiche nicht 
 - Kaderübersicht: Tabelle mit Kernspalten (Position, Alter, Vertragsende, Gehalt, Einsatzstatus, ausgewählte Attribute)
 - Spielerprofil: Detailansicht mit allen verfügbaren Feldern
 - Filter & Sortierung (Position, Alter, Vertrag, Gehalt, Einsatzstatus, Attribute)
-- Vergleichsansicht mehrerer Spieler
+- Spielervergleich: in der Kaderübersicht 2-4 Spieler per Häkchen auswählen (eigene Spalte "Vgl.", stört den normalen Zeilenklick zum Profil nicht), öffnet als eigene Seite mit Spielern als Spalten und Kernwerten als Zeilen (Position, Alter, Vertragsende, Gehalt, Marktwert, Einsatzstatus Ist/Soll, Durchschnittsnote), weitere Spalten aus dem Export bei Bedarf dazuwählbar. Bewusst ohne "bester Wert"-Hervorhebung (z. B. ist ein hohes Gehalt nicht eindeutig gut oder schlecht) - reine Übersicht, die Bewertung bleibt beim Nutzer. Auswahl ist rein für die aktuelle Sitzung (nicht gespeichert, wird bei neuem Import geleert)
 - Handlungsbedarf (regelbasiert, transparent, alle Schwellenwerte direkt in der Oberfläche einstellbar - siehe unten):
   - Vertrag prüfen (Vertragsende bald + Spieler wichtig für die Mannschaft)
   - Verkaufskandidat: Status "Nicht benötigt" (immer) ODER hohes Gehalt für eine kleine Rolle ("Ergänzungsspieler", unabhängig vom Alter) ODER [hohes Gehalt ODER hoher Marktwert] + unterdurchschnittliche Leistungsnote ("verkaufen solange der Wert hoch ist")
@@ -74,7 +74,6 @@ Jeder Handlungsbedarf-Eintrag zeigt direkt in der Liste, welche Werte ihn ausgel
 - Transfer-Scouting (Spieler außerhalb des eigenen Kaders)
 - Design/Optik-Überarbeitung: Typografie, Farbschema, evtl. Dark Mode, responsiveres Layout; Diagramme statt nur Tabellen (z. B. Altersverteilung, Gehaltsstruktur, Vertragslaufzeiten)
 - Druck-/Exportansicht: Dashboard oder Kaderübersicht sauber als PDF/Bild ausgeben, z. B. zum Teilen oder Ausdrucken
-- Spieler-Vergleich: 2-3 Spieler explizit nebeneinander gegenüberstellen (bisher nur implizit über die Kaderübersicht-Tabelle möglich)
 
 ### Backlog – vage Ideen, wahrscheinlich nicht umgesetzt
 
