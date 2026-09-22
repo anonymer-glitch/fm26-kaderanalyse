@@ -82,6 +82,7 @@ Diese zwei sind bewusst nur als "mal drüber nachgedacht" festgehalten, nicht al
 
 - **U18-/U21-/Reserve-Team:** Technisch machbar (siehe unten), aber der Nutzen ist fraglich gegenüber dem Aufwand. Kadertiefe, Qualität/Leistung je Position und die meisten Handlungsbedarf-Regeln gehen aktuell implizit von einem reinen Erste-Mannschaft-Import aus - bei einem gemischten Import müsste vorher nach Team gefiltert werden, sonst verwässern Jugendspieler diese Auswertungen. Das wäre mehr Umbau als der Nutzen (gelegentlich einen Jugendspieler hochziehen) hergibt.
 - **Leihspieler:** Ginge technisch einfach (falls der Export dafür überhaupt Noten/Stats liefert), aber der praktische Nutzen ist gering - so wenige Leihspieler lassen sich auch einfach im Spiel selbst kurz überblicken, ohne eigenen Report dafür.
+- **Trainerkarriere-Historie/Titel:** Anders als die anderen beiden kein CSV-Import, sondern manuelle Eingabe (Saison, Titel/Ereignis, freier Kommentar) - technisch simpel, dieselbe Persistenz wie bei den Notizen (dauerhaft in `localStorage`, wandert in die Sicherungsdatei, nur manuell löschbar statt automatisch überschrieben). Inhaltlich aber losgelöst vom Kaderanalyse-Zweck der App (Karriere-Tagebuch statt Kaderauswertung) - technisch kein Hindernis, eher eine Scope-Frage, noch nicht entschieden.
 
 ### Persistenz (umgesetzt)
 
