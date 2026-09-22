@@ -799,7 +799,7 @@ tbody tr.clickable-row:hover {
    Spielerprofil / Positions-Detail
    --------------------------------------------------------------------- */
 .profile-page {
-  max-width: 680px;
+  max-width: 980px;
   margin: 0 auto;
 }
 
@@ -879,13 +879,15 @@ tbody tr.clickable-row:hover {
   margin: 0;
 }
 
-/* Eine Spalte statt eines Rasters - manche Feldnamen sind lang ("Anteil
-   erfolgreicher Zweikämpfe"), die 680px der Profilseite reichen nicht für
-   zwei Spalten ohne Abschneiden. */
+/* Zwei Spalten nebeneinander, wenn die Breite es hergibt (Profilseite ist
+   auf 980px gewachsen) - fällt auf schmalen Bildschirmen automatisch auf
+   eine Spalte zurück. Lange Feldnamen ("Anteil erfolgreicher Zweikämpfe")
+   werden abgeschnitten, tragen aber ein title-Attribut als Tooltip
+   (siehe makeBarGrid in profile.js). */
 .profile-bar-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 0.4rem 2rem;
 }
 
 .profile-fields + .profile-bar-grid {
@@ -893,7 +895,7 @@ tbody tr.clickable-row:hover {
 }
 
 .profile-bar-grid .compare-chart-bar-name {
-  width: 220px;
+  width: 200px;
 }
 
 .profile-bar-grid .compare-chart-bar-value {
