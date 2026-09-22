@@ -150,6 +150,7 @@ a {
 .tactics-add button,
 .view-nav-btn,
 .filters button,
+.print-bar button,
 #hint-thresholds-settings-body button {
   padding: 0.45rem 0.85rem;
   font: inherit;
@@ -169,6 +170,7 @@ a {
 .tactics-add button:hover,
 .view-nav-btn:hover,
 .filters button:hover,
+.print-bar button:hover,
 #hint-thresholds-settings-body button:hover {
   border-color: var(--color-accent);
   color: var(--color-accent-hover);
@@ -486,6 +488,12 @@ a {
 
 .view-nav-btn.active:hover {
   color: var(--color-accent-contrast);
+}
+
+.print-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
 }
 
 .app-tab h3 {
@@ -1052,5 +1060,108 @@ tbody tr.clickable-row:hover {
   #position-gaps-detail-table-wrapper::-webkit-scrollbar-thumb {
     background: var(--color-border-strong);
     border-radius: 3px;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Druckansicht - druckt die gerade sichtbare Ansicht (Reiter), Rest
+   entscheidet switchTab wie gehabt. Die einfachste Lösung, weil die App
+   ohnehin per Design-Tokens arbeitet: die Tokens selbst auf ein helles,
+   tintensparendes Farbschema umstellen (das dunkle Theme ist nur für den
+   Bildschirm gedacht) - der Großteil der Komponenten passt sich dadurch
+   automatisch an, ohne jede Karte/Tabelle einzeln umzustellen. Dazu
+   gezielt die Steuer-/Eingabe-Elemente ausblenden (Import-Bereich, Nav,
+   Einstellungs-Panels, Vergleichsauswahl, Druck-Button selbst) und
+   Tabellen von ihrer Bildschirm-Scrollbegrenzung befreien, damit der
+   Inhalt vollständig über mehrere Seiten läuft statt abgeschnitten zu
+   werden. */
+@page {
+  size: landscape;
+  margin: 12mm;
+}
+
+@media print {
+  :root {
+    color-scheme: light;
+    --color-page: #ffffff;
+    --color-surface: #ffffff;
+    --color-surface-muted: #f2f2f2;
+    --color-border: #ccc;
+    --color-border-strong: #999;
+    --color-text: #000000;
+    --color-text-secondary: #333333;
+    --color-text-muted: #666666;
+    --color-accent: #1c5cab;
+    --color-accent-hover: #1c5cab;
+    --color-accent-soft: #eef2ff;
+    --color-accent-soft-border: #ccd4f5;
+    --color-accent-contrast: #ffffff;
+    --color-good-bg: #e5f7e5;
+    --color-good-text: #0a6e0a;
+    --color-warn-bg: #fef3c7;
+    --color-warn-text: #92400e;
+    --color-warn-strong-bg: #fef9c3;
+    --color-warn-strong-text: #854d0e;
+    --color-danger-bg: #fee2e2;
+    --color-danger-text: #991b1b;
+    --color-danger-border: #f3b4b4;
+    --shadow-card: none;
+    --shadow-card-hover: none;
+  }
+
+  main {
+    max-width: none;
+  }
+
+  /* Steuerung/Eingabe - nicht Teil des Berichts, den man drucken will. */
+  #import-section,
+  .view-nav,
+  .print-bar,
+  .compare-bar,
+  .filters,
+  #quality-settings,
+  #performance-settings,
+  #standards-settings,
+  #hint-thresholds-settings,
+  #compare-attribute-picker,
+  .app-logo {
+    display: none !important;
+  }
+
+  /* "Vgl."-Auswahlspalte ist nur am Bildschirm relevant. */
+  #tab-kader #table-wrapper th:first-child,
+  #tab-kader #table-wrapper td:first-child {
+    display: none;
+  }
+
+  /* Volle Tabellenhöhe statt Scroll-Ausschnitt - der Browser druckt eine
+     lange Tabelle ohnehin über mehrere Seiten und wiederholt den Kopf. */
+  #table-wrapper,
+  #previous-import-table-wrapper,
+  #position-gaps-detail-table-wrapper,
+  #quality-table-wrapper,
+  #performance-table-wrapper {
+    max-height: none;
+    overflow: visible;
+  }
+
+  thead th {
+    position: static;
+  }
+
+  tbody tr.clickable-row {
+    cursor: default;
+  }
+
+  /* Das Taktik-Feld nie mitten im Spielfeld auf die nächste Seite umbrechen -
+     lieber als Ganzes auf die nächste Seite rutschen, falls es auf der
+     aktuellen nicht mehr passt. */
+  .tactics-board {
+    break-inside: avoid;
+  }
+
+  .hint-summary-box,
+  .standards-category {
+    break-inside: avoid;
   }
 }

@@ -8,6 +8,14 @@ document.addEventListener('DOMContentLoaded', function () {
   var resetKaderBtn = document.getElementById('reset-kader-btn');
 
   var navEl = document.getElementById('view-nav');
+  var printBarEl = document.getElementById('print-bar');
+  var printBtn = document.getElementById('print-btn');
+
+  // Druckt die gerade sichtbare Ansicht (Tab) - welche Tabelle/Karten das
+  // sind, entscheidet einzig der Reiter-Wechsel (switchTab), hier nur der
+  // Browser-Druckdialog selbst. Steuerelemente/Import-Bereich/Einstellungs-
+  // Panels werden über @media print in styles.css ausgeblendet.
+  printBtn.addEventListener('click', function () { window.print(); });
 
   var importComparisonEl = document.getElementById('import-comparison');
   var tacticsPresetsEl = document.getElementById('tactics-presets');
@@ -192,6 +200,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     statusEl.textContent = 'Lese Datei...';
     navEl.hidden = true;
+    printBarEl.hidden = true;
     Array.from(document.querySelectorAll('.app-tab')).forEach(function (section) { section.hidden = true; });
 
     var reader = new FileReader();
@@ -553,6 +562,7 @@ document.addEventListener('DOMContentLoaded', function () {
     renderTable();
 
     navEl.hidden = false;
+    printBarEl.hidden = false;
     switchTab('uebersicht');
   }
 

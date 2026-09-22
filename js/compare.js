@@ -118,6 +118,7 @@ document.addEventListener('DOMContentLoaded', function () {
   container.appendChild(subtitle);
 
   var settingsDetails = document.createElement('details');
+  settingsDetails.id = 'compare-attribute-picker';
   settingsDetails.className = 'quality-settings';
   var summary = document.createElement('summary');
   summary.textContent = 'Weitere Attribute hinzufügen';

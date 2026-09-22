@@ -63,6 +63,7 @@ Drei getrennte Bereiche, damit spätere Erweiterungen bestehende Bereiche nicht 
 - Qualität je Position: Ø-Wert frei wählbarer Attribute je Position (Vorschlag aus FM-Community-Guides als editierbarer Startpunkt, keine feste Bewertungsformel), standardmäßig nach der Positionsspalte sortiert (Feldreihenfolge TW → ST). Zeigt nur die aktuell auf dem Taktik-Board benötigten Positionen (keine Position aus dem Kader, die in der eingestellten Taktik gar nicht vorkommt) - passende Spieler ohne Positions-Treffer werden stattdessen als Vermerk über der Tabelle gezählt und tauchen im Handlungsbedarf-Reiter als eigene Liste auf
 - Leistung je Position: Durchschnittsnote fest je Position (reicht als Überblick, da FM sie schon positionsbewusst berechnet); bei Bedarf zusätzliche Leistungskennzahlen manuell zuwählbar, je Position thematisch sortiert (Verteidiger: Zweikampf zuerst, Stürmer: Offensive zuerst, ...) - eine Spalte pro Kennzahl statt einem Blend-Wert (unterschiedliche Skalen wie Note/Prozent/Pro-90-Rate lassen sich nicht sinnvoll mitteln). Absolute Zähler (z. B. Gewonnene Zweikämpfe) werden automatisch auf "pro 90 Minuten" umgerechnet. Standardmäßig ebenfalls nach der Positionsspalte sortiert (Feldreihenfolge TW → ST). Dieselbe Taktik-Beschränkung und derselbe Vermerk wie bei Qualität je Position
 - Standardsituationen & Führung: Top-5-Vorschläge für Eckbälle, Freistöße, Elfmeter und Führung (Kapitän/Stellvertreter), je Kategorie frei wählbare Attribute. Freistöße/Elfmeter/Führung nutzen mangels eigener FM-Attribute im Export eine Näherung aus ähnlichen Attributen (klar gekennzeichnet)
+- Druckansicht: Button "Aktuelle Ansicht drucken" (erscheint nach dem Import über den Reitern) öffnet den normalen Browser-Druckdialog für den gerade sichtbaren Reiter - von dort aus auch "Als PDF speichern" möglich, ganz ohne eigene Export-Logik. Eigenes `@media print`-Stylesheet: Bedienelemente (Import-Bereich, Navigation, Filter, Einstellungen-Aufklapper, Vgl.-Spalte) werden ausgeblendet, dunkles Theme weicht einem druckfreundlichen hellen Layout, Tabellen laufen ungekürzt (ohne Scroll-Ausschnitt) über mehrere Seiten mit sich wiederholendem Kopf, Seitenformat quer für mehr Platz in der Breite. Taktik-Feld und Karten brechen nicht mitten im Element auf die nächste Seite um
 
 ### Explizit nicht in V1
 
@@ -74,7 +75,6 @@ Jeder Handlungsbedarf-Eintrag zeigt direkt in der Liste, welche Werte ihn ausgel
 
 - Transfer-Scouting (Spieler außerhalb des eigenen Kaders)
 - Diagramme für Kaderweite Auswertungen statt nur Tabellen (z. B. Altersverteilung, Gehaltsstruktur, Vertragslaufzeiten) - das Balken-Chart-Muster aus dem Spielervergleich/Spielerprofil ließe sich dafür wiederverwenden
-- Druck-/Exportansicht: Dashboard oder Kaderübersicht sauber als PDF/Bild ausgeben, z. B. zum Teilen oder Ausdrucken
 
 ### Backlog – vage Ideen, wahrscheinlich nicht umgesetzt
 
