@@ -70,8 +70,9 @@ function parseCompareNumber(str) {
 
 // Feste Reihenfolge/Farben je Spieler (Spalte), unabhängig davon, wer in
 // welcher Zeile gerade vorn liegt - Farbe folgt der Person, nie dem Rang.
-// Validierte 4er-Palette (adjacent CVD-Check bestanden, siehe dataviz-Skill).
-var COMPARE_PLAYER_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100'];
+// Dark-Mode-Schritte der validierten 4er-Palette (adjacent CVD-Check + alle
+// Kontrast-Checks gegen die dunkle Fläche #1a1a19 bestanden, siehe dataviz-Skill).
+var COMPARE_PLAYER_COLORS = ['#3987e5', '#d95926', '#199e70', '#c98500'];
 
 document.addEventListener('DOMContentLoaded', function () {
   var container = document.getElementById('compare-content');
