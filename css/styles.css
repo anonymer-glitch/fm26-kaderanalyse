@@ -1,22 +1,114 @@
+/* ---------------------------------------------------------------------
+   Design-Tokens - ein Satz Variablen statt verstreuter Hex-Werte, damit
+   Farbe/Radius/Abstand/Schatten konsistent bleiben und sich an einer
+   Stelle anpassen lassen. Akzentfarbe ist dasselbe validierte Blau wie
+   im Spielervergleich-Chart (slot 1 der geprüften Kategorial-Palette,
+   siehe compare.js) - dadurch wirkt die App als ein System statt aus
+   Einzelteilen zusammengesetzt. Bewusst nur ein Modus (hell) - die App
+   hatte nie Dark Mode, ein halbfertiger würde inkonsistenter wirken als
+   keiner (siehe README "Erweiterungspunkte").
+   --------------------------------------------------------------------- */
+:root {
+  --color-page: #f4f5f7;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f7f8fa;
+  --color-border: #e3e5e9;
+  --color-border-strong: #cdd1d8;
+  --color-text: #16181d;
+  --color-text-secondary: #565b66;
+  --color-text-muted: #8a8f99;
+
+  --color-accent: #2a78d6;
+  --color-accent-hover: #1c5cab;
+  --color-accent-soft: #eaf1fc;
+  --color-accent-soft-border: #cbdcf4;
+  --color-accent-contrast: #ffffff;
+
+  --color-good-bg: #e5f7e5;
+  --color-good-text: #0a6e0a;
+  --color-warn-bg: #fef3c7;
+  --color-warn-text: #92400e;
+  --color-warn-strong-bg: #fef9c3;
+  --color-warn-strong-text: #854d0e;
+  --color-danger-bg: #fee2e2;
+  --color-danger-text: #991b1b;
+  --color-danger-border: #f3b4b4;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.07);
+  --shadow-card-hover: 0 2px 4px rgba(16, 24, 40, 0.06), 0 4px 10px rgba(16, 24, 40, 0.08);
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
-  font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+  font-family: var(--font-sans);
   margin: 0;
-  padding: 1.5rem;
-  background: #f5f5f5;
-  color: #1a1a1a;
+  padding: 1.75rem;
+  background: var(--color-page);
+  color: var(--color-text);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  letter-spacing: -0.01em;
 }
 
 header h1 {
-  margin-bottom: 0.25rem;
+  margin: 0 0 0.2rem;
+  font-size: 1.65rem;
+  font-weight: 700;
 }
 
 header p {
   margin-top: 0;
-  color: #555;
+  color: var(--color-text-secondary);
 }
 
+h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 1.75rem 0 0.5rem;
+}
+
+.app-tab > h2:first-child {
+  margin-top: 0;
+}
+
+a {
+  color: var(--color-accent);
+}
+
+/* ---------------------------------------------------------------------
+   Import-Bereich
+   --------------------------------------------------------------------- */
 #import-section {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.75rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 1.1rem 1.25rem;
+}
+
+#import-section > label {
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
 #import-status {
@@ -25,45 +117,101 @@ header p {
 }
 
 .reference-date-field {
-  margin-top: 0.75rem;
+  margin-top: 0.9rem;
+}
+
+/* ---------------------------------------------------------------------
+   Buttons - eine gemeinsame Basis für alle button-artigen Elemente,
+   Primär-/Gefahren-Varianten setzen nur Farbe/Rand ab. Kein Klassen-
+   Umbau in HTML/JS nötig, alle bestehenden Container-Selektoren bleiben.
+   --------------------------------------------------------------------- */
+.storage-actions button,
+.compare-bar button,
+.tactics-preset-btn,
+.tactics-add button,
+.view-nav-btn,
+.filters button,
+#hint-thresholds-settings-body button {
+  padding: 0.45rem 0.85rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+
+.storage-actions button:hover,
+.compare-bar button:hover:not(:disabled),
+.tactics-preset-btn:hover,
+.tactics-add button:hover,
+.view-nav-btn:hover,
+.filters button:hover,
+#hint-thresholds-settings-body button:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent-hover);
 }
 
 .storage-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-top: 0.5rem;
+  margin-top: 0.6rem;
 }
 
-.storage-actions button {
-  padding: 0.35rem 0.7rem;
-  font-size: 0.8rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: #fff;
-  cursor: pointer;
+#backup-export-btn {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
 }
 
+#backup-export-btn:hover {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+  color: var(--color-accent-contrast);
+}
+
+#reset-kader-btn {
+  color: var(--color-danger-text);
+  border-color: var(--color-danger-border);
+}
+
+#reset-kader-btn:hover {
+  background: var(--color-danger-bg);
+  border-color: var(--color-danger-text);
+  color: var(--color-danger-text);
+}
+
+/* ---------------------------------------------------------------------
+   Spielervergleich-Leiste (Kaderübersicht)
+   --------------------------------------------------------------------- */
 .compare-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
-  margin-top: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  background: #eef2ff;
-  border: 1px solid #ccd4f5;
-  border-radius: 4px;
+  margin-top: 0.6rem;
+  padding: 0.55rem 0.9rem;
+  background: var(--color-accent-soft);
+  border: 1px solid var(--color-accent-soft-border);
+  border-radius: var(--radius-md);
   font-size: 0.85rem;
+  color: var(--color-text);
 }
 
-.compare-bar button {
-  padding: 0.35rem 0.7rem;
-  font-size: 0.8rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: #fff;
-  cursor: pointer;
+.compare-bar button:first-of-type {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+
+.compare-bar button:first-of-type:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+  color: var(--color-accent-contrast);
 }
 
 .compare-bar button:disabled {
@@ -71,50 +219,38 @@ header p {
   opacity: 0.5;
 }
 
-#reset-kader-btn {
-  color: #991b1b;
-  border-color: #fca5a5;
-}
-
+/* ---------------------------------------------------------------------
+   Taktik-Presets
+   --------------------------------------------------------------------- */
 .tactics-presets {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.4rem;
-  margin-bottom: 0.75rem;
-}
-
-.tactics-preset-btn {
-  padding: 0.35rem 0.7rem;
-  font-size: 0.8rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: #fff;
-  cursor: pointer;
+  margin-bottom: 0.9rem;
 }
 
 .tactics-preset-btn.active {
-  background: #1a1a1a;
-  color: #fff;
-  border-color: #1a1a1a;
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  border-color: var(--color-accent);
 }
 
 .tactics-add {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.4rem;
   margin-left: 0.5rem;
   font-size: 0.8rem;
 }
 
-.tactics-add select,
-.tactics-add button {
-  padding: 0.3rem 0.5rem;
+.tactics-add select {
+  padding: 0.35rem 0.5rem;
   font-size: 0.8rem;
-}
-
-.tactics-add button {
-  cursor: pointer;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 
 .tactics-layout {
@@ -131,6 +267,7 @@ header p {
 
 .tactics-sidebar h4 {
   margin: 0 0 0.5rem 0;
+  font-size: 1rem;
 }
 
 .tactics-board {
@@ -139,9 +276,10 @@ header p {
   max-width: 360px;
   flex-shrink: 0;
   aspect-ratio: 2 / 3;
-  background: #2f9e44;
+  background: linear-gradient(180deg, #2f9e44, #278a3b);
   border: 2px solid #fff;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
   margin-bottom: 1rem;
   overflow: hidden;
   touch-action: none;
@@ -225,19 +363,20 @@ header p {
 .tactic-marker {
   position: absolute;
   transform: translate(-50%, -50%);
-  padding: 0.3rem 0.5rem;
-  border-radius: 14px;
-  background: #1a1a1a;
+  padding: 0.3rem 0.55rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.65rem;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
   cursor: grab;
   user-select: none;
   touch-action: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
 .tactic-marker:active {
@@ -259,6 +398,9 @@ header p {
   cursor: pointer;
 }
 
+/* ---------------------------------------------------------------------
+   Positionslücken (Kadertiefe)
+   --------------------------------------------------------------------- */
 .position-gaps {
   display: flex;
   flex-wrap: wrap;
@@ -267,64 +409,80 @@ header p {
 }
 
 .position-gap-chip {
-  background: #eef2ff;
-  border-radius: 4px;
-  padding: 0.25rem 0.6rem;
+  background: var(--color-accent-soft);
+  color: var(--color-accent-hover);
+  border-radius: var(--radius-sm);
+  padding: 0.3rem 0.65rem;
   font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
   border: 2px solid transparent;
+  transition: border-color 120ms ease;
 }
 
 .position-gap-chip.selected {
-  border-color: #1a1a1a;
+  border-color: var(--color-accent);
 }
 
 .position-gap-chip.tight {
-  background: #fef9c3;
-  color: #854d0e;
+  background: var(--color-warn-strong-bg);
+  color: var(--color-warn-strong-text);
 }
 
 .position-gap-chip.thin {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--color-warn-bg);
+  color: var(--color-warn-text);
 }
 
 .position-gap-chip.missing {
-  background: #fee2e2;
-  color: #991b1b;
-  font-weight: 600;
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
 }
 
+/* ---------------------------------------------------------------------
+   Haupt-Navigation
+   --------------------------------------------------------------------- */
 .view-nav {
   display: flex;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.4rem;
   margin-bottom: 1.5rem;
+  padding: 0.35rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
 }
 
 .view-nav-btn {
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: #fff;
-  cursor: pointer;
+  border-color: transparent;
 }
 
 .view-nav-btn.active {
-  background: #1a1a1a;
-  color: #fff;
-  border-color: #1a1a1a;
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  border-color: var(--color-accent);
+}
+
+.view-nav-btn.active:hover {
+  color: var(--color-accent-contrast);
 }
 
 .app-tab h3 {
   margin-top: 1.75rem;
   margin-bottom: 0.5rem;
+  font-size: 1.05rem;
 }
 
 .app-tab h3:first-of-type {
   margin-top: 0.5rem;
 }
 
+/* ---------------------------------------------------------------------
+   Karten - gemeinsames Muster für Hinweis-Boxen, Einstellungs-Panels,
+   Standardsituationen-Kategorien: weiße Fläche, dezenter Rand + Schatten
+   statt reinem Flat-Border, damit sich Inhalt vom Seitenhintergrund abhebt.
+   --------------------------------------------------------------------- */
 .hints-summary {
   display: flex;
   flex-wrap: wrap;
@@ -332,17 +490,18 @@ header p {
 }
 
 .hint-summary-box {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 0.6rem 0.9rem;
-  min-width: 180px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 0.7rem 1rem;
+  min-width: 200px;
   font-size: 0.85rem;
 }
 
 .hint-summary-title {
-  font-weight: 600;
-  margin-bottom: 0.3rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
 }
 
 .hint-summary-box ul {
@@ -353,29 +512,32 @@ header p {
 .hint-summary-box li {
   list-style: none;
   margin-left: -1.1rem;
+  padding: 0.1rem 0;
 }
 
 .hint-resolved-checkbox {
-  margin-right: 0.35rem;
+  margin-right: 0.4rem;
 }
 
 .hint-summary-box li.resolved {
-  color: #999;
+  color: var(--color-text-muted);
   text-decoration: line-through;
 }
 
 .quality-settings {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 0.5rem 0.9rem;
-  margin-bottom: 0.5rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 0.6rem 1rem;
+  margin-bottom: 0.6rem;
 }
 
 .quality-settings summary {
   cursor: pointer;
   font-size: 0.85rem;
-  color: #555;
+  font-weight: 600;
+  color: var(--color-text-secondary);
 }
 
 #quality-settings-body,
@@ -383,7 +545,7 @@ header p {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-  margin-top: 0.75rem;
+  margin-top: 0.85rem;
   align-items: flex-end;
 }
 
@@ -409,14 +571,15 @@ header p {
 #quality-table-wrapper,
 #performance-table-wrapper {
   overflow-x: auto;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  background: var(--color-surface);
 }
 
 .standards-note {
   font-size: 0.85rem;
-  color: #555;
+  color: var(--color-text-secondary);
   margin-top: 0;
 }
 
@@ -427,10 +590,11 @@ header p {
 }
 
 .standards-category {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 0.6rem 0.9rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 0.7rem 1rem;
   min-width: 220px;
   font-size: 0.85rem;
 }
@@ -446,45 +610,63 @@ header p {
 }
 
 .standards-category .standards-role {
-  color: #555;
+  color: var(--color-text-secondary);
   font-size: 0.8rem;
 }
 
 .warnings {
-  color: #92400e;
-  background: #fef3c7;
+  color: var(--color-warn-text);
+  background: var(--color-warn-bg);
   padding: 0.5rem 1rem;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   margin-top: 0.5rem;
 }
 
+/* ---------------------------------------------------------------------
+   Filter / Formularfelder
+   --------------------------------------------------------------------- */
 .filters {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
   align-items: flex-end;
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 0.75rem 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 0.85rem 1.1rem;
   margin-bottom: 1rem;
 }
 
 .filter-field {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.25rem;
   font-size: 0.8rem;
 }
 
 .filter-field label {
-  color: #555;
+  color: var(--color-text-secondary);
 }
 
 .filter-field input,
-.filter-field select {
-  padding: 0.3rem 0.4rem;
+.filter-field select,
+#reference-date {
+  padding: 0.35rem 0.5rem;
   font-size: 0.85rem;
+  font-family: inherit;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.filter-field input:focus,
+.filter-field select:focus,
+#reference-date:focus,
+.checkbox-group input:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
 }
 
 .checkbox-group {
@@ -495,37 +677,43 @@ header p {
   width: 260px;
   max-height: 130px;
   overflow-y: auto;
-  padding: 0.3rem;
-  border: 1px solid #eee;
-  border-radius: 4px;
-  background: #fafafa;
+  padding: 0.35rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
 }
 
 .checkbox-chip {
   display: flex;
   align-items: center;
-  gap: 0.2rem;
-  background: #f0f0f0;
-  border-radius: 3px;
-  padding: 0.15rem 0.4rem;
+  gap: 0.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: 0.2rem 0.55rem;
   font-size: 0.8rem;
   cursor: pointer;
+  transition: border-color 120ms ease;
+}
+
+.checkbox-chip:hover {
+  border-color: var(--color-accent);
 }
 
 .filters button {
-  padding: 0.4rem 0.8rem;
-  font-size: 0.85rem;
-  cursor: pointer;
   height: fit-content;
 }
 
+/* ---------------------------------------------------------------------
+   Tabellen
+   --------------------------------------------------------------------- */
 th.sortable {
   cursor: pointer;
   user-select: none;
 }
 
 th.sortable:hover {
-  background: #f0f0f0;
+  background: var(--color-accent-soft);
 }
 
 #table-wrapper,
@@ -533,9 +721,10 @@ th.sortable:hover {
 #position-gaps-detail-table-wrapper {
   overflow-x: auto;
   max-height: 70vh;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  background: var(--color-surface);
 }
 
 #previous-import-table-wrapper {
@@ -543,7 +732,7 @@ th.sortable:hover {
 }
 
 .position-gap-detail-heading {
-  font-weight: 600;
+  font-weight: 700;
   margin: 0.75rem 0 0.4rem 0;
   font-size: 0.9rem;
 }
@@ -555,8 +744,8 @@ table {
 }
 
 th, td {
-  padding: 0.35rem 0.6rem;
-  border-bottom: 1px solid #eee;
+  padding: 0.5rem 0.7rem;
+  border-bottom: 1px solid var(--color-border);
   text-align: left;
   white-space: nowrap;
 }
@@ -564,24 +753,33 @@ th, td {
 thead th {
   position: sticky;
   top: 0;
-  background: #fff;
-  border-bottom: 2px solid #ccc;
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  border-bottom: 1px solid var(--color-border-strong);
 }
 
 tbody tr:nth-child(even) {
-  background: #fafafa;
+  background: var(--color-surface-muted);
 }
 
 tbody tr.clickable-row {
   cursor: pointer;
+  transition: background-color 100ms ease;
 }
 
 tbody tr.clickable-row:hover {
-  background: #eef2ff;
+  background: var(--color-accent-soft);
 }
 
+/* ---------------------------------------------------------------------
+   Spielerprofil / Positions-Detail
+   --------------------------------------------------------------------- */
 .profile-page {
-  max-width: 640px;
+  max-width: 680px;
   margin: 0 auto;
 }
 
@@ -590,21 +788,25 @@ tbody tr.clickable-row:hover {
   margin: 0;
 }
 
-#profile-content h1 {
+#profile-content h1,
+#position-content h1,
+#compare-content h1 {
   margin-top: 0;
-  margin-bottom: 0.1rem;
+  margin-bottom: 0.15rem;
+  font-size: 1.5rem;
+  font-weight: 700;
 }
 
 .profile-subtitle {
   margin-top: 0;
-  color: #555;
+  color: var(--color-text-secondary);
 }
 
 .profile-note-label {
   display: block;
   margin-top: 1rem;
   font-size: 0.8rem;
-  color: #555;
+  color: var(--color-text-secondary);
 }
 
 .profile-note {
@@ -612,39 +814,51 @@ tbody tr.clickable-row:hover {
   width: 100%;
   box-sizing: border-box;
   min-height: 4rem;
-  margin-top: 0.3rem;
-  padding: 0.5rem;
+  margin-top: 0.35rem;
+  padding: 0.55rem;
   font-family: inherit;
   font-size: 0.9rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
   resize: vertical;
+}
+
+.profile-note:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
 }
 
 .profile-fields {
   display: grid;
   grid-template-columns: minmax(140px, 40%) 1fr;
-  gap: 0.4rem 1rem;
-  margin-top: 1rem;
+  gap: 0.45rem 1rem;
+  margin-top: 1.1rem;
   font-size: 0.9rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 0.9rem 1.1rem;
 }
 
 .profile-fields dt {
-  color: #555;
+  color: var(--color-text-secondary);
 }
 
 .profile-fields dd {
   margin: 0;
 }
 
-/* Spielervergleich (compare.html/compare.js) - grüne Markierung nur bei
+/* ---------------------------------------------------------------------
+   Spielervergleich (compare.html/compare.js) - grüne Markierung nur bei
    echten Leistungswerten (siehe compare.js), Statusfarbe statt einer
    Serienfarbe, da sie einen Zustand ("bester Wert") statt eine Identität
-   ausdrückt. */
+   ausdrückt.
+   --------------------------------------------------------------------- */
 .compare-best {
-  background: rgba(12, 163, 12, 0.12);
-  color: #006300;
-  font-weight: 600;
+  background: var(--color-good-bg);
+  color: var(--color-good-text);
+  font-weight: 700;
 }
 
 .compare-chart-swatch {
@@ -660,9 +874,9 @@ tbody tr.clickable-row:hover {
   display: flex;
   flex-wrap: wrap;
   gap: 0.9rem;
-  margin: 0.5rem 0 1rem;
+  margin: 0.5rem 0 1.1rem;
   font-size: 0.85rem;
-  color: #555;
+  color: var(--color-text-secondary);
 }
 
 .compare-chart-legend-item {
@@ -671,14 +885,14 @@ tbody tr.clickable-row:hover {
 }
 
 .compare-chart-row {
-  margin-bottom: 1rem;
+  margin-bottom: 1.1rem;
 }
 
 .compare-chart-row-label {
   font-size: 0.8rem;
-  font-weight: 600;
-  color: #555;
-  margin-bottom: 0.3rem;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  margin-bottom: 0.35rem;
 }
 
 .compare-chart-bars {
@@ -705,14 +919,15 @@ tbody tr.clickable-row:hover {
 .compare-chart-bar-track {
   flex: 1 1 auto;
   height: 20px;
-  background: #eee;
-  border-radius: 4px;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
 .compare-chart-bar-fill {
   height: 100%;
-  border-radius: 0 4px 4px 0;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   min-width: 2px;
 }
 
@@ -725,6 +940,6 @@ tbody tr.clickable-row:hover {
 }
 
 .compare-best-text {
-  color: #006300;
-  font-weight: 600;
+  color: var(--color-good-text);
+  font-weight: 700;
 }

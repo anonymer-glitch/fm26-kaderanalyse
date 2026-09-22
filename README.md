@@ -28,6 +28,7 @@ Bewusst eine einzige Reiter-Ebene statt verschachtelter Unterreiter (so vorher k
 - **CSV-Parsing:** eigener kleiner Parser (keine externe Bibliothek), da das FM26-Exportformat (Semikolon-getrennt, sauber) bereits bekannt ist.
 - **Datenimport:** generisches Einlesen aller vorhandenen CSV-Spalten (Rohdaten bleiben erhalten), unabhängig davon, welche Spalten der Nutzer im Export ausgewählt hat. Die Oberfläche nutzt in V1 nur eine kuratierte Teilmenge ("Kernspalten"); zusätzliche Spalten stehen für spätere Auswertungen bereit, ohne dass ein Re-Import nötig ist.
 - **Schlüssel:** jeder Spieler wird über die Spalte `Unique ID` aus dem Export identifiziert.
+- **Design:** ein Satz CSS-Variablen in `css/styles.css` (`:root`) statt verstreuter Hex-Werte - Farben, Radien, Schatten, Abstände an einer Stelle. Akzentfarbe ist dasselbe validierte Blau wie im Spielervergleich-Chart (siehe unten), damit App und Chart als ein System wirken statt als Einzelteile. Bewusst nur ein (heller) Modus - ohne echten Dark Mode wäre ein halbfertiger inkonsistenter als gar keiner.
 - **Persistenz:** der zuletzt importierte Kader, das Taktik-Board und das Spieldatum werden automatisch im Browser (`localStorage`) gespeichert und beim nächsten Öffnen direkt geladen - kein erneuter Upload nötig, auch nach Wochen/Monaten Pause (kein Ablaufdatum, aber gebunden an denselben Browser/dasselbe Gerät). Zusätzlich als Sicherheitsnetz: Export/Import einer Sicherungsdatei (JSON), die der Nutzer selbst z. B. in einem Cloud-Ordner ablegen kann - für Rechnerwechsel oder falls der Browser-Speicher verloren geht. V1 wertet weiterhin nur einen Kaderstand aus (kein Verlauf über mehrere Zeitpunkte); das Datenmodell ist aber so gestaltet, dass ein späterer Verlaufs-Import ergänzt werden kann, ohne die bestehende Struktur umzubauen.
 
 ## Architekturprinzip
@@ -72,7 +73,7 @@ Jeder Handlungsbedarf-Eintrag zeigt direkt in der Liste, welche Werte ihn ausgel
 ## Erweiterungspunkte (für später, nicht in V1 umgesetzt)
 
 - Transfer-Scouting (Spieler außerhalb des eigenen Kaders)
-- Design/Optik-Überarbeitung: Typografie, Farbschema, evtl. Dark Mode, responsiveres Layout; Diagramme statt nur Tabellen (z. B. Altersverteilung, Gehaltsstruktur, Vertragslaufzeiten)
+- Weitere Design-Politur: responsiveres Layout für schmale Bildschirme, evtl. Dark Mode (aktuell bewusst nicht umgesetzt, siehe unten); Diagramme für Kaderweite Auswertungen statt nur Tabellen (z. B. Altersverteilung, Gehaltsstruktur, Vertragslaufzeiten) - das Balken-Chart-Muster aus dem Spielervergleich ließe sich dafür wiederverwenden
 - Druck-/Exportansicht: Dashboard oder Kaderübersicht sauber als PDF/Bild ausgeben, z. B. zum Teilen oder Ausdrucken
 
 ### Backlog – vage Ideen, wahrscheinlich nicht umgesetzt
