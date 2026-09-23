@@ -73,7 +73,7 @@ Jeder Handlungsbedarf-Eintrag zeigt direkt in der Liste, welche Werte ihn ausgel
 
 ## Erweiterungspunkte (für später, nicht in V1 umgesetzt)
 
-- Transfer-Scouting (Spieler außerhalb des eigenen Kaders)
+- Transfer-Scouting (Spieler außerhalb des eigenen Kaders): zweiter, unabhängiger CSV-Import für eine Scouting-/Shortlist-Liste, darauf Qualität/Leistung je Position wiederverwendet - aber als Delta zum eigenen Kader-Ø statt absoluter Wert ("+2,3 über deinem aktuellen Ø auf V (Z)"), gefiltert auf Positionen mit Lücke laut Kadertiefe. Dazu eine separate Moneyball-Kennzahl (Score ÷ Marktwert bzw. Gehalt) für unterbewertete Spieler, plus Alter/Vertragsrestlaufzeit als Filter. Bewusst mehrere einzeln sortierbare Kennzahlen statt einem gewichteten Gesamtscore (gleiches Prinzip wie beim Handlungsbedarf: transparent statt Blackbox). Haken: Scouting-Exporte aus FM basieren auf Beobachtungsgenauigkeit der Scouts, nicht auf echten Werten wie beim eigenen Kader - Qualitätsangaben wären entsprechend unscharf, müsste in der Anzeige klar markiert werden
 - Diagramme für Kaderweite Auswertungen statt nur Tabellen (z. B. Altersverteilung, Gehaltsstruktur, Vertragslaufzeiten) - das Balken-Chart-Muster aus dem Spielervergleich/Spielerprofil ließe sich dafür wiederverwenden
 
 ### Backlog – vage Ideen, wahrscheinlich nicht umgesetzt
